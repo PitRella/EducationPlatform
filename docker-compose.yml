@@ -1,0 +1,17 @@
+services:
+  education_database:
+    container_name: "education_database"
+    image: postgres:17.5-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=education_db
+    ports:
+      - "5432:5432"
+    networks:
+      - container
+
+networks:
+  container:
+    driver: bridge
