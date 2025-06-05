@@ -20,6 +20,12 @@ class ShowUser(TunedModel):
     email: str
     is_active: bool
 
+
+class DeleteUserResponse(BaseModel):
+    deleted_user_id: uuid.UUID
+
+
+
 class CreateUser(BaseModel):
     name: str
     surname: str
