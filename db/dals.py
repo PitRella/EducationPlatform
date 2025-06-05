@@ -1,8 +1,8 @@
 import uuid
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, update, Row
+from sqlalchemy import and_, update, Row, select
 
 from db import User
 
@@ -30,3 +30,10 @@ class UserDAL:
         result = await self.__db_session.execute(query)
         deleted_user_id_row: Optional[Row[Tuple[Any]]] = result.fetchone()
         return deleted_user_id_row[0] if deleted_user_id_row else None
+
+    async def get_user(self, user_id: uuid.UUID) -> Optional[User]:
+        query = select(User).where(and_(User.user_id == user_id,
+                                        User.is_active == True))
+        result = await self.__db_session.execute(query)
+        user: Optional[Row[Tuple[Any]]] = result.fetchone()
+        return cast(User, user[0]) if user else None

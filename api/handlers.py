@@ -43,6 +43,21 @@ async def _deactivate_user(user_id: uuid.UUID, db: AsyncSession) -> \
             return deleted_user_id
 
 
+async def _get_user(user_id: uuid.UUID, db: AsyncSession) -> Optional[
+    ShowUser]:
+    async with db as session:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            user: Optional[User] = await user_dal.get_user(user_id)
+            return ShowUser(
+                user_id=user.user_id,
+                name=user.name,
+                surname=user.surname,
+                email=user.email,
+                is_active=user.is_active,
+            ) if user else None
+
+
 @user_router.post("/", response_model=ShowUser)
 async def create_user(
         user: CreateUser,
@@ -61,3 +76,15 @@ async def deactivate_user(
         raise HTTPException(status_code=404,
                             detail=f"User with {deleted_user_id} not found.")
     return DeleteUserResponse(deleted_user_id=deleted_user_id)
+
+
+@user_router.get("/", response_model=ShowUser)
+async def get_user(user_id: uuid.UUID,
+                   db: AsyncSession = Depends(get_db)
+                   ) -> ShowUser:
+    user: Optional[ShowUser] = await _get_user(user_id, db)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"Active user with"
+                                                    f" {user_id} "
+                                                    f"not found.")
+    return user
