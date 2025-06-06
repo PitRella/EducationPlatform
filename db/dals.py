@@ -27,8 +27,10 @@ class UserDAL:
     async def deactivate_user(self, user_id: uuid.UUID) -> Optional[uuid.UUID]:
         user: Optional[User] = await self.get_user(user_id)
         if not user: return None
-        user.is_active = False
-        return user.user_id
+        deactivated_user_id: Optional[uuid.UUID] = await self.update_user(
+            user.user_id,
+            is_active=False)
+        return deactivated_user_id
 
     async def get_user(self, user_id: uuid.UUID) -> Optional[User]:
         user: Optional[User] = await self.__db_session.get(
