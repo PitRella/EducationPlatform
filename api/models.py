@@ -28,9 +28,9 @@ class DeleteUserResponse(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
-    name: Optional[str] = Field(min_length=3, max_length=10)
-    surname: Optional[str] = Field(min_length=3, max_length=10)
-    email: Optional[str] = Field(min_length=3, max_length=10)
+    name: Optional[str] = Field(default=None, min_length=3, max_length=10)
+    surname: Optional[str] = Field(default=None, min_length=3, max_length=10)
+    email: Optional[str] = Field(default=None, min_length=3, max_length=10)
 
     @classmethod
     @field_validator("name")

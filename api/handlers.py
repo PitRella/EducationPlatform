@@ -62,7 +62,7 @@ async def _get_user(user_id: uuid.UUID, db: AsyncSession) -> Optional[
 
 async def __update_user(
         user_id: uuid.UUID,
-        user_fields: UpdateUserRequest,
+        user_fields: dict[str, str],
         db: AsyncSession
 ) -> Optional[UpdateUserResponse]:
     async with (db as session):
@@ -70,7 +70,7 @@ async def __update_user(
             user_dal = UserDAL(db)
             updated_user_id: Optional[uuid.UUID] = await user_dal.update_user(
                 user_id,
-                **user_fields.model_dump()
+                **user_fields,
             )
             return UpdateUserResponse(
                 updated_user_id=updated_user_id) if updated_user_id else None
@@ -115,7 +115,10 @@ async def update_user(
         user_fields: UpdateUserRequest,
         db=Depends(get_db)
 ) -> UpdateUserResponse:
-    if user_fields.model_dump(exclude_none=True) == {}:  # If empty body
+    filtered_user_fields: dict[str, str] = (user_fields.
+                                            model_dump(exclude_none=True)
+                                            )  # Delete None key value pair
+    if filtered_user_fields == {}:  # If empty body
         raise HTTPException(status_code=422, detail=f"At least one parameter "
                                                     f"for user update info "
                                                     f"should be provided")
@@ -126,7 +129,7 @@ async def update_user(
 
     updated_user: Optional[UpdateUserResponse] = await __update_user(
         user_id,
-        user_fields,
+        filtered_user_fields,
         db
     )
     if not updated_user:
