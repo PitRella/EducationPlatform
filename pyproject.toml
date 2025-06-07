@@ -6,11 +6,16 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.16.1",
     "asyncpg>=0.30.0",
+    "bcrypt>=4.3.0",
     "envparse>=0.2.0",
     "fastapi>=0.115.12",
+    "httpx>=0.28.1",
     "mypy>=1.16.0",
+    "passlib>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.5",
+    "pytest>=8.4.0",
     "sqlalchemy>=2.0.41",
+    "types-passlib>=1.7.7.20250602",
     "uvicorn>=0.34.3",
 ]

@@ -3,7 +3,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.base import state_str
 
 from api.models import ShowUser, CreateUser, DeleteUserResponse, \
     UpdateUserResponse, UpdateUserRequest
@@ -11,6 +10,7 @@ from db import User
 from db.dals import UserDAL
 from db.session import get_db
 from fastapi import HTTPException
+from hashing import Hasher
 
 user_router = APIRouter()
 
@@ -22,7 +22,8 @@ async def _create_new_user(user: CreateUser, db: AsyncSession) -> ShowUser:
             created_user: User = await user_dal.create_user(
                 name=user.name,
                 surname=user.surname,
-                email=user.email
+                email=user.email,
+                password=Hasher.hash_password(user.password)
             )
             return ShowUser(
                 user_id=created_user.user_id,  # type: ignore
