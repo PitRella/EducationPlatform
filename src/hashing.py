@@ -1,12 +1,17 @@
+from typing import Type
+
 from passlib.context import CryptContext
 
 
 class Hasher:
-    __crypt_context: CryptContext = CryptContext(schemes=["bcrypt"],
-                                                 deprecated="auto")
+    __crypt_context: CryptContext = CryptContext(
+        schemes=["bcrypt"],
+        deprecated="auto"
+    )
 
-    @staticmethod
+    @classmethod
     def hash_password(
+            cls: Type["Hasher"],
             unhashed_password: str
     ) -> str:
         """
@@ -16,8 +21,9 @@ class Hasher:
         """
         return Hasher.__crypt_context.hash(unhashed_password)
 
-    @staticmethod
+    @classmethod
     def verify_password(
+            cls: Type["Hasher"],
             unhashed_password: str,
             hashed_password: str
     ) -> bool:
@@ -27,4 +33,5 @@ class Hasher:
         :param hashed_password: Hashed password
         :return: True if hashed password identical to raw, false otherwise
         """
-        return Hasher.__crypt_context.verify(unhashed_password, hashed_password)
+        return Hasher.__crypt_context.verify(unhashed_password,
+                                             hashed_password)
