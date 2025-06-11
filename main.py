@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter
 
-from api.handlers import user_router
+from src.users.router import user_router
 
 app = FastAPI(title="EducationPlatform")
 

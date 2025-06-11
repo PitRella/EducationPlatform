@@ -4,8 +4,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.models import ShowUser, CreateUser, DeleteUserResponse, \
-    UpdateUserResponse, UpdateUserRequest
+from src.users.schemas import (
+    ShowUser,
+    CreateUser,
+    DeleteUserResponse,
+    UpdateUserResponse,
+    UpdateUserRequest
+)
 from db import User
 from db.dals import UserDAL
 from db.session import get_db
@@ -15,7 +20,10 @@ from hashing import Hasher
 user_router = APIRouter()
 
 
-async def _create_new_user(user: CreateUser, db: AsyncSession) -> ShowUser:
+async def _create_new_user(
+        user: CreateUser,
+        db: AsyncSession
+) -> ShowUser:
     async with db as session:
         async with session.begin():
             user_dal = UserDAL(session)
@@ -26,15 +34,18 @@ async def _create_new_user(user: CreateUser, db: AsyncSession) -> ShowUser:
                 password=Hasher.hash_password(user.password)
             )
             return ShowUser(
-                user_id=created_user.user_id,  # type: ignore
-                name=created_user.name,  # type: ignore
-                surname=created_user.surname,  # type: ignore
-                email=created_user.email,  # type: ignore
-                is_active=created_user.is_active,  # type: ignore
+                user_id=created_user.user_id,
+                name=created_user.name,
+                surname=created_user.surname,
+                email=created_user.email,
+                is_active=created_user.is_active,
             )
 
 
-async def _deactivate_user(user_id: uuid.UUID, db: AsyncSession) -> \
+async def _deactivate_user(
+        user_id: uuid.UUID,
+        db: AsyncSession
+) -> \
         Optional[
             uuid.UUID]:
     async with db as session:
@@ -46,8 +57,10 @@ async def _deactivate_user(user_id: uuid.UUID, db: AsyncSession) -> \
             return deleted_user_id
 
 
-async def _get_user(user_id: uuid.UUID, db: AsyncSession) -> Optional[
-    ShowUser]:
+async def _get_user(
+        user_id: uuid.UUID,
+        db: AsyncSession
+) -> Optional[ShowUser]:
     async with db as session:
         async with session.begin():
             user_dal = UserDAL(session)
