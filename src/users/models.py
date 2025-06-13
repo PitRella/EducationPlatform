@@ -1,9 +1,8 @@
 from sqlalchemy import String, Boolean
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-
-Base = declarative_base()
+from src.database import Base
 
 
 class User(Base):  # type: ignore

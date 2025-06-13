@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from db.dals import UserDAL
+from src.users.dal import UserDAL
 from src.hashing import Hasher
 from src.users.models import User
 from src.users.schemas import CreateUser, ShowUser, UpdateUserResponse
@@ -58,7 +58,7 @@ class UserService:
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user(user_id)
+                user: Optional[User] = await user_dal.get_user_by_id(user_id)
                 return ShowUser(
                     user_id=user.user_id,
                     name=user.name,

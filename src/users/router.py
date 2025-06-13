@@ -13,8 +13,7 @@ from src.users.schemas import (
     UpdateUserResponse,
     UpdateUserRequest
 )
-from db.session import get_db
-from fastapi import HTTPException
+from src.session import get_db
 
 from src.users.service import UserService
 
