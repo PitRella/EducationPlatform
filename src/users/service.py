@@ -4,10 +4,18 @@ from typing import Optional
 from src.users.dal import UserDAL
 from src.hashing import Hasher
 from src.users.models import User
-from src.users.schemas import CreateUser, ShowUser, UpdateUserResponse, \
-    UpdateUserRequest, DeleteUserResponse
-from src.users.exceptions import UserQueryIdMissmatchException, \
-    UserNotFoundByIdException, ForgottenParametersException
+from src.users.schemas import (
+    CreateUser,
+    ShowUser,
+    UpdateUserResponse,
+    UpdateUserRequest,
+    DeleteUserResponse
+)
+from src.users.exceptions import (
+    UserQueryIdMissmatchException,
+    UserNotFoundByIdException,
+    ForgottenParametersException
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -109,7 +117,7 @@ class UserService:
 
         async with db as session:
             async with session.begin():
-                user_dal = UserDAL(db)
+                user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_id(
                     requested_user_id)
                 if not user: raise UserNotFoundByIdException
