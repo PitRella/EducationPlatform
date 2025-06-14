@@ -40,13 +40,12 @@ async def deactivate_user(
         jwt_user: User = Depends(get_user_from_jwt),
 
 ) -> DeleteUserResponse:
-    deleted_user_id: Optional[uuid.UUID] = await UserService.deactivate_user(
-        user_id=user_id,
+    deleted_user: DeleteUserResponse = await UserService.deactivate_user(
+        requested_user_id=user_id,
+        jwt_user_id=jwt_user.user_id,
         db=db
     )
-    if not deleted_user_id:
-        raise UserNotFoundByIdException
-    return DeleteUserResponse(deleted_user_id=deleted_user_id)
+    return deleted_user
 
 
 @user_router.get("/", response_model=ShowUser)
@@ -56,12 +55,11 @@ async def get_user_by_id(
         jwt_user: User = Depends(get_user_from_jwt),
 
 ) -> ShowUser:
-    user: Optional[ShowUser] = await UserService.get_user(
-        user_id=user_id,
+    user: ShowUser = await UserService.get_user(
+        jwt_user_id=jwt_user.user_id,
+        requested_user_id=user_id,
         db=db
     )
-    if not user:
-        raise UserNotFoundByIdException
     return user
 
 
@@ -73,22 +71,12 @@ async def update_user(
         jwt_user: User = Depends(get_user_from_jwt),
 
 ) -> UpdateUserResponse:
-    filtered_user_fields: dict[str, str] = (
-        user_fields.
-        model_dump(exclude_none=True)
-    )  # Delete None key value pair
-    if filtered_user_fields == {}:  # If empty body
-        raise UserNotFoundByIdException
-    if not await get_user_by_id(user_id, db):  # If user doesn't exist
-        raise ForgottenParametersException
-
-    updated_user: Optional[UpdateUserResponse] = await (
+    updated_user: UpdateUserResponse = await (
         UserService.update_user(
-            user_id,
-            filtered_user_fields,
-            db
+            jwt_user_id=jwt_user.user_id,
+            requested_user_id=user_id,
+            user_fields=user_fields,
+            db=db
         )
     )
-    if not updated_user:
-        raise UserNotFoundByIdException
     return updated_user

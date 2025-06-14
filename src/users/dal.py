@@ -44,11 +44,10 @@ class UserDAL:
         :param user_id: UUID of user to deactivate
         :return: Deactivated user UUID
         """
-        user: Optional[User] = await self.get_user_by_id(user_id)
-        if not user: return None
         deactivated_user_id: Optional[uuid.UUID] = await self.update_user(
-            user.user_id,
-            is_active=False)
+            user_id,
+            is_active=False
+        )
         return deactivated_user_id
 
     async def get_user_by_id(
