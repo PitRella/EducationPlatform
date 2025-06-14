@@ -17,6 +17,14 @@ class UserDAL:
             email: str,
             password: str
     ) -> User:
+        """
+        Create a new user
+        :param name: User name
+        :param surname: User's surname
+        :param email: User's email
+        :param password: User's hashed password
+        :return: User
+        """
         new_user = User(
             name=name,
             surname=surname,
@@ -31,6 +39,11 @@ class UserDAL:
             self,
             user_id: uuid.UUID
     ) -> Optional[uuid.UUID]:
+        """
+        Deactivate a user
+        :param user_id: UUID of user to deactivate
+        :return: Deactivated user UUID
+        """
         user: Optional[User] = await self.get_user_by_id(user_id)
         if not user: return None
         deactivated_user_id: Optional[uuid.UUID] = await self.update_user(
@@ -40,12 +53,19 @@ class UserDAL:
 
     async def get_user_by_id(
             self,
-            user_id: uuid.UUID
+            user_id: Optional[uuid.UUID | str]
     ) -> Optional[User]:
-        user: Optional[User] = await self.__db_session.get(
-            entity=User,
-            ident=user_id
-        )
+        """
+        Get user by UUID
+        :param user_id: User UUID
+        :return: User
+        """
+        query: Select = select(User).where(and_(
+            User.user_id == user_id,
+            User.is_active == True
+        ))
+        result: Result[Any] = await self.__db_session.execute(query)
+        user: Optional[User] = result.scalar_one_or_none()
         return user
 
     async def update_user(
@@ -53,7 +73,13 @@ class UserDAL:
             user_id: uuid.UUID,
             **kwargs
     ) -> Optional[uuid.UUID]:
-        query: Update[Any] = update(User).where(
+        """
+        Update user info
+        :param user_id: User UUID
+        :param kwargs: Parametrs to update
+        :return:
+        """
+        query: Update = update(User).where(
             and_(User.user_id == user_id, User.is_active == True)).values(
             kwargs).returning(User.user_id)
         result: Result[Any] = await self.__db_session.execute(query)
@@ -64,7 +90,15 @@ class UserDAL:
             self,
             email: str
     ) -> Optional[User]:
-        query: Select[Any] = select(User).where(User.email == email)
+        """
+        Get user by email
+        :param email: User's email
+        :return: User
+        """
+        query: Select[Any] = select(User).where(and_(
+            User.email == email,
+            User.is_active == True
+        ))
         result: Result[Any] = await self.__db_session.execute(query)
         user: Optional[User] = result.scalar_one_or_none()
         return user

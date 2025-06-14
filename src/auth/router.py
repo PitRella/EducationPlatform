@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi import APIRouter, Depends, Response, Request, status
 
 from src.auth.exceptions import WrongCredentialsException
@@ -14,6 +14,10 @@ from src.users.models import User
 
 auth_router = APIRouter()
 
+oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
+
 
 @auth_router.post(path="/login", response_model=Token)
 async def login_user(
@@ -21,6 +25,13 @@ async def login_user(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: AsyncSession = Depends(get_db)
 ) -> Token:
+    """
+    Endpoint to login user based on email and password.
+    :param response: User response.
+    :param form_data: Form data with password and email.
+    :param db: Async session to db.
+    :return: Pair of access token and refresh token.
+    """
     user: Optional[User] = await AuthService.auth_user(
         email=form_data.username,
         password=form_data.password,
@@ -41,3 +52,30 @@ async def login_user(
         httponly=True
     )
     return token
+
+
+async def _get_user_from_jwt(
+        token=Depends(oauth_scheme),
+        db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Method to take user_id from access token.
+    :param token: Access token.
+    :param db: Async session to db.
+    :return: User.
+    """
+    user: Optional[User] = await AuthService.validate_token(token, db)
+    if not user:
+        raise WrongCredentialsException
+    return user
+
+
+@auth_router.get(path='/test')
+async def test_endpoint(
+        jwt_user: User = Depends(_get_user_from_jwt),
+        db: AsyncSession = Depends(get_db)
+
+):
+    return {
+        "name":jwt_user.name,
+    }
