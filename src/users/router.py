@@ -4,8 +4,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.router import get_user_from_jwt
 from src.users.exceptions import UserNotFoundByIdException, \
     ForgottenParametersException
+from src.users.models import User
 from src.users.schemas import (
     ShowUser,
     CreateUser,
@@ -34,7 +36,9 @@ async def create_user(
 @user_router.delete("/", response_model=DeleteUserResponse)
 async def deactivate_user(
         user_id: uuid.UUID,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
+        jwt_user: User = Depends(get_user_from_jwt),
+
 ) -> DeleteUserResponse:
     deleted_user_id: Optional[uuid.UUID] = await UserService.deactivate_user(
         user_id=user_id,
@@ -48,7 +52,9 @@ async def deactivate_user(
 @user_router.get("/", response_model=ShowUser)
 async def get_user_by_id(
         user_id: uuid.UUID,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
+        jwt_user: User = Depends(get_user_from_jwt),
+
 ) -> ShowUser:
     user: Optional[ShowUser] = await UserService.get_user(
         user_id=user_id,
@@ -63,11 +69,14 @@ async def get_user_by_id(
 async def update_user(
         user_id: uuid.UUID,
         user_fields: UpdateUserRequest,
-        db=Depends(get_db)
+        db=Depends(get_db),
+        jwt_user: User = Depends(get_user_from_jwt),
+
 ) -> UpdateUserResponse:
-    filtered_user_fields: dict[str, str] = (user_fields.
-                                            model_dump(exclude_none=True)
-                                            )  # Delete None key value pair
+    filtered_user_fields: dict[str, str] = (
+        user_fields.
+        model_dump(exclude_none=True)
+    )  # Delete None key value pair
     if filtered_user_fields == {}:  # If empty body
         raise UserNotFoundByIdException
     if not await get_user_by_id(user_id, db):  # If user doesn't exist

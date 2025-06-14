@@ -54,7 +54,7 @@ async def login_user(
     return token
 
 
-async def _get_user_from_jwt(
+async def get_user_from_jwt(
         token=Depends(oauth_scheme),
         db: AsyncSession = Depends(get_db)
 ) -> User:
@@ -72,10 +72,9 @@ async def _get_user_from_jwt(
 
 @auth_router.get(path='/test')
 async def test_endpoint(
-        jwt_user: User = Depends(_get_user_from_jwt),
+        jwt_user: User = Depends(get_user_from_jwt),
         db: AsyncSession = Depends(get_db)
-
 ):
     return {
-        "name":jwt_user.name,
+        "name": jwt_user.name,
     }
