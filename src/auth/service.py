@@ -55,7 +55,8 @@ class AuthService:
         :param db: Async session to db.
         :return: User or None
         """
-        decoded_jwt = await cls._eject_token(user_jwt_token)
+        decoded_jwt: dict[str, str | int] = await cls._eject_token(
+            user_jwt_token)
         await cls._validate_token_expire(decoded_jwt)
         user_id: Optional[int | str] = decoded_jwt.get("sub", None)
         if not user_id or isinstance(user_id, int):
