@@ -1,10 +1,12 @@
 import uuid
+from calendar import timegm
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.exceptions import WrongCredentialsException
+from src.auth.exceptions import WrongCredentialsException, \
+    AccessTokenExpiredException
 from src.auth.schemas import Token
 from src.auth.dal import AuthDAL
 from src.users.dal import UserDAL
@@ -53,16 +55,10 @@ class AuthService:
         :param db: Async session to db.
         :return: User or None
         """
-        try:
-            decoded_jwt: dict[str, str] = jwt.decode(
-                token=user_jwt_token,
-                key=SECRET_KEY,
-                algorithms=ALGORITHM
-            )
-        except JWTError:
-            raise WrongCredentialsException
-        user_id: Optional[str] = decoded_jwt.get("sub", "")
-        if not user_id:
+        decoded_jwt = await cls._eject_token(user_jwt_token)
+        await cls._validate_token_expire(decoded_jwt)
+        user_id: Optional[int | str] = decoded_jwt.get("sub", None)
+        if not user_id or isinstance(user_id, int):
             raise WrongCredentialsException
         async with db as session:
             async with session.begin():
@@ -71,6 +67,41 @@ class AuthService:
         if not user:
             raise WrongCredentialsException
         return user
+
+    @classmethod
+    async def _validate_token_expire(
+            cls,
+            decoded_jwt: dict[str, str | int]
+    ) -> None:
+        """
+        Method to validate token expiration date
+        :param decoded_jwt: Decoded jwt
+        :return: None
+        """
+        jwt_exp_date: int = int(decoded_jwt.get("exp", 0))
+        current_time: int = timegm(datetime.now().utctimetuple())
+        if not jwt_exp_date or current_time >= jwt_exp_date:
+            raise AccessTokenExpiredException
+
+    @classmethod
+    async def _eject_token(
+            cls,
+            user_jwt_token: str
+    ) -> dict[str, str | int]:
+        """
+        Function to eject token and return decoded jwt.
+        :param user_jwt_token: User access token.
+        :return: Decoded jwt.
+        """
+        try:
+            decoded_jwt: dict[str, str | int] = jwt.decode(
+                token=user_jwt_token,
+                key=SECRET_KEY,
+                algorithms=ALGORITHM
+            )
+        except JWTError:
+            raise WrongCredentialsException
+        return decoded_jwt
 
     @classmethod
     async def create_token(
