@@ -32,12 +32,11 @@ async def login_user(
     :param db: Async session to db.
     :return: Pair of access token and refresh token.
     """
-    user: Optional[User] = await AuthService.auth_user(
+    user: User = await AuthService.auth_user(
         email=form_data.username,
         password=form_data.password,
         db=db
     )
-    if not user: raise WrongCredentialsException
     token: Token = await AuthService.create_token(user.user_id, db)
     response.set_cookie(
         'access_token',
@@ -64,9 +63,7 @@ async def get_user_from_jwt(
     :param db: Async session to db.
     :return: User.
     """
-    user: Optional[User] = await AuthService.validate_token(token, db)
-    if not user:
-        raise WrongCredentialsException
+    user: User = await AuthService.validate_token(token, db)
     return user
 
 

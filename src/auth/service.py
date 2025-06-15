@@ -25,7 +25,7 @@ class AuthService:
             email: str,
             password: str,
             db: AsyncSession
-    ) -> Optional[User]:
+    ) -> User:
         """
         Method to find user based on email and pass
         :param email: User email
@@ -38,7 +38,7 @@ class AuthService:
                 user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_email(email)
         if not user or not Hasher.verify_password(password, user.password):
-            return None
+            raise WrongCredentialsException
         return user
 
     @classmethod
@@ -46,7 +46,7 @@ class AuthService:
             cls,
             user_jwt_token: str,
             db: AsyncSession
-    ) -> Optional[User]:
+    ) -> User:
         """
         Method to validate token and take user if token is valid
         :param user_jwt_token: JWT token
@@ -62,12 +62,12 @@ class AuthService:
         except JWTError:
             raise WrongCredentialsException
         user_id: Optional[str] = decoded_jwt.get("sub", "")
-        if not user_id: return None
+        if not user_id: raise WrongCredentialsException
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_id(user_id)
-        if not user: return None
+        if not user: raise WrongCredentialsException
         return user
 
     @classmethod
