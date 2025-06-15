@@ -61,7 +61,7 @@ class UserDAL:
         """
         query: Select = select(User).where(and_(
             User.user_id == user_id,
-            User.is_active == True
+            User.is_active
         ))
         result: Result[Any] = await self.__db_session.execute(query)
         user: Optional[User] = result.scalar_one_or_none()
@@ -79,7 +79,7 @@ class UserDAL:
         :return:
         """
         query: Update = update(User).where(
-            and_(User.user_id == user_id, User.is_active == True)).values(
+            and_(User.user_id == user_id, User.is_active)).values(
             kwargs).returning(User.user_id)
         result: Result[Any] = await self.__db_session.execute(query)
         updated_user_id: Optional[uuid.UUID] = result.scalar_one_or_none()
@@ -96,7 +96,7 @@ class UserDAL:
         """
         query: Select[Any] = select(User).where(and_(
             User.email == email,
-            User.is_active == True
+            User.is_active
         ))
         result: Result[Any] = await self.__db_session.execute(query)
         user: Optional[User] = result.scalar_one_or_none()

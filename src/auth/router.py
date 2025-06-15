@@ -1,11 +1,8 @@
-import uuid
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from fastapi import APIRouter, Depends, Response, Request, status
+from fastapi import APIRouter, Depends, Response
 
-from src.auth.exceptions import WrongCredentialsException
 from src.auth.schemas import Token
 from src.auth.service import AuthService
 from src.session import get_db

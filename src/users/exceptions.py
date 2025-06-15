@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
 
 class UserNotFoundByIdException(HTTPException):
@@ -6,8 +6,8 @@ class UserNotFoundByIdException(HTTPException):
 
     def __init__(self):
         super().__init__(status_code=404,
-                         detail=f"Active user by this id not "
-                                f"found.")
+                         detail="Active user by this id not "
+                                "found.")
 
 
 class UserQueryIdMissmatchException(HTTPException):
@@ -16,8 +16,8 @@ class UserQueryIdMissmatchException(HTTPException):
     """
 
     def __init__(self):
-        super().__init__(status_code=404, detail=f"JWT token doesn't belong "
-                                                 f"to requested user")
+        super().__init__(status_code=404, detail="JWT token doesn't belong "
+                                                 "to requested user")
 
 
 class ForgottenParametersException(HTTPException):
@@ -25,4 +25,4 @@ class ForgottenParametersException(HTTPException):
 
     def __init__(self):
         super().__init__(status_code=422,
-                         detail=f"Not all parameters was filled")
+                         detail="Not all parameters was filled")

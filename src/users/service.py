@@ -70,11 +70,13 @@ class UserService:
                 user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_id(
                     user_id=requested_user_id)
-                if not user: raise UserNotFoundByIdException
+                if not user:
+                    raise UserNotFoundByIdException
                 deleted_user_id: Optional[
                     uuid.UUID] = await user_dal.deactivate_user(
                     requested_user_id)
-        if not deleted_user_id:  raise UserNotFoundByIdException
+        if not deleted_user_id:
+            raise UserNotFoundByIdException
         return DeleteUserResponse(deleted_user_id=deleted_user_id)
 
     @classmethod
@@ -90,7 +92,8 @@ class UserService:
                 user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_id(
                     requested_user_id)
-        if not user: raise UserNotFoundByIdException
+        if not user:
+            raise UserNotFoundByIdException
         return ShowUser(
             user_id=user.user_id,
             name=user.name,
@@ -113,19 +116,22 @@ class UserService:
             user_fields.
             model_dump(exclude_none=True)
         )  # Delete None key value pair
-        if not filtered_user_fields: raise ForgottenParametersException
+        if not filtered_user_fields:
+            raise ForgottenParametersException
 
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
                 user: Optional[User] = await user_dal.get_user_by_id(
                     requested_user_id)
-                if not user: raise UserNotFoundByIdException
+                if not user:
+                    raise UserNotFoundByIdException
                 updated_user_id: Optional[
                     uuid.UUID] = await user_dal.update_user(
                     requested_user_id,
                     **filtered_user_fields,
                 )
-        if not updated_user_id: raise UserNotFoundByIdException
+        if not updated_user_id:
+            raise UserNotFoundByIdException
 
         return UpdateUserResponse(updated_user_id=updated_user_id)
