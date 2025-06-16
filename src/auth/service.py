@@ -1,14 +1,15 @@
 import uuid
 from calendar import timegm
-from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple, Union, Any, Coroutine
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import (
     WrongCredentialsException,
-    AccessTokenExpiredException
+    AccessTokenExpiredException, RefreshTokenException
 )
+from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
 from src.auth.dal import AuthDAL
 from src.users.dal import UserDAL
@@ -60,7 +61,7 @@ class AuthService:
         """
         decoded_jwt: dict[str, str | int] = await cls._eject_token(
             user_jwt_token)
-        await cls._validate_token_expire(decoded_jwt)
+        cls._validate_access_token_expire(decoded_jwt)
         user_id: Optional[int | str] = decoded_jwt.get("sub", None)
         if not user_id or isinstance(user_id, int):
             raise WrongCredentialsException
@@ -73,19 +74,34 @@ class AuthService:
         return user
 
     @classmethod
-    async def _validate_token_expire(
+    def _validate_access_token_expire(
             cls,
             decoded_jwt: dict[str, str | int]
     ) -> None:
         """
-        Method to validate token expiration date
-        :param decoded_jwt: Decoded jwt
+        Method to validate access token expiration date
+        :param decoded_jwt: Decoded jwt object
         :return: None
         """
         jwt_exp_date: int = int(decoded_jwt.get("exp", 0))
         current_time: int = timegm(datetime.now().utctimetuple())
         if not jwt_exp_date or current_time >= jwt_exp_date:
             raise AccessTokenExpiredException
+
+    @classmethod
+    async def _validate_refresh_token_expire(
+            cls,
+            refresh_token_model: RefreshSessionModel,
+            db: AsyncSession,
+    ) -> None:
+        if (datetime.now(timezone.utc) >= refresh_token_model.created_at
+                + timedelta(seconds=refresh_token_model.expires_in)):
+            async with db as session:
+                async with session.begin():
+                    auth_dal: AuthDAL = AuthDAL(session)
+                    await auth_dal.delete_refresh_token(
+                        refresh_token_id=refresh_token_model.id)
+            raise RefreshTokenException
 
     @classmethod
     async def _eject_token(
@@ -120,11 +136,10 @@ class AuthService:
         :param db: Database async session
         :return: Token: A Pair of refresh and access tokens with their type
         """
-        access_token: str = await cls._generate_access_token(
+        access_token: str = cls._generate_access_token(
             user_id=user_id
         )
-        refresh_token, tm_delta = await (
-            cls._generate_refresh_token_timedelta())
+        refresh_token, tm_delta = cls._generate_refresh_token_timedelta()
         async with db as session:
             async with session.begin():
                 auth_dal = AuthDAL(session)
@@ -139,7 +154,47 @@ class AuthService:
         )
 
     @classmethod
-    async def _generate_access_token(
+    async def refresh_token(
+            cls,
+            refresh_token: uuid.UUID,
+            db: AsyncSession
+    ) -> Token:
+        async with db as session:
+            async with session.begin():
+                auth_dal: AuthDAL = AuthDAL(db_session=db)
+                user_dal: UserDAL = UserDAL(db_session=db)
+                refresh_token_model: Optional[
+                    RefreshSessionModel] = await auth_dal.get_refresh_token(
+                    refresh_token=refresh_token
+                )
+                if not refresh_token_model:
+                    raise RefreshTokenException
+                await cls._validate_refresh_token_expire(
+                    refresh_token_model=refresh_token_model,
+                    db=db
+                )
+                user_id: uuid.UUID = refresh_token_model.user_id
+                user: Optional[User] = await user_dal.get_user_by_id(
+                    user_id=user_id)
+                if not user:
+                    raise RefreshTokenException
+                access_token: str = cls._generate_access_token(user_id=user_id)
+                updated_refresh_token, tm_delta = cls._generate_refresh_token_timedelta()
+                updated_refresh_token_model: Optional[
+                    RefreshSessionModel] = await auth_dal.update_refresh_token(
+                    refresh_token_id=refresh_token_model.id,
+                    refresh_token=updated_refresh_token,
+                    expires_at=tm_delta.total_seconds(),
+                )
+                if not updated_refresh_token_model:
+                    raise RefreshTokenException
+                return Token(
+                    access_token=access_token,
+                    refresh_token=str(updated_refresh_token)
+                )
+
+    @classmethod
+    def _generate_access_token(
             cls,
             user_id: uuid.UUID
     ) -> str:
@@ -158,7 +213,7 @@ class AuthService:
         return f'Bearer {encoded_jwt}'
 
     @classmethod
-    async def _generate_refresh_token_timedelta(cls) -> Tuple[
+    def _generate_refresh_token_timedelta(cls) -> Tuple[
         uuid.UUID, timedelta]:
         """
         Generate refresh token and timedelta

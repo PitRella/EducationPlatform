@@ -1,7 +1,8 @@
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Request
 
 from src.auth.dependencies import get_user_from_jwt
 from src.auth.schemas import Token
@@ -45,6 +46,32 @@ async def login_user(
         httponly=True
     )
     return token
+
+
+@auth_router.post(path="/refresh", response_model=Token)
+async def refresh_token(
+        request: Request,
+        response: Response,
+        db: AsyncSession = Depends(get_db)
+) -> Token:
+    token: Token = await AuthService.refresh_token(
+        refresh_token=uuid.UUID(request.cookies.get('refresh_token')),
+        db=db
+    )
+    response.set_cookie(
+        'access_token',
+        token.access_token,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        httponly=True
+    )
+    response.set_cookie(
+        'refresh_token',
+        token.refresh_token,
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
+        httponly=True
+    )
+    return token
+
 
 @auth_router.get(path='/test')
 async def test_endpoint(
