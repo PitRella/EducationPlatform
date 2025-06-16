@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.router import get_user_from_jwt
+from src.auth.dependencies import get_user_from_jwt
 from src.users.models import User
 from src.users.schemas import (
     ShowUser,

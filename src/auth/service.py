@@ -5,19 +5,22 @@ from typing import Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.exceptions import WrongCredentialsException, \
+from src.auth.exceptions import (
+    WrongCredentialsException,
     AccessTokenExpiredException
+)
 from src.auth.schemas import Token
 from src.auth.dal import AuthDAL
 from src.users.dal import UserDAL
 from src.hashing import Hasher
-from src.settings import ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
-from fastapi.security import OAuth2PasswordBearer
+from src.settings import (
+    ALGORITHM,
+    SECRET_KEY,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 from src.settings import REFRESH_TOKEN_EXPIRE_DAYS
 from jose import jwt, JWTError
 from src.users.models import User
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/token')
 
 
 class AuthService:
@@ -130,7 +133,10 @@ class AuthService:
                     refresh_token,
                     tm_delta.total_seconds()
                 )
-        return Token(access_token=access_token, refresh_token=refresh_token)
+        return Token(
+            access_token=access_token,
+            refresh_token=str(refresh_token)
+        )
 
     @classmethod
     async def _generate_access_token(
