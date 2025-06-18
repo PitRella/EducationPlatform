@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Response, Request
 
 from src.auth.dependencies import get_user_from_jwt
 from src.auth.schemas import Token
-from src.auth.service import AuthService
+from src.auth.services import AuthService
 from src.session import get_db
 from src.settings import REFRESH_TOKEN_EXPIRE_DAYS, ACCESS_TOKEN_EXPIRE_MINUTES
 from src.users.models import User
@@ -76,8 +76,7 @@ async def refresh_token(
 @auth_router.get(path='/test')
 async def test_endpoint(
         jwt_user: User = Depends(get_user_from_jwt),
-        db: AsyncSession = Depends(get_db)
-):
+) -> dict[str, str]:
     return {
         "name": jwt_user.name,
     }
