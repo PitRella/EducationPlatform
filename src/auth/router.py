@@ -72,6 +72,13 @@ async def refresh_token(
     )
     return token
 
+@auth_router.delete(path="/logout")
+async def logout_user(
+        request: Request,
+        response: Response,
+        db: AsyncSession = Depends(get_db)
+) -> None:
+    await AuthService.logout_user(request.cookies.get('refresh_token'), db)
 
 @auth_router.get(path='/test')
 async def test_endpoint(

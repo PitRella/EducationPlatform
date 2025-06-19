@@ -105,5 +105,5 @@ class TokenManager:
         refresh_token_expire_date: datetime = (refresh_token_model.created_at +
                                                timedelta(
                                                    seconds=refresh_token_model.expires_in))
-        if not (current_date >= refresh_token_expire_date):
+        if current_date >= refresh_token_expire_date:
             raise RefreshTokenException

@@ -10,7 +10,7 @@ from src.auth.exceptions import (
 )
 from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
-from src.auth.services import TokenManager
+from src.auth.services.token_manager import TokenManager
 from src.hashing import Hasher
 from src.users.dal import UserDAL
 from src.users.models import User
@@ -54,7 +54,7 @@ class AuthService:
             User: Authenticated user model instance
 
         Raises:
-            WrongCredentialsException: If user not found or password verification fails
+            WrongCredentialsException: If a user is not found or password verification fails
         """
         async with db as session:
             async with session.begin():
@@ -75,7 +75,7 @@ class AuthService:
             str: The validated user ID from the token
 
         Raises:
-            WrongCredentialsException: If user ID is missing or has invalid type
+            WrongCredentialsException: If user ID is missing or has an invalid type
         """
         user_id: Optional[int | str] = decoded_jwt.get("sub", None)
         if not user_id or isinstance(user_id, int):
@@ -99,7 +99,7 @@ class AuthService:
             User: User model instance associated with the token
 
         Raises:
-            WrongCredentialsException: If token is invalid or user not found
+            WrongCredentialsException: If the token is invalid, or the user has not found
             AccessTokenExpiredException: If token has expired
         """
 
@@ -169,7 +169,7 @@ class AuthService:
             Token: New token pair containing fresh access_token and refresh_token
 
         Raises:
-            RefreshTokenException: If refresh token is invalid, expired, or user not found
+            RefreshTokenException: If the refresh token is invalid, expired, or the user is not found
         """
 
         async with db as session:
@@ -204,4 +204,34 @@ class AuthService:
                 return Token(
                     access_token=access_token,
                     refresh_token=str(updated_refresh_token)
+                )
+
+    @classmethod
+    async def logout_user(
+            cls,
+            refresh_token: uuid.UUID,
+            db: AsyncSession
+    ) -> None:
+        """
+        Log out a user by invalidating their refresh token.
+
+        Args:
+            refresh_token: UUID of the refresh token to invalidate
+            db: AsyncSession instance for database operations
+
+        Raises:
+            RefreshTokenException: If the refresh token is not found
+        """
+
+        async with db as session:
+            async with session.begin():
+                auth_dal: AuthDAL = AuthDAL(db_session=db)
+                refresh_token_model: Optional[
+                    RefreshSessionModel] = await auth_dal.get_refresh_token(
+                    refresh_token=refresh_token
+                )
+                if not refresh_token_model:
+                    raise RefreshTokenException
+                await auth_dal.delete_refresh_token(
+                    refresh_token_id=refresh_token_model.id
                 )

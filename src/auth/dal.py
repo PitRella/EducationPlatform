@@ -7,6 +7,18 @@ from src.auth.models import RefreshSessionModel
 
 
 class AuthDAL:
+    """Database Access Layer for authentication operations.
+
+    This class handles all database operations related to authentication including:
+    - Creating refresh tokens
+    - Retrieving refresh tokens
+    - Updating refresh tokens
+    - Deleting refresh tokens
+
+    Attributes:
+        __db_session (AsyncSession): The database session for executing queries
+    """
+
     def __init__(self, db_session: AsyncSession):
         self.__db_session: AsyncSession = db_session
 
@@ -26,8 +38,8 @@ class AuthDAL:
         return new_token
 
     async def get_refresh_token(
-            self,
-            refresh_token: uuid.UUID
+        self,
+        refresh_token: uuid.UUID
     ) -> Optional[RefreshSessionModel]:
         query: Select[RefreshSessionModel] = Select(RefreshSessionModel).where(
             RefreshSessionModel.refresh_token == refresh_token
@@ -47,7 +59,7 @@ class AuthDAL:
             refresh_token=refresh_token,
             expires_in=expires_at
         ).returning(RefreshSessionModel.id)
-        result: Result = await self.__db_session.execute(query)
+        result: Result[RefreshSessionModel] = await self.__db_session.execute(query)
         updated_token: Optional[
             RefreshSessionModel] = result.scalar_one_or_none()
         return updated_token
