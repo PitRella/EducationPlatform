@@ -19,7 +19,7 @@ class Hasher:
         :param unhashed_password: A password to hash
         :return: hashed password
         """
-        return Hasher.__crypt_context.hash(unhashed_password)
+        return cls.__crypt_context.hash(unhashed_password)
 
     @classmethod
     def verify_password(
@@ -28,10 +28,12 @@ class Hasher:
             hashed_password: str
     ) -> bool:
         """
-        Return
+        Check if raw password equal to hashed password
         :param unhashed_password: Raw password
         :param hashed_password: Hashed password
         :return: True if hashed password identical to raw, false otherwise
         """
-        return Hasher.__crypt_context.verify(unhashed_password,
-                                             hashed_password)
+        return cls.__crypt_context.verify(
+            unhashed_password,
+            hashed_password
+        )

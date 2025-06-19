@@ -1,14 +1,38 @@
 import uuid
 from typing import Optional
 
-from db.dals import UserDAL
+from src.users.dal import UserDAL
 from src.hashing import Hasher
 from src.users.models import User
-from src.users.schemas import CreateUser, ShowUser, UpdateUserResponse
+from src.users.schemas import (
+    CreateUser,
+    ShowUser,
+    UpdateUserResponse,
+    UpdateUserRequest,
+    DeleteUserResponse
+)
+from src.users.exceptions import (
+    UserQueryIdMissmatchException,
+    UserNotFoundByIdException,
+    ForgottenParametersException
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserService:
+    @staticmethod
+    def _validate_jwt_query_id(
+            query_uuid: uuid.UUID,
+            jwt_uuid: uuid.UUID
+    ) -> None:
+        """
+        Validate uuid from jwt the same as uuid from query
+
+        :param query_uuid: uuid from query
+        :param jwt_uuid: uuid from jwt token
+        """
+        if query_uuid != jwt_uuid:
+            raise UserQueryIdMissmatchException
 
     @classmethod
     async def create_new_user(
@@ -36,51 +60,78 @@ class UserService:
     @classmethod
     async def deactivate_user(
             cls,
-            user_id: uuid.UUID,
+            requested_user_id: uuid.UUID,
+            jwt_user_id: uuid.UUID,
             db: AsyncSession
-    ) -> \
-            Optional[
-                uuid.UUID]:
+    ) -> DeleteUserResponse:
+        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
+                user: Optional[User] = await user_dal.get_user_by_id(
+                    user_id=requested_user_id)
+                if not user:
+                    raise UserNotFoundByIdException
                 deleted_user_id: Optional[
                     uuid.UUID] = await user_dal.deactivate_user(
-                    user_id)
-                return deleted_user_id
+                    requested_user_id)
+        if not deleted_user_id:
+            raise UserNotFoundByIdException
+        return DeleteUserResponse(deleted_user_id=deleted_user_id)
 
     @classmethod
     async def get_user(
             cls,
-            user_id: uuid.UUID,
+            requested_user_id: uuid.UUID,
+            jwt_user_id: uuid.UUID,
             db: AsyncSession
-    ) -> Optional[ShowUser]:
+    ) -> ShowUser:
+        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user(user_id)
-                return ShowUser(
-                    user_id=user.user_id,
-                    name=user.name,
-                    surname=user.surname,
-                    email=user.email,
-                    is_active=user.is_active,
-                ) if user else None
+                user: Optional[User] = await user_dal.get_user_by_id(
+                    requested_user_id)
+        if not user:
+            raise UserNotFoundByIdException
+        return ShowUser(
+            user_id=user.user_id,
+            name=user.name,
+            surname=user.surname,
+            email=user.email,
+            is_active=user.is_active,
+        )
 
     @classmethod
     async def update_user(
             cls,
-            user_id: uuid.UUID,
-            user_fields: dict[str, str],
+            requested_user_id: uuid.UUID,
+            jwt_user_id: uuid.UUID,
+            user_fields: UpdateUserRequest,
             db: AsyncSession
-    ) -> Optional[UpdateUserResponse]:
-        async with (db as session):
+    ) -> UpdateUserResponse:
+        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
+
+        filtered_user_fields: dict[str, str] = (
+            user_fields.
+            model_dump(exclude_none=True)
+        )  # Delete None key value pair
+        if not filtered_user_fields:
+            raise ForgottenParametersException
+
+        async with db as session:
             async with session.begin():
-                user_dal = UserDAL(db)
+                user_dal = UserDAL(session)
+                user: Optional[User] = await user_dal.get_user_by_id(
+                    requested_user_id)
+                if not user:
+                    raise UserNotFoundByIdException
                 updated_user_id: Optional[
                     uuid.UUID] = await user_dal.update_user(
-                    user_id,
-                    **user_fields,
+                    requested_user_id,
+                    **filtered_user_fields,
                 )
-                return UpdateUserResponse(
-                    updated_user_id=updated_user_id) if updated_user_id else None
+        if not updated_user_id:
+            raise UserNotFoundByIdException
+
+        return UpdateUserResponse(updated_user_id=updated_user_id)

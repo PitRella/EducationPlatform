@@ -1,12 +1,11 @@
 from sqlalchemy import String, Boolean
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from src.database import Base
 
-Base = declarative_base()
 
-
-class User(Base):  # type: ignore
+class User(Base):
     __tablename__ = "users"
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
