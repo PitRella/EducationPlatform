@@ -12,6 +12,7 @@ dependencies = [
     "httpx>=0.28.1",
     "mypy>=1.16.0",
     "passlib>=1.7.4",
+    "pre-commit>=4.2.0",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.5",
     "pyjwt>=2.10.1",
@@ -25,3 +26,6 @@ dependencies = [
 [tool.mypy]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
 strict = true
+
+[tool.ruff]
+line-length = 80

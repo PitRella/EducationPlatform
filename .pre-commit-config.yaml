@@ -9,6 +9,7 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
+        language: system
         args: ["--config-file=pyproject.toml"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks

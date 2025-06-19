@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from fastapi.exceptions import HTTPException
@@ -6,7 +7,7 @@ from pydantic import BaseModel, field_validator, ConfigDict, Field
 
 import uuid
 
-LETTER_MATCH_PATTERN = r"^[а-яА-яa-zA-Z\-]+$"
+LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 
 
 class TunedModel(BaseModel):
@@ -29,23 +30,25 @@ class DeleteUserResponse(BaseModel):
 class UpdateUserRequest(BaseModel):
     name: Optional[str] = Field(default=None, min_length=3, max_length=10)
     surname: Optional[str] = Field(default=None, min_length=3, max_length=10)
-    email: Optional[str] = Field(default=None, min_length=3, max_length=10)
+    email: Optional[str] = Field(default=None, min_length=3, max_length=50)
 
     @classmethod
     @field_validator("name")
-    def validate_name(cls, value: str):
-        if LETTER_MATCH_PATTERN.match(value):
+    def validate_name(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=422, detail="Name should contain only letters."
+                status_code=422,
+                detail="Name should contain only letters (a-z, A-Z, а-я, А-Я, -).",
             )
         return value
 
     @classmethod
     @field_validator("surname")
-    def validate_surname(cls, value: str):
-        if LETTER_MATCH_PATTERN.match(value):
+    def validate_surname(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=422, detail="Surname should contain only letters."
+                status_code=422,
+                detail="Surname should contain only letters (a-z, A-Z, а-я, А-Я, -).",
             )
         return value
 
@@ -59,21 +62,23 @@ class CreateUser(BaseModel):
     surname: str
     email: str
     password: str
-    
+
     @classmethod
     @field_validator("name")
-    def validate_name(cls, value: str):
-        if LETTER_MATCH_PATTERN.match(value):
+    def validate_name(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=422, detail="Name should contain only letters."
+                status_code=422,
+                detail="Name should contain only letters (a-z, A-Z, а-я, А-Я, -).",
             )
         return value
 
     @classmethod
     @field_validator("surname")
-    def validate_surname(cls, value: str):
-        if LETTER_MATCH_PATTERN.match(value):
+    def validate_surname(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=422, detail="Surname should contain only letters."
+                status_code=422,
+                detail="Surname should contain only letters (a-z, A-Z, а-я, А-Я, -).",
             )
         return value
