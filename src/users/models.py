@@ -5,7 +5,7 @@ import uuid
 from src.database import Base
 
 
-class User(Base):  # type: ignore
+class User(Base):
     __tablename__ = "users"
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

@@ -18,13 +18,14 @@ class UserDAL:
             password: str
     ) -> User:
         """
-        Create a new user
-        :param name: User name
-        :param surname: User's surname
-        :param email: User's email
-        :param password: User's hashed password
-        :return: User
+        Create a new user in the database
+        :param name: User's first name
+        :param surname: User's last name
+        :param email: User's email address
+        :param password: User's password
+        :return: Created User object
         """
+
         new_user = User(
             name=name,
             surname=surname,
@@ -55,10 +56,11 @@ class UserDAL:
             user_id: Optional[uuid.UUID | str]
     ) -> Optional[User]:
         """
-        Get user by UUID
-        :param user_id: User UUID
-        :return: User
+        Get a user by their ID
+        :param user_id: UUID or string representation of user's ID
+        :return: User object if found and active, None otherwise
         """
+
         query: Select = select(User).where(and_(
             User.user_id == user_id,
             User.is_active
@@ -73,10 +75,10 @@ class UserDAL:
             **kwargs
     ) -> Optional[uuid.UUID]:
         """
-        Update user info
-        :param user_id: User UUID
-        :param kwargs: Parametrs to update
-        :return:
+        Update user attributes
+        :param user_id: UUID of user to update
+        :param kwargs: User attributes to update
+        :return: Updated user UUID
         """
         query: Update = update(User).where(
             and_(User.user_id == user_id, User.is_active)).values(

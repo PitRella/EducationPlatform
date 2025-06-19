@@ -9,7 +9,7 @@ from src.auth.models import RefreshSessionModel
 class AuthDAL:
     """Database Access Layer for authentication operations.
 
-    This class handles all database operations related to authentication including:
+    This class handles all database operations related to authentication, including
     - Creating refresh tokens
     - Retrieving refresh tokens
     - Updating refresh tokens
@@ -28,7 +28,7 @@ class AuthDAL:
             refresh_token: uuid.UUID,
             refresh_token_expires_total_seconds: float
     ) -> Optional[RefreshSessionModel]:
-        new_token = RefreshSessionModel(
+        new_token = RefreshSessionModel( # type: ignore
             refresh_token=refresh_token,
             expires_in=refresh_token_expires_total_seconds,
             user_id=user_id,
@@ -41,10 +41,10 @@ class AuthDAL:
         self,
         refresh_token: uuid.UUID
     ) -> Optional[RefreshSessionModel]:
-        query: Select[RefreshSessionModel] = Select(RefreshSessionModel).where(
+        query: Select[RefreshSessionModel] = Select(RefreshSessionModel).where( # type: ignore
             RefreshSessionModel.refresh_token == refresh_token
         )
-        result: Result = await self.__db_session.execute(query)
+        result: Result = await self.__db_session.execute(query) # type: ignore
         token: Optional[RefreshSessionModel] = result.scalar_one_or_none()
         return token
 
@@ -59,7 +59,7 @@ class AuthDAL:
             refresh_token=refresh_token,
             expires_in=expires_at
         ).returning(RefreshSessionModel.id)
-        result: Result[RefreshSessionModel] = await self.__db_session.execute(query)
+        result: Result[RefreshSessionModel] = await self.__db_session.execute(query) # type: ignore
         updated_token: Optional[
             RefreshSessionModel] = result.scalar_one_or_none()
         return updated_token
