@@ -23,11 +23,11 @@ async def get_user_from_jwt(
         db (AsyncSession): Async database session for database operations.
 
     Returns:
-        User: Authenticated user object if token is valid.
+        User: Authenticated user object if the token is valid.
 
     Raises:
         WrongCredentialsException: If token is invalid.
-        AccessTokenExpiredException: If token has expired.
+        AccessTokenExpiredException: If the token has expired.
     """
 
     user: User = await AuthService.validate_token(token, db)

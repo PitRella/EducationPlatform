@@ -22,13 +22,21 @@ class AuthDAL:
     def __init__(self, db_session: AsyncSession):
         self.__db_session: AsyncSession = db_session
 
+    async def delete_old_tokens(
+            self,
+            user_id: uuid.UUID,
+    ) -> None:
+        query: Delete = Delete(RefreshSessionModel).where(
+            RefreshSessionModel.user_id == user_id)
+        await self.__db_session.execute(query)
+
     async def create_token(
             self,
             user_id: uuid.UUID,
             refresh_token: uuid.UUID,
             refresh_token_expires_total_seconds: float
     ) -> Optional[RefreshSessionModel]:
-        new_token = RefreshSessionModel( # type: ignore
+        new_token = RefreshSessionModel(  # type: ignore
             refresh_token=refresh_token,
             expires_in=refresh_token_expires_total_seconds,
             user_id=user_id,
@@ -38,13 +46,13 @@ class AuthDAL:
         return new_token
 
     async def get_refresh_token(
-        self,
-        refresh_token: uuid.UUID
+            self,
+            refresh_token: uuid.UUID
     ) -> Optional[RefreshSessionModel]:
         query: Select[RefreshSessionModel] = Select(RefreshSessionModel).where( # type: ignore
             RefreshSessionModel.refresh_token == refresh_token
         )
-        result: Result = await self.__db_session.execute(query) # type: ignore
+        result: Result = await self.__db_session.execute(query)  # type: ignore
         token: Optional[RefreshSessionModel] = result.scalar_one_or_none()
         return token
 
@@ -60,8 +68,7 @@ class AuthDAL:
             expires_in=expires_at
         ).returning(RefreshSessionModel.id)
         result: Result[RefreshSessionModel] = await self.__db_session.execute(query) # type: ignore
-        updated_token: Optional[
-            RefreshSessionModel] = result.scalar_one_or_none()
+        updated_token: Optional[RefreshSessionModel] = result.scalar_one_or_none()
         return updated_token
 
     async def delete_refresh_token(

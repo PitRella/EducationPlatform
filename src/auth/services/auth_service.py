@@ -142,6 +142,9 @@ class AuthService:
         async with db as session:
             async with session.begin():
                 auth_dal = AuthDAL(session)
+                await auth_dal.delete_old_tokens(
+                    user_id=user_id,
+                )
                 await auth_dal.create_token(
                     user_id,
                     refresh_token,
@@ -209,7 +212,7 @@ class AuthService:
     @classmethod
     async def logout_user(
             cls,
-            refresh_token: uuid.UUID,
+            refresh_token: Optional[str],
             db: AsyncSession
     ) -> None:
         """
@@ -222,7 +225,8 @@ class AuthService:
         Raises:
             RefreshTokenException: If the refresh token is not found
         """
-
+        if not refresh_token:
+            raise RefreshTokenException
         async with db as session:
             async with session.begin():
                 auth_dal: AuthDAL = AuthDAL(db_session=db)
