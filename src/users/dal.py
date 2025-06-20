@@ -1,9 +1,10 @@
 import uuid
-from typing import Optional, Any
+from typing import Optional, Any, Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, update, select, Result, Select, Update
 from src.users.models import User
+from src.users.enums import UserRoles
 
 
 class UserDAL:
@@ -11,7 +12,12 @@ class UserDAL:
         self.__db_session: AsyncSession = db_session
 
     async def create_user(
-        self, name: str, surname: str, email: str, password: str
+        self,
+        name: str,
+        surname: str,
+        email: str,
+        password: str,
+        user_roles: Sequence[UserRoles],
     ) -> User:
         """
         Create a new user in the database
@@ -19,6 +25,7 @@ class UserDAL:
         :param surname: User's last name
         :param email: User's email address
         :param password: User's password
+        :param user_roles: List of roles assigned to the user
         :return: Created User object
         """
 
@@ -27,6 +34,8 @@ class UserDAL:
             surname=surname,
             email=email,
             password=password,
+            roles=[r.value for r in user_roles],
+            # Convert from sequence to str
         )
         self.__db_session.add(new_user)
         await self.__db_session.flush()

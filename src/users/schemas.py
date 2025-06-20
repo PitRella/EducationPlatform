@@ -1,5 +1,6 @@
 import re
-from typing import Optional
+from typing import Optional, Sequence
+from src.users.enums import UserRoles
 
 from fastapi.exceptions import HTTPException
 
@@ -21,6 +22,7 @@ class ShowUser(TunedModel):
     surname: str
     email: str
     is_active: bool
+    user_roles: Sequence[str]
 
 
 class DeleteUserResponse(BaseModel):
@@ -62,6 +64,7 @@ class CreateUser(BaseModel):
     surname: str
     email: str
     password: str
+    user_roles: Optional[Sequence[UserRoles]] = None
 
     @classmethod
     @field_validator("name")
