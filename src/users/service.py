@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 
+from src.auth.services import PermissionService
 from src.users.dal import UserDAL
 from src.hashing import Hasher
 from src.users.models import User
@@ -13,7 +14,6 @@ from src.users.schemas import (
     DeleteUserResponse,
 )
 from src.users.exceptions import (
-    UserQueryIdMissmatchException,
     UserNotFoundByIdException,
     ForgottenParametersException,
 )
@@ -22,22 +22,59 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 class UserService:
     @staticmethod
-    def _validate_jwt_query_id(
-        query_uuid: uuid.UUID, jwt_uuid: uuid.UUID
-    ) -> None:
+    async def fetch_user_with_validation(
+        requested_user_id: uuid.UUID,
+        jwt_user_id: uuid.UUID,
+        db: AsyncSession,
+    ) -> User:
         """
-        Validate uuid from jwt the same as uuid from query
+        Retrieve and validate user permissions between the requested and current user.
 
-        :param query_uuid: uuid from query
-        :param jwt_uuid: uuid from jwt token
+        Args:
+            requested_user_id (uuid.UUID): ID of the user being requested/targeted
+            jwt_user_id (uuid.UUID): ID of the user making the request (from JWT token)
+            db (AsyncSession): Database session for transaction management
+
+        Returns:
+            User: The target user object if validation succeeds
+
+        Raises:
+            UserNotFoundByIdException: If either target or current user is not found,
+            PermissionException: If the current user lacks permission to access the target user
         """
-        if query_uuid != jwt_uuid:
-            raise UserQueryIdMissmatchException
+
+        async with db as session:
+            async with session.begin():
+                user_dal: UserDAL = UserDAL(session)
+                target_user: Optional[User] = await user_dal.get_user_by_id(
+                    user_id=requested_user_id
+                )
+                current_user: Optional[User] = await user_dal.get_user_by_id(
+                    user_id=jwt_user_id
+                )
+        if not current_user or not target_user:
+            raise UserNotFoundByIdException
+        PermissionService.validate_permission(target_user, current_user)
+        return target_user
 
     @classmethod
     async def create_new_user(
         cls, user: CreateUser, db: AsyncSession
     ) -> ShowUser:
+        """
+        Create a new user in the database.
+
+        Args:
+            user (CreateUser): User data containing name, surname, email, password and optional roles
+            db (AsyncSession): Database session for transaction management
+
+        Returns:
+            ShowUser: Created user information including ID, name, surname, email, active status and roles
+
+        Note:
+            If user_roles are not provided, defaults to [UserRoles.USER]
+        """
+
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
@@ -66,18 +103,15 @@ class UserService:
         jwt_user_id: uuid.UUID,
         db: AsyncSession,
     ) -> DeleteUserResponse:
-        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
+        target_user: User = await cls.fetch_user_with_validation(
+            requested_user_id, jwt_user_id, db
+        )
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=requested_user_id
-                )
-                if not user:
-                    raise UserNotFoundByIdException
                 deleted_user_id: Optional[
                     uuid.UUID
-                ] = await user_dal.deactivate_user(requested_user_id)
+                ] = await user_dal.deactivate_user(target_user.user_id)
         if not deleted_user_id:
             raise UserNotFoundByIdException
         return DeleteUserResponse(deleted_user_id=deleted_user_id)
@@ -89,22 +123,16 @@ class UserService:
         jwt_user_id: uuid.UUID,
         db: AsyncSession,
     ) -> ShowUser:
-        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_id(
-                    requested_user_id
-                )
-        if not user:
-            raise UserNotFoundByIdException
+        target_user = await cls.fetch_user_with_validation(
+            requested_user_id, jwt_user_id, db
+        )
         return ShowUser(
-            user_id=user.user_id,
-            name=user.name,
-            surname=user.surname,
-            email=user.email,
-            is_active=user.is_active,
-            user_roles=user.roles,
+            user_id=target_user.user_id,
+            name=target_user.name,
+            surname=target_user.surname,
+            email=target_user.email,
+            is_active=target_user.is_active,
+            user_roles=target_user.roles,
         )
 
     @classmethod
@@ -115,29 +143,23 @@ class UserService:
         user_fields: UpdateUserRequest,
         db: AsyncSession,
     ) -> UpdateUserResponse:
-        cls._validate_jwt_query_id(requested_user_id, jwt_user_id)
-
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
             exclude_none=True
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
-
+        target_user: User = await cls.fetch_user_with_validation(
+            requested_user_id, jwt_user_id, db
+        )
         async with db as session:
             async with session.begin():
                 user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_id(
-                    requested_user_id
-                )
-                if not user:
-                    raise UserNotFoundByIdException
                 updated_user_id: Optional[
                     uuid.UUID
                 ] = await user_dal.update_user(
-                    requested_user_id,
+                    target_user.user_id,
                     **filtered_user_fields,
                 )
         if not updated_user_id:
             raise UserNotFoundByIdException
-
         return UpdateUserResponse(updated_user_id=updated_user_id)
