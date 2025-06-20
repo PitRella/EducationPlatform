@@ -1,4 +1,4 @@
-from .auth_service import AuthService
-from .token_manager import TokenManager
+from .auth import AuthService
+from .token import TokenManager
 
-__all__ = ['AuthService', 'TokenManager']
+__all__ = ["AuthService", "TokenManager"]

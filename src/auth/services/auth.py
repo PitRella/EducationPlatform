@@ -4,13 +4,10 @@ from typing import Optional, Union, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dal import AuthDAL
-from src.auth.exceptions import (
-    WrongCredentialsException,
-    RefreshTokenException
-)
+from src.auth.exceptions import WrongCredentialsException, RefreshTokenException
 from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
-from src.auth.services.token_manager import TokenManager
+from src.auth.services.token import TokenManager
 from src.hashing import Hasher
 from src.users.dal import UserDAL
 from src.users.models import User
@@ -29,18 +26,12 @@ class AuthService:
         Raises:
             WrongCredentialsException: If user is None or password verification fails
         """
-        if not user or not Hasher.verify_password(
-                password,
-                user.password
-        ):
+        if not user or not Hasher.verify_password(password, user.password):
             raise WrongCredentialsException
 
     @classmethod
     async def auth_user(
-            cls,
-            email: str,
-            password: str,
-            db: AsyncSession
+        cls, email: str, password: str, db: AsyncSession
     ) -> User:
         """
         Authenticate a user using email and password.
@@ -84,9 +75,7 @@ class AuthService:
 
     @classmethod
     async def validate_token(
-            cls,
-            user_jwt_token: str,
-            db: AsyncSession
+        cls, user_jwt_token: str, db: AsyncSession
     ) -> User:
         """
         Validate a JWT token and return the associated user.
@@ -104,7 +93,8 @@ class AuthService:
         """
 
         decoded_jwt: dict[str, str | int] = TokenManager.decode_access_token(
-            token=user_jwt_token)
+            token=user_jwt_token
+        )
         TokenManager.validate_access_token_expired(decoded_jwt)
         user_id: Union[uuid.UUID, str] = cls._get_user_id_from_jwt(decoded_jwt)
         async with db as session:
@@ -116,11 +106,7 @@ class AuthService:
         return user
 
     @classmethod
-    async def create_token(
-            cls,
-            user_id: uuid.UUID,
-            db: AsyncSession
-    ) -> Token:
+    async def create_token(cls, user_id: uuid.UUID, db: AsyncSession) -> Token:
         """
         Create a new token pair (access token and refresh token) for a user.
 
@@ -135,9 +121,7 @@ class AuthService:
             The refresh token is stored in the database with its expiration time
         """
 
-        access_token: str = TokenManager.generate_access_token(
-            user_id=user_id
-        )
+        access_token: str = TokenManager.generate_access_token(user_id=user_id)
         refresh_token, tm_delta = TokenManager.generate_refresh_token()
         async with db as session:
             async with session.begin():
@@ -146,20 +130,15 @@ class AuthService:
                     user_id=user_id,
                 )
                 await auth_dal.create_token(
-                    user_id,
-                    refresh_token,
-                    tm_delta.total_seconds()
+                    user_id, refresh_token, tm_delta.total_seconds()
                 )
         return Token(
-            access_token=access_token,
-            refresh_token=str(refresh_token)
+            access_token=access_token, refresh_token=str(refresh_token)
         )
 
     @classmethod
     async def refresh_token(
-            cls,
-            refresh_token: uuid.UUID,
-            db: AsyncSession
+        cls, refresh_token: uuid.UUID, db: AsyncSession
     ) -> Token:
         """
         Refresh an existing token pair using a refresh token.
@@ -180,7 +159,8 @@ class AuthService:
                 auth_dal: AuthDAL = AuthDAL(db_session=db)
                 user_dal: UserDAL = UserDAL(db_session=db)
                 refresh_token_model: Optional[
-                    RefreshSessionModel] = await auth_dal.get_refresh_token(
+                    RefreshSessionModel
+                ] = await auth_dal.get_refresh_token(
                     refresh_token=refresh_token
                 )
                 if not refresh_token_model:
@@ -190,14 +170,19 @@ class AuthService:
                 )
                 user_id: uuid.UUID = refresh_token_model.user_id
                 user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=user_id)
+                    user_id=user_id
+                )
                 if not user:
                     raise RefreshTokenException
                 access_token: str = TokenManager.generate_access_token(
-                    user_id=user_id)
-                updated_refresh_token, tm_delta = TokenManager.generate_refresh_token()
+                    user_id=user_id
+                )
+                updated_refresh_token, tm_delta = (
+                    TokenManager.generate_refresh_token()
+                )
                 updated_refresh_token_model: Optional[
-                    RefreshSessionModel] = await auth_dal.update_refresh_token(
+                    RefreshSessionModel
+                ] = await auth_dal.update_refresh_token(
                     refresh_token_id=refresh_token_model.id,
                     refresh_token=updated_refresh_token,
                     expires_at=tm_delta.total_seconds(),
@@ -206,14 +191,12 @@ class AuthService:
                     raise RefreshTokenException
                 return Token(
                     access_token=access_token,
-                    refresh_token=str(updated_refresh_token)
+                    refresh_token=str(updated_refresh_token),
                 )
 
     @classmethod
     async def logout_user(
-            cls,
-            refresh_token: Optional[str],
-            db: AsyncSession
+        cls, refresh_token: Optional[str], db: AsyncSession
     ) -> None:
         """
         Log out a user by invalidating their refresh token.
@@ -231,7 +214,8 @@ class AuthService:
             async with session.begin():
                 auth_dal: AuthDAL = AuthDAL(db_session=db)
                 refresh_token_model: Optional[
-                    RefreshSessionModel] = await auth_dal.get_refresh_token(
+                    RefreshSessionModel
+                ] = await auth_dal.get_refresh_token(
                     refresh_token=refresh_token
                 )
                 if not refresh_token_model:
