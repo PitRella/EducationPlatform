@@ -34,8 +34,13 @@ class PermissionService:
         Raises:
             PermissionException: If the current user doesn't have required permissions
         """
+        # Every user can get info about himself
+        # if target_user.user_id == current_user.user_id:
+        #     return
+        if target_user == current_user:
+            return
         # Superadmin can do anything for every user except other superadmin
-        if (
+        elif (
             UserRoles.SUPERADMIN in current_user.roles
             and UserRoles.SUPERADMIN not in target_user.roles
         ):
