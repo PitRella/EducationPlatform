@@ -1,6 +1,7 @@
 from src.auth.exceptions import PermissionException
 from src.users.models import User
 from src.users.enums import UserRoles
+from src.auth.enums import UserAction
 
 
 class PermissionService:
@@ -16,45 +17,59 @@ class PermissionService:
 
     @classmethod
     def validate_permission(
-        cls,
-        target_user: User,
-        current_user: User,
+        cls, target_user: User, current_user: User, action: UserAction
     ) -> None:
-        """Validate if the current user has permission to perform actions on the target user.
+        match current_user.roles:
+            case UserRoles.SUPERADMIN:
+                cls._validate_superadmin_permissions(
+                    target_user, current_user, action
+                )
+            case UserRoles.ADMIN:
+                cls._validate_admin_permissions(
+                    target_user, current_user, action
+                )
+            case UserRoles.USER:
+                cls._validate_user_permissions(
+                    target_user, current_user, action
+                )
 
-        Permission rules:
-        - Superadmin can perform actions on any user except other superadmins
-        - Admin can perform actions on any user except admins and superadmins
-        - Regular users have no permissions to perform actions on other users
+    @staticmethod
+    def _validate_superadmin_permissions(
+        target_user: User, current_user: User, action: UserAction
+    ) -> None:
+        if current_user == target_user:
+            match action:
+                case UserAction.DELETE:  # Superadmin cannot delete himself
+                    raise PermissionException
+                case _:
+                    return
+        else:
+            match target_user.roles:
+                # Superadmin cannot perform actions on another superadmin
+                case UserRoles.SUPERADMIN:
+                    raise PermissionException
 
-        Args:
-            target_user: User object on which action is being performed
-            current_user: User object requesting to perform the action
+    @staticmethod
+    def _validate_admin_permissions(
+        target_user: User, current_user: User, action: UserAction
+    ) -> None:
+        if current_user == target_user:
+            match action:
+                case UserAction.DELETE:  # Admin cannot delete himself
+                    raise PermissionException
+                case _:
+                    return
+        else:
+            match target_user.roles:
+                # Admin cannot perform actions on another superadmin or admin
+                case UserRoles.SUPERADMIN, UserRoles.ADMIN:
+                    raise PermissionException
 
-        Raises:
-            PermissionException: If the current user doesn't have required permissions
-        """
-        # Every user can get info about himself
-        # if target_user.user_id == current_user.user_id:
-        #     return
-        if target_user == current_user:
-            return
-        # Superadmin can do anything for every user except other superadmin
-        elif (
-            UserRoles.SUPERADMIN in current_user.roles
-            and UserRoles.SUPERADMIN not in target_user.roles
-        ):
-            return
-        # Admin can do anything for every user except other admin and superadmin
-        elif (
-            UserRoles.ADMIN in current_user.roles
-            and UserRoles.SUPERADMIN not in target_user.roles
-            and UserRoles.ADMIN not in target_user.roles
-        ):
-            return
-        # Regular user can do nothing for other users except superadmin and admin
-        elif (
-            UserRoles.USER in target_user.roles and target_user == current_user
-        ):
-            return
-        raise PermissionException
+    @staticmethod
+    def _validate_user_permissions(
+        target_user: User, current_user: User, action: UserAction
+    ) -> None:
+        match target_user.roles:
+            # User cannot perform actions on another superadmin, admin or user
+            case UserRoles.SUPERADMIN, UserRoles.ADMIN, UserRoles.USER:
+                raise PermissionException

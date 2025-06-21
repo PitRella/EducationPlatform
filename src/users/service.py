@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 
+from src.auth.enums import UserAction
 from src.auth.services import PermissionService
 from src.users.dal import UserDAL
 from src.hashing import Hasher
@@ -26,6 +27,7 @@ class UserService:
         requested_user_id: uuid.UUID,
         jwt_user_id: uuid.UUID,
         db: AsyncSession,
+        action: UserAction,
     ) -> User:
         """
         Retrieve and validate user permissions between the requested and current user.
@@ -34,6 +36,7 @@ class UserService:
             requested_user_id (uuid.UUID): ID of the user being requested/targeted
             jwt_user_id (uuid.UUID): ID of the user making the request (from JWT token)
             db (AsyncSession): Database session for transaction management
+            action (UserAction): User action to perform
 
         Returns:
             User: The target user object if validation succeeds
@@ -54,7 +57,7 @@ class UserService:
                 )
         if not current_user or not target_user:
             raise UserNotFoundByIdException
-        PermissionService.validate_permission(target_user, current_user)
+        PermissionService.validate_permission(target_user, current_user, action)
         return target_user
 
     @classmethod
@@ -104,7 +107,7 @@ class UserService:
         db: AsyncSession,
     ) -> DeleteUserResponse:
         target_user: User = await cls.fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db
+            requested_user_id, jwt_user_id, db, UserAction.DELETE
         )
         async with db as session:
             async with session.begin():
@@ -124,7 +127,7 @@ class UserService:
         db: AsyncSession,
     ) -> ShowUser:
         target_user = await cls.fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db
+            requested_user_id, jwt_user_id, db, UserAction.GET
         )
         return ShowUser(
             user_id=target_user.user_id,
@@ -149,7 +152,7 @@ class UserService:
         if not filtered_user_fields:
             raise ForgottenParametersException
         target_user: User = await cls.fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db
+            requested_user_id, jwt_user_id, db, UserAction.UPDATE
         )
         async with db as session:
             async with session.begin():
