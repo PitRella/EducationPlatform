@@ -6,6 +6,11 @@ from starlette_exporter import PrometheusMiddleware
 from src.settings import SENTRY_URL
 from src.users.router import user_router
 from src.auth.router import auth_router
+from src.logger import configure_logging
+import logging
+
+logger = logging.getLogger(__name__)
+configure_logging()
 
 sentry_sdk.init(
     dsn=SENTRY_URL,
@@ -18,3 +23,5 @@ main_api_router = APIRouter(prefix="/api/v1")
 main_api_router.include_router(user_router, prefix="/user", tags=["user"])
 main_api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(main_api_router)
+
+logger.info("Application started")

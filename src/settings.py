@@ -22,3 +22,6 @@ DATABASE_URL: str = env.str(
 
 # Sentry url
 SENTRY_URL: str = env.str("SENTRY_URL", default="")
+
+# Logger
+LOG_LEVEL: str = env.str("LOG_LEVEL", default="INFO")
