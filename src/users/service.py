@@ -7,7 +7,6 @@ from src.users.dal import UserDAL
 from src.hashing import Hasher
 from src.users.models import User
 from src.users.enums import UserRoles
-from src.auth.exceptions import PermissionException
 from src.users.schemas import (
     CreateUser,
     ShowUser,
@@ -172,16 +171,12 @@ class UserService:
         requested_user_id: uuid.UUID,
         db: AsyncSession,
     ) -> UpdateUserResponse:
+        target_user = await cls._fetch_user_with_validation(
+            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
+        )
         async with db as session:
             async with session.begin():
                 user_dal: UserDAL = UserDAL(session)
-                target_user: Optional[User] = await user_dal.get_user_by_id(
-                    requested_user_id
-                )
-                if not target_user:
-                    raise UserNotFoundByIdException
-                if not jwt_user.is_user_superadmin:
-                    raise PermissionException
                 updated_user_id: Optional[
                     uuid.UUID
                 ] = await user_dal.set_admin_privilege(target_user.user_id)

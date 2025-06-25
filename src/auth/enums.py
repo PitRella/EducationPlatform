@@ -6,3 +6,4 @@ class UserAction(StrEnum):
     GET = "get"
     DELETE = "delete"
     UPDATE = "update"
+    SET_ADMIN_PRIVILEGE = "set_admin_privilege"

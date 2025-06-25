@@ -58,6 +58,7 @@ class PermissionService:
             cls._validate_user_permissions(
                 target_user,
                 current_user,
+                action,
             )
 
     @classmethod
@@ -107,10 +108,17 @@ class PermissionService:
         # If user admin or superadmin, he cannot delete himself
         if current_user.user_id == target_user.user_id:
             match action:
-                case UserAction.DELETE:
+                case UserAction.DELETE | UserAction.SET_ADMIN_PRIVILEGE:
                     raise PermissionException
                 case _:
                     return
+
+        # Only superadmin can give admin privileges
+        if not current_user.is_user_superadmin:
+            match action:
+                case UserAction.SET_ADMIN_PRIVILEGE:
+                    raise PermissionException
+
         manageable_roles = cls._get_manageable_roles(current_user)
         highest_target_user_role: UserRoles = cls._get_highest_role_from_user(
             target_user
@@ -124,6 +132,7 @@ class PermissionService:
         cls,
         target_user: User,
         current_user: User,
+        action: UserAction,
     ) -> None:
         """Validates permissions for regular users (non-admin roles).
 
@@ -139,5 +148,9 @@ class PermissionService:
         """
 
         if current_user.user_id == target_user.user_id:
-            return
+            match action:
+                case UserAction.SET_ADMIN_PRIVILEGE:
+                    raise PermissionException
+                case _:
+                    return
         raise PermissionException
