@@ -24,9 +24,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 class UserService:
     @staticmethod
-    async def fetch_user_with_validation(
+    async def _fetch_user_with_validation(
         requested_user_id: uuid.UUID,
-        jwt_user_id: uuid.UUID,
+        current_user: User,
         db: AsyncSession,
         action: UserAction,
     ) -> User:
@@ -35,7 +35,7 @@ class UserService:
 
         Args:
             requested_user_id (uuid.UUID): ID of the user being requested/targeted
-            jwt_user_id (uuid.UUID): ID of the user making the request (from JWT token)
+            current_user (uuid.UUID): User making the request (from JWT token)
             db (AsyncSession): Database session for transaction management
             action (UserAction): User action to perform
 
@@ -53,10 +53,7 @@ class UserService:
                 target_user: Optional[User] = await user_dal.get_user_by_id(
                     user_id=requested_user_id
                 )
-                current_user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=jwt_user_id
-                )
-        if not current_user or not target_user:
+        if not target_user:
             raise UserNotFoundByIdException
         PermissionService.validate_permission(target_user, current_user, action)
         return target_user
@@ -104,10 +101,10 @@ class UserService:
     async def deactivate_user(
         cls,
         requested_user_id: uuid.UUID,
-        jwt_user_id: uuid.UUID,
+        jwt_user_id: User,
         db: AsyncSession,
     ) -> DeleteUserResponse:
-        target_user: User = await cls.fetch_user_with_validation(
+        target_user: User = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user_id, db, UserAction.DELETE
         )
         async with db as session:
@@ -124,10 +121,10 @@ class UserService:
     async def get_user(
         cls,
         requested_user_id: uuid.UUID,
-        jwt_user_id: uuid.UUID,
+        jwt_user_id: User,
         db: AsyncSession,
     ) -> ShowUser:
-        target_user = await cls.fetch_user_with_validation(
+        target_user = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user_id, db, UserAction.GET
         )
         return ShowUser(
@@ -143,7 +140,7 @@ class UserService:
     async def update_user(
         cls,
         requested_user_id: uuid.UUID,
-        jwt_user_id: uuid.UUID,
+        jwt_user_id: User,
         user_fields: UpdateUserRequest,
         db: AsyncSession,
     ) -> UpdateUserResponse:
@@ -152,7 +149,7 @@ class UserService:
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
-        target_user: User = await cls.fetch_user_with_validation(
+        target_user: User = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user_id, db, UserAction.UPDATE
         )
         async with db as session:
