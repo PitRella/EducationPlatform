@@ -108,7 +108,11 @@ class PermissionService:
         # If user admin or superadmin, he cannot delete himself
         if current_user.user_id == target_user.user_id:
             match action:
-                case UserAction.DELETE | UserAction.SET_ADMIN_PRIVILEGE:
+                case (
+                    UserAction.DELETE
+                    | UserAction.SET_ADMIN_PRIVILEGE
+                    | UserAction.REVOKE_ADMIN_PRIVILEGE
+                ):
                     raise PermissionException
                 case _:
                     return
@@ -116,7 +120,10 @@ class PermissionService:
         # Only superadmin can give admin privileges
         if not current_user.is_user_superadmin:
             match action:
-                case UserAction.SET_ADMIN_PRIVILEGE:
+                case (
+                    UserAction.SET_ADMIN_PRIVILEGE
+                    | UserAction.REVOKE_ADMIN_PRIVILEGE
+                ):
                     raise PermissionException
 
         manageable_roles = cls._get_manageable_roles(current_user)
@@ -149,7 +156,10 @@ class PermissionService:
 
         if current_user.user_id == target_user.user_id:
             match action:
-                case UserAction.SET_ADMIN_PRIVILEGE:
+                case (
+                    UserAction.SET_ADMIN_PRIVILEGE
+                    | UserAction.REVOKE_ADMIN_PRIVILEGE
+                ):
                     raise PermissionException
                 case _:
                     return

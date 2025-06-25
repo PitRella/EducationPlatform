@@ -183,3 +183,23 @@ class UserService:
                 if not updated_user_id:
                     raise UserNotFoundByIdException
                 return UpdateUserResponse(updated_user_id=updated_user_id)
+
+    @classmethod
+    async def revoke_admin_privilege(
+        cls,
+        jwt_user: User,
+        requested_user_id: uuid.UUID,
+        db: AsyncSession,
+    ) -> UpdateUserResponse:
+        target_user = await cls._fetch_user_with_validation(
+            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
+        )
+        async with db as session:
+            async with session.begin():
+                user_dal: UserDAL = UserDAL(session)
+                updated_user_id: Optional[
+                    uuid.UUID
+                ] = await user_dal.revoke_admin_privilege(target_user.user_id)
+                if not updated_user_id:
+                    raise UserNotFoundByIdException
+                return UpdateUserResponse(updated_user_id=updated_user_id)

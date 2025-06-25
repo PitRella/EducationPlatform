@@ -7,3 +7,4 @@ class UserAction(StrEnum):
     DELETE = "delete"
     UPDATE = "update"
     SET_ADMIN_PRIVILEGE = "set_admin_privilege"
+    REVOKE_ADMIN_PRIVILEGE = "revoke_admin_privilege"

@@ -104,3 +104,8 @@ class UserDAL:
         self, target_user_id: uuid.UUID
     ) -> Optional[uuid.UUID]:
         return await self.update_user(target_user_id, roles=[UserRoles.ADMIN])
+
+    async def revoke_admin_privilege(
+        self, target_user_id: uuid.UUID
+    ) -> Optional[uuid.UUID]:
+        return await self.update_user(target_user_id, roles=[UserRoles.USER])

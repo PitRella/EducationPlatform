@@ -94,3 +94,16 @@ async def set_admin_privilege(
         requested_user_id=user_id,
         db=db,
     )
+
+
+@user_router.patch("/revoke_admin_privilege")
+async def revoke_admin_privilege(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    jwt_user: User = Depends(get_user_from_jwt),
+) -> UpdateUserResponse:
+    return await UserService.revoke_admin_privilege(
+        jwt_user=jwt_user,
+        requested_user_id=user_id,
+        db=db,
+    )
