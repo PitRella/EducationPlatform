@@ -31,7 +31,7 @@ class PermissionService:
             target_user (User): The user whose roles are to be checked.
 
         Returns:
-            UserRoles: The highest role found for the user, or UserRoles.USER if none found.
+            UserRoles: The highest role found for the user, or UserRoles.USER if none is found.
         """
 
         for role in cls.ALL_USER_ROLES:
@@ -50,11 +50,7 @@ class PermissionService:
             current_user (User): The user performing the action.
             action (UserAction): The action being performed.
         """
-        highest_user_role: UserRoles = cls._get_highest_role_from_user(
-            current_user
-        )
-
-        if UserRoles.is_admin(highest_user_role):  # Admin group permissions
+        if current_user.is_user_in_admin_group:  # Admin group permissions
             cls._validate_admin_group_permissions(
                 target_user, current_user, action
             )
@@ -101,7 +97,7 @@ class PermissionService:
 
         Args:
             target_user (User): The user being acted upon
-            current_user (User): The admin user performing the action
+            current_user (User): The admin user performing the action,
             action (UserAction): The action being performed
 
         Raises:

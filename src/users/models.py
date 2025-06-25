@@ -2,6 +2,7 @@ from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID
+from src.users.enums import UserRoles
 import uuid
 from src.database import Base
 
@@ -17,3 +18,17 @@ class User(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     roles: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    @property
+    def is_user_admin(self) -> bool:
+        return UserRoles.ADMIN in self.roles
+
+    @property
+    def is_user_superadmin(self) -> bool:
+        return UserRoles.SUPERADMIN in self.roles
+
+    @property
+    def is_user_in_admin_group(self) -> bool:
+        return (
+            UserRoles.ADMIN in self.roles or UserRoles.SUPERADMIN in self.roles
+        )
