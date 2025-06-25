@@ -1,8 +1,14 @@
+import sentry_sdk
 from fastapi import FastAPI, APIRouter
 
+from src.settings import SENTRY_URL
 from src.users.router import user_router
 from src.auth.router import auth_router
 
+sentry_sdk.init(
+    dsn=SENTRY_URL,
+    send_default_pii=True,
+)
 app = FastAPI(title="EducationPlatform")
 
 main_api_router = APIRouter(prefix="/api/v1")

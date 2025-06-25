@@ -19,3 +19,6 @@ DATABASE_URL: str = env.str(
     "DATABASE_URL",
     default="postgresql+asyncpg://postgres:postgres@0.0.0.0:5432/education_db",
 )
+
+# Sentry url
+SENTRY_URL: str = env.str("SENTRY_URL", default="")
