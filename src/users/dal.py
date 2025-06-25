@@ -99,3 +99,8 @@ class UserDAL:
         result: Result[Any] = await self.__db_session.execute(query)
         user: Optional[User] = result.scalar_one_or_none()
         return user
+
+    async def set_admin_privilege(
+        self, target_user_id: uuid.UUID
+    ) -> Optional[uuid.UUID]:
+        return await self.update_user(target_user_id, roles=[UserRoles.ADMIN])

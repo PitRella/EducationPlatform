@@ -81,3 +81,16 @@ async def update_user(
         db=db,
     )
     return updated_user
+
+
+@user_router.patch("/set_admin_privilege")
+async def set_admin_privilege(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    jwt_user: User = Depends(get_user_from_jwt),
+) -> UpdateUserResponse:
+    return await UserService.set_admin_privilege(
+        jwt_user=jwt_user,
+        requested_user_id=user_id,
+        db=db,
+    )
