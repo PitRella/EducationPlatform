@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends, Response, Request
 
-from src.auth.dependencies import get_user_from_jwt
 from src.auth.schemas import Token
 from src.auth.services import AuthService
 from src.session import get_db
@@ -16,9 +15,9 @@ auth_router = APIRouter()
 
 @auth_router.post(path="/login", response_model=Token)
 async def login_user(
-        response: Response,
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        db: AsyncSession = Depends(get_db)
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
 ) -> Token:
     """
     Endpoint to login user based on email and password.
@@ -28,67 +27,51 @@ async def login_user(
     :return: Pair of access token and refresh token.
     """
     user: User = await AuthService.auth_user(
-        email=form_data.username,
-        password=form_data.password,
-        db=db
+        email=form_data.username, password=form_data.password, db=db
     )
     token: Token = await AuthService.create_token(user.user_id, db)
     response.set_cookie(
-        'access_token',
+        "access_token",
         token.access_token,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        httponly=True
+        httponly=True,
     )
     response.set_cookie(
-        'refresh_token',
+        "refresh_token",
         token.refresh_token,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
-        httponly=True
+        httponly=True,
     )
     return token
 
 
 @auth_router.post(path="/refresh", response_model=Token)
 async def refresh_token(
-        request: Request,
-        response: Response,
-        db: AsyncSession = Depends(get_db)
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ) -> Token:
     token: Token = await AuthService.refresh_token(
-        refresh_token=uuid.UUID(request.cookies.get('refresh_token')),
-        db=db
+        refresh_token=uuid.UUID(request.cookies.get("refresh_token")), db=db
     )
     response.set_cookie(
-        'access_token',
+        "access_token",
         token.access_token,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        httponly=True
+        httponly=True,
     )
     response.set_cookie(
-        'refresh_token',
+        "refresh_token",
         token.refresh_token,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
-        httponly=True
+        httponly=True,
     )
     return token
 
 
 @auth_router.delete(path="/logout", response_model=dict[str, str])
 async def logout_user(
-        request: Request,
-        response: Response,
-        db: AsyncSession = Depends(get_db)
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ) -> dict[str, str]:
-    await AuthService.logout_user(request.cookies.get('refresh_token'), db)
-    response.delete_cookie('access_token')
-    response.delete_cookie('refresh_token')
+    await AuthService.logout_user(request.cookies.get("refresh_token"), db)
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
     return {"message": "Logged out successfully"}
-
-
-@auth_router.get(path='/test')
-async def test_endpoint(
-        jwt_user: User = Depends(get_user_from_jwt),
-) -> dict[str, str]:
-    return {
-        "name": jwt_user.name,
-    }

@@ -33,7 +33,7 @@ async def deactivate_user(
     jwt_user: User = Depends(get_user_from_jwt),
 ) -> DeleteUserResponse:
     deleted_user: DeleteUserResponse = await UserService.deactivate_user(
-        requested_user_id=user_id, jwt_user_id=jwt_user.user_id, db=db
+        requested_user_id=user_id, jwt_user_id=jwt_user, db=db
     )
     return deleted_user
 
@@ -45,7 +45,7 @@ async def get_user_by_id(
     jwt_user: User = Depends(get_user_from_jwt),
 ) -> ShowUser:
     user: ShowUser = await UserService.get_user(
-        jwt_user_id=jwt_user.user_id, requested_user_id=user_id, db=db
+        jwt_user_id=jwt_user, requested_user_id=user_id, db=db
     )
     return user
 
@@ -75,9 +75,35 @@ async def update_user(
     """
 
     updated_user: UpdateUserResponse = await UserService.update_user(
-        jwt_user_id=jwt_user.user_id,
+        jwt_user_id=jwt_user,
         requested_user_id=user_id,
         user_fields=user_fields,
         db=db,
     )
     return updated_user
+
+
+@user_router.patch("/set_admin_privilege")
+async def set_admin_privilege(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    jwt_user: User = Depends(get_user_from_jwt),
+) -> UpdateUserResponse:
+    return await UserService.set_admin_privilege(
+        jwt_user=jwt_user,
+        requested_user_id=user_id,
+        db=db,
+    )
+
+
+@user_router.patch("/revoke_admin_privilege")
+async def revoke_admin_privilege(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    jwt_user: User = Depends(get_user_from_jwt),
+) -> UpdateUserResponse:
+    return await UserService.revoke_admin_privilege(
+        jwt_user=jwt_user,
+        requested_user_id=user_id,
+        db=db,
+    )

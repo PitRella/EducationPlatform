@@ -7,14 +7,14 @@ from datetime import datetime, timedelta, timezone
 from src.auth.exceptions import (
     WrongCredentialsException,
     AccessTokenExpiredException,
-    RefreshTokenException
+    RefreshTokenException,
 )
 from src.auth.models import RefreshSessionModel
 from src.settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     SECRET_KEY,
     ALGORITHM,
-    REFRESH_TOKEN_EXPIRE_DAYS
+    REFRESH_TOKEN_EXPIRE_DAYS,
 )
 
 
@@ -40,15 +40,13 @@ class TokenManager:
         """
         to_encode: dict[str, str | datetime] = {
             "sub": str(user_id),
-            "exp": datetime.now() + timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            "exp": datetime.now()
+            + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         }
         encoded_jwt: str = jwt.encode(
-            to_encode,
-            SECRET_KEY,
-            algorithm=ALGORITHM
+            to_encode, SECRET_KEY, algorithm=ALGORITHM
         )
-        return f'Bearer {encoded_jwt}'
+        return f"Bearer {encoded_jwt}"
 
     @classmethod
     def generate_refresh_token(cls) -> Tuple[uuid.UUID, timedelta]:
@@ -69,16 +67,16 @@ class TokenManager:
         """
         try:
             decoded_jwt: dict[str, str | int] = jwt.decode(
-                token=token,
-                key=SECRET_KEY,
-                algorithms=ALGORITHM
+                token=token, key=SECRET_KEY, algorithms=ALGORITHM
             )
         except JWTError:
             raise WrongCredentialsException
         return decoded_jwt
 
     @classmethod
-    def validate_access_token_expired(cls, decoded: dict[str, str | int]) -> None:
+    def validate_access_token_expired(
+        cls, decoded: dict[str, str | int]
+    ) -> None:
         """
         Check if the access token has expired.
 
@@ -92,8 +90,8 @@ class TokenManager:
 
     @classmethod
     def validate_refresh_token_expired(
-            cls,
-            refresh_token_model: RefreshSessionModel,
+        cls,
+        refresh_token_model: RefreshSessionModel,
     ) -> None:
         """
         Check if the refresh token has expired.
@@ -102,8 +100,9 @@ class TokenManager:
         :raises: RefreshTokenException if the token has not expired
         """
         current_date: datetime = datetime.now(timezone.utc)
-        refresh_token_expire_date: datetime = (refresh_token_model.created_at +
-                                               timedelta(
-                                                   seconds=refresh_token_model.expires_in))
+        refresh_token_expire_date: datetime = (
+            refresh_token_model.created_at
+            + timedelta(seconds=refresh_token_model.expires_in)
+        )
         if current_date >= refresh_token_expire_date:
             raise RefreshTokenException
