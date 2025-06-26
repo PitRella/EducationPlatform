@@ -18,7 +18,9 @@ dependencies = [
     "pyjwt>=2.10.1",
     "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
+    "sentry-sdk[fastapi]>=2.31.0",
     "sqlalchemy[mypy]>=2.0.41",
+    "starlette-exporter>=0.23.0",
     "types-passlib>=1.7.7.20250602",
     "uvicorn>=0.34.3",
 ]
