@@ -7,6 +7,7 @@ dependencies = [
     "alembic>=1.16.1",
     "asyncpg>=0.30.0",
     "bcrypt==3.2.2",
+    "coverage>=7.9.1",
     "envparse>=0.2.0",
     "fastapi>=0.115.12",
     "httpx>=0.28.1",
