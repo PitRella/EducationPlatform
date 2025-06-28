@@ -1,8 +1,9 @@
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+
+from src.session import engine
 from src.users.schemas import CreateUser, UpdateUserRequest
-from src.settings import DATABASE_URL
 
 
 @pytest_asyncio.fixture
@@ -26,19 +27,25 @@ async def update_user_schema() -> UpdateUserRequest:
 
 
 @pytest_asyncio.fixture
-async def db():  # type: ignore
-    engine = create_async_engine(DATABASE_URL, future=True)
-    async_session = sessionmaker(  # type: ignore
+async def async_session_maker():  # type: ignore
+    async_session_maker = sessionmaker(  # type: ignore
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    yield async_session
+    yield async_session_maker
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
-async def db_session(db):  # type: ignore
-    async with db() as session:
-        async with session.begin():
-            yield session
-            await session.rollback()
+async def db_session(async_session_maker):  # type: ignore
+    session: AsyncSession = async_session_maker()
+    try:
+        yield session
+    finally:
         await session.close()
+
+
+@pytest_asyncio.fixture
+async def db_started_session(db_session):  # type: ignore
+    async with db_session.begin():
+        yield db_session
+        await db_session.rollback()
