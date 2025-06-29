@@ -22,11 +22,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserService:
-    @staticmethod
+    def __init__(
+        self, db_session: AsyncSession, dao: Optional[UserDAO] = None
+    ) -> None:
+        self._session: AsyncSession = db_session
+        self._dao: UserDAO = dao or UserDAO(db_session)
+
+    @property
+    def dao(self) -> UserDAO:
+        return self._dao
+
+    @property
+    def session(self) -> AsyncSession:
+        return self._session
+
     async def _fetch_user_with_validation(
+        self,
         requested_user_id: uuid.UUID,
         current_user: User,
-        db: AsyncSession,
         action: UserAction,
     ) -> User:
         """
@@ -45,10 +58,8 @@ class UserService:
             UserNotFoundByIdException: If either target or current user is not found,
             PermissionException: If the current user lacks permission to access the target user
         """
-
-        async with db.begin():
-            user_dal: UserDAO = UserDAO(db)
-            target_user: Optional[User] = await user_dal.get_user_by_id(
+        async with self.session.begin():
+            target_user: Optional[User] = await self.dao.get_user_by_id(
                 user_id=requested_user_id
             )
         if not target_user:
@@ -56,9 +67,9 @@ class UserService:
         PermissionService.validate_permission(target_user, current_user, action)
         return target_user
 
-    @classmethod
     async def create_new_user(
-        cls, user: CreateUser, db: AsyncSession
+        self,
+        user: CreateUser,
     ) -> ShowUser:
         """
         Create a new user in the database.
@@ -73,9 +84,8 @@ class UserService:
         Note:
             If user_roles are not provided, defaults to [UserRoles.USER]
         """
-        async with db.begin():
-            user_dal = UserDAO(db)
-            created_user: User = await user_dal.create_user(
+        async with self.session.begin():
+            created_user: User = await self.dao.create_user(
                 name=user.name,
                 surname=user.surname,
                 email=user.email,
@@ -93,34 +103,29 @@ class UserService:
                 user_roles=created_user.roles,
             )
 
-    @classmethod
     async def deactivate_user(
-        cls,
+        self,
         requested_user_id: uuid.UUID,
         jwt_user_id: User,
-        db: AsyncSession,
     ) -> DeleteUserResponse:
-        target_user: User = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.DELETE
+        target_user: User = await self._fetch_user_with_validation(
+            requested_user_id, jwt_user_id, UserAction.DELETE
         )
-        async with db.begin():
-            user_dal = UserDAO(db)
+        async with self.session.begin():
             deleted_user_id: Optional[
                 uuid.UUID
-            ] = await user_dal.deactivate_user(target_user.user_id)
+            ] = await self.dao.deactivate_user(target_user.user_id)
         if not deleted_user_id:
             raise UserNotFoundByIdException
         return DeleteUserResponse(deleted_user_id=deleted_user_id)
 
-    @classmethod
     async def get_user(
-        cls,
+        self,
         requested_user_id: uuid.UUID,
         jwt_user_id: User,
-        db: AsyncSession,
     ) -> ShowUser:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.GET
+        target_user = await self._fetch_user_with_validation(
+            requested_user_id, jwt_user_id, UserAction.GET
         )
         return ShowUser(
             user_id=target_user.user_id,
@@ -131,69 +136,57 @@ class UserService:
             user_roles=target_user.roles,
         )
 
-    @classmethod
     async def update_user(
-        cls,
+        self,
         requested_user_id: uuid.UUID,
         jwt_user_id: User,
         user_fields: UpdateUserRequest,
-        db: AsyncSession,
     ) -> UpdateUserResponse:
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
             exclude_none=True
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
-        target_user: User = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.UPDATE
+        target_user: User = await self._fetch_user_with_validation(
+            requested_user_id, jwt_user_id, UserAction.UPDATE
         )
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAO(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.update_user(
-                    target_user.user_id,
-                    **filtered_user_fields,
-                )
+        async with self.session.begin():
+            updated_user_id: Optional[uuid.UUID] = await self.dao.update_user(
+                target_user.user_id,
+                **filtered_user_fields,
+            )
         if not updated_user_id:
             raise UserNotFoundByIdException
         return UpdateUserResponse(updated_user_id=updated_user_id)
 
-    @classmethod
     async def set_admin_privilege(
-        cls,
+        self,
         jwt_user: User,
         requested_user_id: uuid.UUID,
-        db: AsyncSession,
     ) -> UpdateUserResponse:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
+        target_user = await self._fetch_user_with_validation(
+            requested_user_id, jwt_user, UserAction.SET_ADMIN_PRIVILEGE
         )
-        async with db.begin():
-            user_dal: UserDAO = UserDAO(db)
+        async with self.session.begin():
             updated_user_id: Optional[
                 uuid.UUID
-            ] = await user_dal.set_admin_privilege(target_user.user_id)
+            ] = await self.dao.set_admin_privilege(target_user.user_id)
             if not updated_user_id:
                 raise UserNotFoundByIdException
             return UpdateUserResponse(updated_user_id=updated_user_id)
 
-    @classmethod
     async def revoke_admin_privilege(
-        cls,
+        self,
         jwt_user: User,
         requested_user_id: uuid.UUID,
-        db: AsyncSession,
     ) -> UpdateUserResponse:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
+        target_user = await self._fetch_user_with_validation(
+            requested_user_id, jwt_user, UserAction.SET_ADMIN_PRIVILEGE
         )
-        async with db.begin():
-            user_dal: UserDAO = UserDAO(db)
+        async with self.session.begin():
             updated_user_id: Optional[
                 uuid.UUID
-            ] = await user_dal.revoke_admin_privilege(target_user.user_id)
+            ] = await self.dao.revoke_admin_privilege(target_user.user_id)
             if not updated_user_id:
                 raise UserNotFoundByIdException
             return UpdateUserResponse(updated_user_id=updated_user_id)
