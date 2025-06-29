@@ -27,21 +27,17 @@ async def update_user_schema() -> UpdateUserRequest:
 
 
 @pytest_asyncio.fixture
-async def async_session_maker():  # type: ignore
+async def db_session():  # type: ignore
     async_session_maker = sessionmaker(  # type: ignore
         engine, expire_on_commit=False, class_=AsyncSession
     )
-    yield async_session_maker
-    await engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def db_session(async_session_maker):  # type: ignore
     session: AsyncSession = async_session_maker()
     try:
         yield session
     finally:
+        await session.rollback()
         await session.close()
+        await engine.dispose()
 
 
 @pytest_asyncio.fixture
