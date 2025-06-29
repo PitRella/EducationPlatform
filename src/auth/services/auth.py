@@ -47,10 +47,9 @@ class AuthService:
         Raises:
             WrongCredentialsException: If a user is not found or password verification fails
         """
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_email(email)
+        async with db.begin():
+            user_dal: UserDAL = UserDAL(db)
+            user: Optional[User] = await user_dal.get_user_by_email(email)
         cls._verify_user_password(user, password)
         return cast(User, user)
 
@@ -97,10 +96,9 @@ class AuthService:
         )
         TokenManager.validate_access_token_expired(decoded_jwt)
         user_id: Union[uuid.UUID, str] = cls._get_user_id_from_jwt(decoded_jwt)
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_id(user_id)
+        async with db.begin():
+            user_dal = UserDAL(db)
+            user: Optional[User] = await user_dal.get_user_by_id(user_id)
         if not user:
             raise WrongCredentialsException
         return user
@@ -123,15 +121,14 @@ class AuthService:
 
         access_token: str = TokenManager.generate_access_token(user_id=user_id)
         refresh_token, tm_delta = TokenManager.generate_refresh_token()
-        async with db as session:
-            async with session.begin():
-                auth_dal = AuthDAL(session)
-                await auth_dal.delete_old_tokens(
-                    user_id=user_id,
-                )
-                await auth_dal.create_token(
-                    user_id, refresh_token, tm_delta.total_seconds()
-                )
+        async with db.begin():
+            auth_dal = AuthDAL(db)
+            await auth_dal.delete_old_tokens(
+                user_id=user_id,
+            )
+            await auth_dal.create_token(
+                user_id, refresh_token, tm_delta.total_seconds()
+            )
         return Token(
             access_token=access_token, refresh_token=str(refresh_token)
         )
@@ -154,45 +151,42 @@ class AuthService:
             RefreshTokenException: If the refresh token is invalid, expired, or the user is not found
         """
 
-        async with db as session:
-            async with session.begin():
-                auth_dal: AuthDAL = AuthDAL(db_session=db)
-                user_dal: UserDAL = UserDAL(db_session=db)
-                refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.get_refresh_token(
-                    refresh_token=refresh_token
-                )
-                if not refresh_token_model:
-                    raise RefreshTokenException
-                TokenManager.validate_refresh_token_expired(
-                    refresh_token_model=refresh_token_model,
-                )
-                user_id: uuid.UUID = refresh_token_model.user_id
-                user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=user_id
-                )
-                if not user:
-                    raise RefreshTokenException
-                access_token: str = TokenManager.generate_access_token(
-                    user_id=user_id
-                )
-                updated_refresh_token, tm_delta = (
-                    TokenManager.generate_refresh_token()
-                )
-                updated_refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.update_refresh_token(
-                    refresh_token_id=refresh_token_model.id,
-                    refresh_token=updated_refresh_token,
-                    expires_at=tm_delta.total_seconds(),
-                )
-                if not updated_refresh_token_model:
-                    raise RefreshTokenException
-                return Token(
-                    access_token=access_token,
-                    refresh_token=str(updated_refresh_token),
-                )
+        async with db.begin():
+            auth_dal: AuthDAL = AuthDAL(db_session=db)
+            user_dal: UserDAL = UserDAL(db_session=db)
+            refresh_token_model: Optional[
+                RefreshSessionModel
+            ] = await auth_dal.get_refresh_token(refresh_token=refresh_token)
+            if not refresh_token_model:
+                raise RefreshTokenException
+            TokenManager.validate_refresh_token_expired(
+                refresh_token_model=refresh_token_model,
+            )
+            user_id: uuid.UUID = refresh_token_model.user_id
+            user: Optional[User] = await user_dal.get_user_by_id(
+                user_id=user_id
+            )
+            if not user:
+                raise RefreshTokenException
+            access_token: str = TokenManager.generate_access_token(
+                user_id=user_id
+            )
+            updated_refresh_token, tm_delta = (
+                TokenManager.generate_refresh_token()
+            )
+            updated_refresh_token_model: Optional[
+                RefreshSessionModel
+            ] = await auth_dal.update_refresh_token(
+                refresh_token_id=refresh_token_model.id,
+                refresh_token=updated_refresh_token,
+                expires_at=tm_delta.total_seconds(),
+            )
+            if not updated_refresh_token_model:
+                raise RefreshTokenException
+            return Token(
+                access_token=access_token,
+                refresh_token=str(updated_refresh_token),
+            )
 
     @classmethod
     async def logout_user(
@@ -210,16 +204,13 @@ class AuthService:
         """
         if not refresh_token:
             raise RefreshTokenException
-        async with db as session:
-            async with session.begin():
-                auth_dal: AuthDAL = AuthDAL(db_session=db)
-                refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.get_refresh_token(
-                    refresh_token=refresh_token
-                )
-                if not refresh_token_model:
-                    raise RefreshTokenException
-                await auth_dal.delete_refresh_token(
-                    refresh_token_id=refresh_token_model.id
-                )
+        async with db.begin():
+            auth_dal: AuthDAL = AuthDAL(db_session=db)
+            refresh_token_model: Optional[
+                RefreshSessionModel
+            ] = await auth_dal.get_refresh_token(refresh_token=refresh_token)
+            if not refresh_token_model:
+                raise RefreshTokenException
+            await auth_dal.delete_refresh_token(
+                refresh_token_id=refresh_token_model.id
+            )

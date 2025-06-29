@@ -46,12 +46,11 @@ class UserService:
             PermissionException: If the current user lacks permission to access the target user
         """
 
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                target_user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=requested_user_id
-                )
+        async with db.begin():
+            user_dal: UserDAL = UserDAL(db)
+            target_user: Optional[User] = await user_dal.get_user_by_id(
+                user_id=requested_user_id
+            )
         if not target_user:
             raise UserNotFoundByIdException
         PermissionService.validate_permission(target_user, current_user, action)
@@ -74,27 +73,25 @@ class UserService:
         Note:
             If user_roles are not provided, defaults to [UserRoles.USER]
         """
-
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                created_user: User = await user_dal.create_user(
-                    name=user.name,
-                    surname=user.surname,
-                    email=user.email,
-                    password=Hasher.hash_password(user.password),
-                    user_roles=user.user_roles
-                    if user.user_roles
-                    else [UserRoles.USER],  # noqa: F821
-                )
-                return ShowUser(
-                    user_id=created_user.user_id,
-                    name=created_user.name,
-                    surname=created_user.surname,
-                    email=created_user.email,
-                    is_active=created_user.is_active,
-                    user_roles=created_user.roles,
-                )
+        async with db.begin():
+            user_dal = UserDAL(db)
+            created_user: User = await user_dal.create_user(
+                name=user.name,
+                surname=user.surname,
+                email=user.email,
+                password=Hasher.hash_password(user.password),
+                user_roles=user.user_roles
+                if user.user_roles
+                else [UserRoles.USER],  # noqa: F821
+            )
+            return ShowUser(
+                user_id=created_user.user_id,
+                name=created_user.name,
+                surname=created_user.surname,
+                email=created_user.email,
+                is_active=created_user.is_active,
+                user_roles=created_user.roles,
+            )
 
     @classmethod
     async def deactivate_user(
@@ -106,12 +103,11 @@ class UserService:
         target_user: User = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user_id, db, UserAction.DELETE
         )
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                deleted_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.deactivate_user(target_user.user_id)
+        async with db.begin():
+            user_dal = UserDAL(db)
+            deleted_user_id: Optional[
+                uuid.UUID
+            ] = await user_dal.deactivate_user(target_user.user_id)
         if not deleted_user_id:
             raise UserNotFoundByIdException
         return DeleteUserResponse(deleted_user_id=deleted_user_id)
@@ -174,15 +170,14 @@ class UserService:
         target_user = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
         )
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.set_admin_privilege(target_user.user_id)
-                if not updated_user_id:
-                    raise UserNotFoundByIdException
-                return UpdateUserResponse(updated_user_id=updated_user_id)
+        async with db.begin():
+            user_dal: UserDAL = UserDAL(db)
+            updated_user_id: Optional[
+                uuid.UUID
+            ] = await user_dal.set_admin_privilege(target_user.user_id)
+            if not updated_user_id:
+                raise UserNotFoundByIdException
+            return UpdateUserResponse(updated_user_id=updated_user_id)
 
     @classmethod
     async def revoke_admin_privilege(
@@ -194,12 +189,11 @@ class UserService:
         target_user = await cls._fetch_user_with_validation(
             requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
         )
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.revoke_admin_privilege(target_user.user_id)
-                if not updated_user_id:
-                    raise UserNotFoundByIdException
-                return UpdateUserResponse(updated_user_id=updated_user_id)
+        async with db.begin():
+            user_dal: UserDAL = UserDAL(db)
+            updated_user_id: Optional[
+                uuid.UUID
+            ] = await user_dal.revoke_admin_privilege(target_user.user_id)
+            if not updated_user_id:
+                raise UserNotFoundByIdException
+            return UpdateUserResponse(updated_user_id=updated_user_id)
