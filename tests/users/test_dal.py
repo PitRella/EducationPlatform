@@ -7,7 +7,7 @@ from src.users.models import User
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.users.schemas import CreateUser, UpdateUserRequest
-from src.users.dal import UserDAL
+from src.users.dao import UserDAO
 
 
 class TestUserDAL:
@@ -15,14 +15,14 @@ class TestUserDAL:
     async def _base_revoke_admin_privilege(
         user_id: uuid.UUID, session: AsyncSession
     ) -> Optional[uuid.UUID]:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.revoke_admin_privilege(target_user_id=user_id)
 
     @staticmethod
     async def _base_set_admin_privilege(
         user_id: uuid.UUID, session: AsyncSession
     ) -> Optional[uuid.UUID]:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.set_admin_privilege(target_user_id=user_id)
 
     @staticmethod
@@ -32,14 +32,14 @@ class TestUserDAL:
         session: AsyncSession,
     ) -> Optional[uuid.UUID]:
         filtered_user_fields: dict[str, str] = updated_user.model_dump()
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.update_user(user_id, **filtered_user_fields)
 
     @staticmethod
     async def _base_user_create(
         test_schema: CreateUser, session: AsyncSession
     ) -> User:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.create_user(
             name=test_schema.name,
             surname=test_schema.surname,
@@ -52,21 +52,21 @@ class TestUserDAL:
     async def _base_user_deactivate(
         user_id: uuid.UUID, session: AsyncSession
     ) -> Optional[uuid.UUID]:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.deactivate_user(user_id)
 
     @staticmethod
     async def _base_user_get_by_id(
         user_id: uuid.UUID, session: AsyncSession
     ) -> Optional[User]:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.get_user_by_id(user_id)
 
     @staticmethod
     async def _base_user_get_by_email(
         email: str, session: AsyncSession
     ) -> Optional[User]:
-        user_dal = UserDAL(session)
+        user_dal = UserDAO(session)
         return await user_dal.get_user_by_email(email)
 
     @staticmethod

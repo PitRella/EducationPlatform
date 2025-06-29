@@ -7,7 +7,7 @@ from src.users.models import User
 from src.users.enums import UserRoles
 
 
-class UserDAL:
+class UserDAO:
     def __init__(self, db_session: AsyncSession):
         self.__db_session: AsyncSession = db_session
 

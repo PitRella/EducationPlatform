@@ -3,13 +3,13 @@ from typing import Optional, Union, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dal import AuthDAL
+from src.auth.dao import AuthDAO
 from src.auth.exceptions import WrongCredentialsException, RefreshTokenException
 from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
 from src.auth.services.token import TokenManager
 from src.hashing import Hasher
-from src.users.dal import UserDAL
+from src.users.dao import UserDAO
 from src.users.models import User
 
 
@@ -48,7 +48,7 @@ class AuthService:
             WrongCredentialsException: If a user is not found or password verification fails
         """
         async with db.begin():
-            user_dal: UserDAL = UserDAL(db)
+            user_dal: UserDAO = UserDAO(db)
             user: Optional[User] = await user_dal.get_user_by_email(email)
         cls._verify_user_password(user, password)
         return cast(User, user)
@@ -97,7 +97,7 @@ class AuthService:
         TokenManager.validate_access_token_expired(decoded_jwt)
         user_id: Union[uuid.UUID, str] = cls._get_user_id_from_jwt(decoded_jwt)
         async with db.begin():
-            user_dal = UserDAL(db)
+            user_dal = UserDAO(db)
             user: Optional[User] = await user_dal.get_user_by_id(user_id)
         if not user:
             raise WrongCredentialsException
@@ -122,7 +122,7 @@ class AuthService:
         access_token: str = TokenManager.generate_access_token(user_id=user_id)
         refresh_token, tm_delta = TokenManager.generate_refresh_token()
         async with db.begin():
-            auth_dal = AuthDAL(db)
+            auth_dal = AuthDAO(db)
             await auth_dal.delete_old_tokens(
                 user_id=user_id,
             )
@@ -152,8 +152,8 @@ class AuthService:
         """
 
         async with db.begin():
-            auth_dal: AuthDAL = AuthDAL(db_session=db)
-            user_dal: UserDAL = UserDAL(db_session=db)
+            auth_dal: AuthDAO = AuthDAO(db_session=db)
+            user_dal: UserDAO = UserDAO(db_session=db)
             refresh_token_model: Optional[
                 RefreshSessionModel
             ] = await auth_dal.get_refresh_token(refresh_token=refresh_token)
@@ -205,7 +205,7 @@ class AuthService:
         if not refresh_token:
             raise RefreshTokenException
         async with db.begin():
-            auth_dal: AuthDAL = AuthDAL(db_session=db)
+            auth_dal: AuthDAO = AuthDAO(db_session=db)
             refresh_token_model: Optional[
                 RefreshSessionModel
             ] = await auth_dal.get_refresh_token(refresh_token=refresh_token)

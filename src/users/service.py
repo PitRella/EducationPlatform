@@ -3,7 +3,7 @@ from typing import Optional
 
 from src.auth.enums import UserAction
 from src.auth.services import PermissionService
-from src.users.dal import UserDAL
+from src.users.dao import UserDAO
 from src.hashing import Hasher
 from src.users.models import User
 from src.users.enums import UserRoles
@@ -47,7 +47,7 @@ class UserService:
         """
 
         async with db.begin():
-            user_dal: UserDAL = UserDAL(db)
+            user_dal: UserDAO = UserDAO(db)
             target_user: Optional[User] = await user_dal.get_user_by_id(
                 user_id=requested_user_id
             )
@@ -74,7 +74,7 @@ class UserService:
             If user_roles are not provided, defaults to [UserRoles.USER]
         """
         async with db.begin():
-            user_dal = UserDAL(db)
+            user_dal = UserDAO(db)
             created_user: User = await user_dal.create_user(
                 name=user.name,
                 surname=user.surname,
@@ -104,7 +104,7 @@ class UserService:
             requested_user_id, jwt_user_id, db, UserAction.DELETE
         )
         async with db.begin():
-            user_dal = UserDAL(db)
+            user_dal = UserDAO(db)
             deleted_user_id: Optional[
                 uuid.UUID
             ] = await user_dal.deactivate_user(target_user.user_id)
@@ -149,7 +149,7 @@ class UserService:
         )
         async with db as session:
             async with session.begin():
-                user_dal = UserDAL(session)
+                user_dal = UserDAO(session)
                 updated_user_id: Optional[
                     uuid.UUID
                 ] = await user_dal.update_user(
@@ -171,7 +171,7 @@ class UserService:
             requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
         )
         async with db.begin():
-            user_dal: UserDAL = UserDAL(db)
+            user_dal: UserDAO = UserDAO(db)
             updated_user_id: Optional[
                 uuid.UUID
             ] = await user_dal.set_admin_privilege(target_user.user_id)
@@ -190,7 +190,7 @@ class UserService:
             requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
         )
         async with db.begin():
-            user_dal: UserDAL = UserDAL(db)
+            user_dal: UserDAO = UserDAO(db)
             updated_user_id: Optional[
                 uuid.UUID
             ] = await user_dal.revoke_admin_privilege(target_user.user_id)

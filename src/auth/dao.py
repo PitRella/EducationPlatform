@@ -6,7 +6,7 @@ from sqlalchemy import Result, Select, Update, Delete
 from src.auth.models import RefreshSessionModel
 
 
-class AuthDAL:
+class AuthDAO:
     """Database Access Layer for authentication operations.
 
     This class handles all database operations related to authentication, including
