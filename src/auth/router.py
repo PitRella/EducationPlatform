@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Response, Request
 
 from src.auth.schemas import Token
 from src.auth.services import AuthService
-from src.session import get_db
+from src.database import get_db
 from src.settings import REFRESH_TOKEN_EXPIRE_DAYS, ACCESS_TOKEN_EXPIRE_MINUTES
 from src.users.models import User
 

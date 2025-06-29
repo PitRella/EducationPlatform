@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.users.service import UserService
 
-from src.session import get_db
+from src.database import get_db
 
 __all__ = ["get_service"]
 

@@ -2,7 +2,7 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.session import get_db
+from src.database import get_db
 from src.users.models import User
 from src.auth.services import AuthService
 
@@ -12,8 +12,7 @@ oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 
 
 async def get_user_from_jwt(
-        token: str = Depends(oauth_scheme),
-        db: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
     """
     Dependency that extracts and validates a user from a JWT token.
