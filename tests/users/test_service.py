@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.enums import UserAction
 from src.auth.exceptions import PermissionException
+from src.users.enums import UserRoles
 from src.users.models import User
+from src.users.schemas import CreateUser
 from src.users.service import UserService
-
-from tests.conftest import admin_user_obj  # noqa: F401
 
 
 class MockUserDAO:
@@ -148,28 +148,7 @@ class TestUserService:
             await self._base_user_assert(result_user, test_user)
 
     @pytest.mark.asyncio
-    async def test_create_new_user_success(
-        self,
-        db_session: AsyncSession,
-        admin_user_obj: User,  # noqa: F811
-    ) -> None:
-        service = UserService(
-            db_session=db_session,
-            dao=MockUserDAO(admin_user_obj),  # type: ignore
-        )
-        show_user = await service.get_user(
-            admin_user_obj.user_id, admin_user_obj
-        )
-        assert show_user
-        assert show_user.user_id == admin_user_obj.user_id
-        assert show_user.name == admin_user_obj.name
-        assert show_user.surname == admin_user_obj.surname
-        assert show_user.email == admin_user_obj.email
-        assert show_user.is_active == admin_user_obj.is_active
-        assert show_user.user_roles == admin_user_obj.roles
-
-    @pytest.mark.asyncio
-    async def test_create_new_admin_user_success(
+    async def test_get_user(
         self, db_session: AsyncSession, default_user_obj: User
     ) -> None:
         service = UserService(
@@ -186,3 +165,66 @@ class TestUserService:
         assert show_user.email == default_user_obj.email
         assert show_user.is_active == default_user_obj.is_active
         assert show_user.user_roles == default_user_obj.roles
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_with_none_roles(
+        self,
+        db_session: AsyncSession,
+        user_schema: CreateUser,
+        default_user_obj: User,
+    ) -> None:
+        """Test create user if roles are none."""
+        user_schema.user_roles = None
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        await service.create_new_user(user_schema)
+        assert default_user_obj.roles == ["user"]
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_with_regular_roles(
+        self,
+        db_session: AsyncSession,
+        user_schema: CreateUser,
+        default_user_obj: User,
+    ) -> None:
+        """Test create user with user roles."""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        await service.create_new_user(user_schema)
+        assert default_user_obj.roles == ["user"]
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_with_admin_roles(
+        self,
+        db_session: AsyncSession,
+        user_schema: CreateUser,
+        admin_user_obj: User,
+    ) -> None:
+        """Test create user with admin roles."""
+        user_schema.user_roles = [UserRoles.ADMIN]
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(admin_user_obj),  # type: ignore
+        )
+        await service.create_new_user(user_schema)
+        assert admin_user_obj.roles == ["admin"]
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_with_superadmin_roles(
+        self,
+        db_session: AsyncSession,
+        user_schema: CreateUser,
+        superadmin_user_obj: User,
+    ) -> None:
+        user_schema.user_roles = [UserRoles.SUPERADMIN]
+        """Test create user with superadmin roles."""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(superadmin_user_obj),  # type: ignore
+        )
+        await service.create_new_user(user_schema)
+        assert superadmin_user_obj.roles == ["superadmin"]
