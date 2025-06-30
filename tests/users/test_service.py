@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.enums import UserAction
 from src.auth.exceptions import PermissionException
 from src.users.enums import UserRoles
-from src.users.exceptions import ForgottenParametersException
+from src.users.exceptions import (
+    ForgottenParametersException,
+    UserNotFoundByIdException,
+)
 from src.users.models import User
 from src.users.schemas import CreateUser, UpdateUserRequest
 from src.users.service import UserService
@@ -41,17 +44,17 @@ class MockUserDAO:
     async def deactivate_user(  # type: ignore
         self, *args, **kwargs
     ) -> uuid.UUID:
-        return self._user.user_id
+        return await self.update_user(*args, **kwargs)
 
     async def set_admin_privilege(  # type: ignore
         self, *args, **kwargs
     ) -> uuid.UUID:
-        return self._user.user_id
+        return await self.update_user(*args, roles=[UserRoles.ADMIN])
 
     async def revoke_admin_privilege(  # type: ignore
         self, *args, **kwargs
     ) -> uuid.UUID:
-        return self._user.user_id
+        return await self.update_user(*args, roles=[UserRoles.USER])
 
 
 class TestUserService:
@@ -301,3 +304,133 @@ class TestUserService:
                 default_user_obj.user_id, default_user_obj, update_user_schema
             )
         assert True
+
+    @pytest.mark.asyncio
+    async def test_deactivate_inactive_regular_user(
+        self,
+        db_session: AsyncSession,
+        superadmin_user_obj: User,
+        default_user_obj: User,
+    ) -> None:
+        """Test to deactivate an inactive user"""
+        default_user_obj.is_active = False
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        with pytest.raises(UserNotFoundByIdException):
+            await service.deactivate_user(
+                default_user_obj.user_id, default_user_obj
+            )
+
+    @pytest.mark.asyncio
+    async def test_deactivate_regular_user(
+        self,
+        db_session: AsyncSession,
+        superadmin_user_obj: User,
+        default_user_obj: User,
+    ) -> None:
+        """Test to deactivate an inactive user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        deactivated_user_schema = await service.deactivate_user(
+            default_user_obj.user_id, default_user_obj
+        )
+        assert (
+            deactivated_user_schema.deleted_user_id == default_user_obj.user_id
+        )
+
+    @pytest.mark.parametrize(
+        "test_user", ["admin_user_obj", "superadmin_user_obj"], indirect=True
+    )
+    @pytest.mark.asyncio
+    async def test_deactivate_admin_user(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+    ) -> None:
+        """Test to deactivate an admin user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(test_user),  # type: ignore
+        )
+        with pytest.raises(PermissionException):
+            await service.deactivate_user(test_user.user_id, test_user)
+
+    #
+    @pytest.mark.parametrize(
+        "test_user", ["admin_user_obj", "superadmin_user_obj"], indirect=True
+    )
+    @pytest.mark.asyncio
+    async def test_deactivate_regular_user_by_superadmin(
+        self,
+        db_session: AsyncSession,
+        default_user_obj: User,
+        test_user: User,
+    ) -> None:
+        """Test to deactivate a regular user by admin user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        await service.deactivate_user(default_user_obj.user_id, test_user)
+
+    @pytest.mark.parametrize(
+        "test_user",
+        ["default_user_obj", "admin_user_obj", "superadmin_user_obj"],
+        indirect=True,
+    )
+    @pytest.mark.asyncio
+    async def test_set_admin_privilege_on_user_himself(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+    ) -> None:
+        """Test user set admin privilege on himself"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(test_user),  # type: ignore
+        )
+        with pytest.raises(PermissionException):
+            await service.set_admin_privilege(test_user, test_user.user_id)
+
+    @pytest.mark.parametrize(
+        "test_user", ["default_user_obj", "admin_user_obj"], indirect=True
+    )
+    @pytest.mark.asyncio
+    async def test_set_admin_privilege_on_other_users(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+        superadmin_user_obj: User,
+    ) -> None:
+        """Test superadmin set admin privilege on another user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(test_user),  # type: ignore
+        )
+        upd_user_schema = await service.set_admin_privilege(
+            superadmin_user_obj, test_user.user_id
+        )
+        assert test_user.user_id == upd_user_schema.updated_user_id
+        assert test_user.roles == ["admin"]
+
+    @pytest.mark.asyncio
+    async def test_revoke_admin_privilege(
+        self,
+        db_session: AsyncSession,
+        superadmin_user_obj: User,
+        default_user_obj: User,
+    ) -> None:
+        """Test superadmin revoke admin privilege from another user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        upd_user_schema = await service.revoke_admin_privilege(
+            superadmin_user_obj, superadmin_user_obj.user_id
+        )
+        assert default_user_obj.user_id == upd_user_schema.updated_user_id
+        assert default_user_obj.roles == ["user"]

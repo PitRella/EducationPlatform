@@ -111,6 +111,8 @@ class UserService:
         target_user: User = await self._fetch_user_with_validation(
             requested_user_id, jwt_user, UserAction.DELETE
         )
+        if not target_user.is_active:
+            raise UserNotFoundByIdException
         async with self.session.begin():
             deleted_user_id: Optional[
                 uuid.UUID
