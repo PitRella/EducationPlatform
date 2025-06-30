@@ -143,7 +143,7 @@ class UserService:
         user_fields: UpdateUserRequest,
     ) -> UpdateUserResponse:
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
-            exclude_none=True
+            exclude_none=True, exclude_unset=True
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
