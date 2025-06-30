@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.enums import UserAction
 from src.auth.exceptions import PermissionException
 from src.users.enums import UserRoles
+from src.users.exceptions import ForgottenParametersException
 from src.users.models import User
-from src.users.schemas import CreateUser
+from src.users.schemas import CreateUser, UpdateUserRequest
 from src.users.service import UserService
 
 
@@ -33,6 +34,8 @@ class MockUserDAO:
         return await self.create_user()
 
     async def update_user(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
+        for k, v in kwargs.items():
+            setattr(self._user, k, v)
         return self._user.user_id
 
     async def deactivate_user(  # type: ignore
@@ -220,11 +223,81 @@ class TestUserService:
         user_schema: CreateUser,
         superadmin_user_obj: User,
     ) -> None:
-        user_schema.user_roles = [UserRoles.SUPERADMIN]
         """Test create user with superadmin roles."""
+        user_schema.user_roles = [UserRoles.SUPERADMIN]
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(superadmin_user_obj),  # type: ignore
         )
         await service.create_new_user(user_schema)
         assert superadmin_user_obj.roles == ["superadmin"]
+
+    @pytest.mark.asyncio
+    async def test_update_user(
+        self,
+        db_session: AsyncSession,
+        update_user_schema: UpdateUserRequest,
+        default_user_obj: User,
+    ) -> None:
+        """Test to user update his own profile"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        await service.update_user(
+            default_user_obj.user_id, default_user_obj, update_user_schema
+        )
+        updated_user = await service.get_user(
+            default_user_obj.user_id, default_user_obj
+        )
+        assert updated_user.user_id == default_user_obj.user_id
+        assert updated_user.name == update_user_schema.name
+        assert updated_user.surname == update_user_schema.surname
+        assert updated_user.email == update_user_schema.email
+
+    @pytest.mark.asyncio
+    async def test_update_user_email_none(
+        self,
+        db_session: AsyncSession,
+        update_user_schema: UpdateUserRequest,
+        default_user_obj: User,
+    ) -> None:
+        """Test to user update email to none"""
+        update_user_schema.email = None
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        await service.update_user(
+            default_user_obj.user_id, default_user_obj, update_user_schema
+        )
+        updated_user = await service.get_user(
+            default_user_obj.user_id, default_user_obj
+        )
+        assert updated_user.user_id == default_user_obj.user_id
+        assert updated_user.name == update_user_schema.name
+        assert updated_user.surname == update_user_schema.surname
+        # Email should not be changed, because it is None
+        assert updated_user.email == default_user_obj.email
+
+    @pytest.mark.asyncio
+    async def test_update_user_all_fields_none(
+        self,
+        db_session: AsyncSession,
+        update_user_schema: UpdateUserRequest,
+        default_user_obj: User,
+    ) -> None:
+        """Test to user update every field with none"""
+        update_user_schema.name = None
+        update_user_schema.surname = None
+        update_user_schema.email = None
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(default_user_obj),  # type: ignore
+        )
+        # All fields should not be changed because it is None
+        with pytest.raises(ForgottenParametersException):
+            await service.update_user(
+                default_user_obj.user_id, default_user_obj, update_user_schema
+            )
+        assert True
