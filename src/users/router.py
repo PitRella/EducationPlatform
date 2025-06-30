@@ -32,7 +32,7 @@ async def deactivate_user(
     jwt_user: User = Depends(get_user_from_jwt),
 ) -> DeleteUserResponse:
     return await service.deactivate_user(
-        requested_user_id=user_id, jwt_user_id=jwt_user
+        requested_user_id=user_id, jwt_user=jwt_user
     )
 
 
@@ -53,7 +53,7 @@ async def update_user(
     jwt_user: User = Depends(get_user_from_jwt),
 ) -> UpdateUserResponse:
     return await service.update_user(
-        jwt_user_id=jwt_user, requested_user_id=user_id, user_fields=user_fields
+        jwt_user=jwt_user, requested_user_id=user_id, user_fields=user_fields
     )
 
 

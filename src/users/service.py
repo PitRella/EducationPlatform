@@ -106,10 +106,10 @@ class UserService:
     async def deactivate_user(
         self,
         requested_user_id: uuid.UUID,
-        jwt_user_id: User,
+        jwt_user: User,
     ) -> DeleteUserResponse:
         target_user: User = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, UserAction.DELETE
+            requested_user_id, jwt_user, UserAction.DELETE
         )
         async with self.session.begin():
             deleted_user_id: Optional[
@@ -139,7 +139,7 @@ class UserService:
     async def update_user(
         self,
         requested_user_id: uuid.UUID,
-        jwt_user_id: User,
+        jwt_user: User,
         user_fields: UpdateUserRequest,
     ) -> UpdateUserResponse:
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
@@ -148,7 +148,7 @@ class UserService:
         if not filtered_user_fields:
             raise ForgottenParametersException
         target_user: User = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, UserAction.UPDATE
+            requested_user_id, jwt_user, UserAction.UPDATE
         )
         async with self.session.begin():
             updated_user_id: Optional[uuid.UUID] = await self.dao.update_user(
