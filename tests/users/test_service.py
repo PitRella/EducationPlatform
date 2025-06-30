@@ -35,13 +35,19 @@ class MockUserDAO:
     async def update_user(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
         return self._user.user_id
 
-    async def deactivate_user(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
+    async def deactivate_user(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
         return self._user.user_id
 
-    async def set_admin_privilege(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
+    async def set_admin_privilege(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
         return self._user.user_id
 
-    async def revoke_admin_privilege(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
+    async def revoke_admin_privilege(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
         return self._user.user_id
 
 
@@ -59,18 +65,18 @@ class TestUserService:
 
     @pytest.mark.parametrize("action", list(UserAction))
     @pytest.mark.asyncio
-    async def test_fetch_regular_user_with_validation_user(
+    async def test_fetch_user_operations_on_himself(
         self,
         db_session: AsyncSession,
         default_user_obj: User,
         action: UserAction,
     ) -> None:
-        """Test to make sure user can only exceclude CRUD on himself"""
+        """Test regular user for default user actions"""
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(default_user_obj),  # type: ignore
         )
-        if action in (
+        if action in (  # Default user cannot modify an admin role on himself
             UserAction.SET_ADMIN_PRIVILEGE,
             UserAction.REVOKE_ADMIN_PRIVILEGE,
         ):
@@ -79,22 +85,46 @@ class TestUserService:
                     default_user_obj.user_id, default_user_obj, action
                 )
             assert True
-        else:
+        else:  # Another action performs as usual
             result_user = await service._fetch_user_with_validation(
                 default_user_obj.user_id, default_user_obj, action
             )
             await self._base_user_assert(result_user, default_user_obj)
+
+    @pytest.mark.parametrize("action", list(UserAction))
+    @pytest.mark.asyncio
+    async def test_fetch_user_operations_on_another_user(
+        self,
+        db_session: AsyncSession,
+        default_user_obj: User,
+        admin_user_obj: User,  # noqa: F811
+        action: UserAction,
+    ) -> None:
+        """Test to see a user make any action on another user"""
+        service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(admin_user_obj),  # type: ignore
+        )
+        with pytest.raises(PermissionException):
+            await service._fetch_user_with_validation(
+                requested_user_id=admin_user_obj.user_id,
+                current_user=default_user_obj,
+                action=action,
+            )
+        assert True
 
     @pytest.mark.parametrize(
         "test_user", ["admin_user_obj", "superadmin_user_obj"], indirect=True
     )
     @pytest.mark.parametrize("action", list(UserAction))
     @pytest.mark.asyncio
-    async def test_fetch_admin_user_with_validation_user(
+    async def test_fetch_admins_operations_on_himself(
         self, db_session: AsyncSession, test_user: User, action: UserAction
     ) -> None:
-        """Test to make sure superadmin/admin cannot
-        delete himself and revoke/give admin priveleges"""
+        """
+        Test to make sure superadmin/admin cannot
+        delete, revoke/give admin priveleges on himself
+        """
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(test_user),  # type: ignore
@@ -111,7 +141,9 @@ class TestUserService:
             assert True
         else:
             result_user = await service._fetch_user_with_validation(
-                test_user.user_id, test_user, action
+                requested_user_id=test_user.user_id,
+                current_user=test_user,
+                action=action,
             )
             await self._base_user_assert(result_user, test_user)
 
