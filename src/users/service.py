@@ -122,10 +122,10 @@ class UserService:
     async def get_user(
         self,
         requested_user_id: uuid.UUID,
-        jwt_user_id: User,
+        jwt_user: User,
     ) -> ShowUser:
         target_user = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, UserAction.GET
+            requested_user_id, jwt_user, UserAction.GET
         )
         return ShowUser(
             user_id=target_user.user_id,

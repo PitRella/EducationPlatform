@@ -42,9 +42,7 @@ async def get_user_by_id(
     service: UserService = Depends(get_service),
     jwt_user: User = Depends(get_user_from_jwt),
 ) -> ShowUser:
-    return await service.get_user(
-        requested_user_id=user_id, jwt_user_id=jwt_user
-    )
+    return await service.get_user(requested_user_id=user_id, jwt_user=jwt_user)
 
 
 @user_router.patch("/", response_model=UpdateUserResponse)
