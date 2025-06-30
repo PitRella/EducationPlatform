@@ -1,19 +1,67 @@
 import pytest_asyncio
+import pytest
+from _pytest.fixtures import FixtureRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+import uuid
 
-from src.session import engine
+from src.database import engine
+from src.users.models import User
 from src.users.schemas import CreateUser, UpdateUserRequest
 
 
+@pytest.fixture
+def test_user(request: FixtureRequest) -> User:
+    return request.getfixturevalue(request.param)  # type: ignore
+
+
 @pytest_asyncio.fixture
-async def test_user_schema() -> CreateUser:
+async def user_schema() -> CreateUser:
     return CreateUser(
         name="TestName",
         surname="TestSurName",
         email="test_user@tmail.com",
         password="qwerty123",
         user_roles=["user"],  # type: ignore
+    )
+
+
+@pytest_asyncio.fixture
+async def default_user_obj() -> User:
+    return User(
+        user_id=uuid.uuid4(),
+        name="TestName",
+        surname="TestSurName",
+        email="test_user@tmail.com",
+        password="qwerty123",
+        roles=["user"],
+        is_active=True,
+    )
+
+
+@pytest_asyncio.fixture
+async def admin_user_obj() -> User:
+    return User(
+        user_id=uuid.uuid4(),
+        name="AdminTestName",
+        surname="AdminTestSurName",
+        email="admin_test_user@tmail.com",
+        password="qwerty123",
+        roles=["admin"],
+        is_active=True,
+    )
+
+
+@pytest_asyncio.fixture
+async def superadmin_user_obj() -> User:
+    return User(
+        user_id=uuid.uuid4(),
+        name="AdminTestName",
+        surname="AdminTestSurName",
+        email="admin_test_user@tmail.com",
+        password="qwerty123",
+        roles=["superadmin"],
+        is_active=True,
     )
 
 

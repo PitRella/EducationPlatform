@@ -94,33 +94,29 @@ class TestUserDAL:
 
     @pytest.mark.asyncio
     async def test_create_user(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
 
     @pytest.mark.asyncio
     async def test_create_user_duplicated_user(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
         with pytest.raises(IntegrityError):
             for _ in range(2):
                 user = await self._base_user_create(
-                    test_user_schema, db_started_session
+                    user_schema, db_started_session
                 )
-                self._base_user_assert(user, test_user_schema)
+                self._base_user_assert(user, user_schema)
         assert True
 
     @pytest.mark.asyncio
     async def test_deactivate_user(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         deactivated_user_id = await self._base_user_deactivate(
             user.user_id, db_started_session
         )
@@ -129,12 +125,10 @@ class TestUserDAL:
 
     @pytest.mark.asyncio
     async def test_deactivate_inactive_user(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         deactivated_user_id = await self._base_user_deactivate(
             user.user_id, db_started_session
         )
@@ -146,21 +140,19 @@ class TestUserDAL:
 
     @pytest.mark.asyncio
     async def test_get_user_by_id(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         get_user = await self._base_user_get_by_id(
             user.user_id, db_started_session
         )
         assert get_user
-        self._base_user_assert(get_user, test_user_schema)
+        self._base_user_assert(get_user, user_schema)
 
     @pytest.mark.asyncio
     async def test_get_user_by_wrong_id(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
         random_uid = uuid.uuid4()
         get_user = await self._base_user_get_by_id(
@@ -170,21 +162,19 @@ class TestUserDAL:
 
     @pytest.mark.asyncio
     async def test_get_user_by_email(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         get_user = await self._base_user_get_by_email(
             user.email, db_started_session
         )
         assert get_user
-        self._base_user_assert(get_user, test_user_schema)
+        self._base_user_assert(get_user, user_schema)
 
     @pytest.mark.asyncio
     async def test_get_user_by_wrong_email(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
         random_email = "test-none@gmail.com"
         get_user = await self._base_user_get_by_email(
@@ -195,14 +185,12 @@ class TestUserDAL:
     @pytest.mark.asyncio
     async def test_update_user(
         self,
-        test_user_schema: CreateUser,
+        user_schema: CreateUser,
         update_user_schema: UpdateUserRequest,
         db_started_session: AsyncSession,
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_user_update(
             user.user_id, update_user_schema, db_started_session
         )
@@ -211,22 +199,18 @@ class TestUserDAL:
             updated_user_id, db_started_session
         )
         assert updated_user
-        self._base_updated_user_assert(
-            user, test_user_schema, update_user_schema
-        )
+        self._base_updated_user_assert(user, user_schema, update_user_schema)
 
     @pytest.mark.asyncio
     async def test_update_user_with_none_email(
         self,
-        test_user_schema: CreateUser,
+        user_schema: CreateUser,
         update_user_schema: UpdateUserRequest,
         db_started_session: AsyncSession,
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
+        user = await self._base_user_create(user_schema, db_started_session)
         assert user
-        self._base_user_assert(user, test_user_schema)
+        self._base_user_assert(user, user_schema)
         update_user_schema.email = None
         with pytest.raises(IntegrityError):
             await self._base_user_update(
@@ -237,14 +221,12 @@ class TestUserDAL:
     @pytest.mark.asyncio
     async def test_update_user_with_none_surname_name(
         self,
-        test_user_schema: CreateUser,
+        user_schema: CreateUser,
         update_user_schema: UpdateUserRequest,
         db_started_session: AsyncSession,
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         update_user_schema.name = None
         update_user_schema.surname = None
         with pytest.raises(IntegrityError):
@@ -255,12 +237,10 @@ class TestUserDAL:
 
     @pytest.mark.asyncio
     async def test_set_admin_privilege(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_set_admin_privilege(
             user.user_id, db_started_session
         )
@@ -269,21 +249,19 @@ class TestUserDAL:
             updated_user_id, db_started_session
         )
         assert admin_user
-        assert admin_user.name == test_user_schema.name
-        assert admin_user.surname == test_user_schema.surname
-        assert admin_user.email == test_user_schema.email
-        assert admin_user.password == test_user_schema.password
-        assert admin_user.roles != test_user_schema.user_roles
+        assert admin_user.name == user_schema.name
+        assert admin_user.surname == user_schema.surname
+        assert admin_user.email == user_schema.email
+        assert admin_user.password == user_schema.password
+        assert admin_user.roles != user_schema.user_roles
         assert "admin" in admin_user.roles
 
     @pytest.mark.asyncio
     async def test_revoke_admin_privilege(
-        self, test_user_schema: CreateUser, db_started_session: AsyncSession
+        self, user_schema: CreateUser, db_started_session: AsyncSession
     ) -> None:
-        user = await self._base_user_create(
-            test_user_schema, db_started_session
-        )
-        self._base_user_assert(user, test_user_schema)
+        user = await self._base_user_create(user_schema, db_started_session)
+        self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_set_admin_privilege(
             user.user_id, db_started_session
         )
@@ -292,7 +270,7 @@ class TestUserDAL:
             updated_user_id, db_started_session
         )
         assert admin_user
-        assert admin_user.roles != test_user_schema.user_roles
+        assert admin_user.roles != user_schema.user_roles
         assert "admin" in admin_user.roles
         revoked_user_id = await self._base_revoke_admin_privilege(
             admin_user.user_id, db_started_session
@@ -303,5 +281,5 @@ class TestUserDAL:
         )
         assert revoked_user
         assert revoked_user.user_id == admin_user.user_id
-        assert revoked_user.roles == test_user_schema.user_roles
+        assert revoked_user.roles == user_schema.user_roles
         assert "admin" not in admin_user.roles
