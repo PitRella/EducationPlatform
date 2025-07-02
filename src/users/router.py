@@ -1,8 +1,6 @@
-import uuid
-
 from fastapi import APIRouter, Depends
 from .dependencies import get_service
-from src.auth.dependencies import get_user_from_jwt, validate_user_permission
+from src.auth.dependencies import validate_user_permission
 from src.users.models import User
 from src.users.schemas import (
     ShowUser,
@@ -13,7 +11,7 @@ from src.users.schemas import (
 )
 
 from src.users.service import UserService
-from ..auth.enums import UserAction
+from src.auth.enums import UserAction
 
 user_router = APIRouter()
 
@@ -28,13 +26,10 @@ async def create_user(
 
 @user_router.delete("/", response_model=DeleteUserResponse)
 async def deactivate_user(
-    user_id: uuid.UUID,
     service: UserService = Depends(get_service),
-    jwt_user: User = Depends(get_user_from_jwt),
+    user: User = Depends(validate_user_permission(UserAction.DELETE)),
 ) -> DeleteUserResponse:
-    return await service.deactivate_user(
-        requested_user_id=user_id, jwt_user=jwt_user
-    )
+    return await service.deactivate_user(target_user=user)
 
 
 @user_router.get("/", response_model=ShowUser)
@@ -46,35 +41,26 @@ async def get_user_by_id(
 
 @user_router.patch("/", response_model=UpdateUserResponse)
 async def update_user(
-    user_id: uuid.UUID,
     user_fields: UpdateUserRequest,
     service: UserService = Depends(get_service),
-    jwt_user: User = Depends(get_user_from_jwt),
+    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
 ) -> UpdateUserResponse:
-    return await service.update_user(
-        jwt_user=jwt_user, requested_user_id=user_id, user_fields=user_fields
-    )
+    return await service.update_user(target_user=user, user_fields=user_fields)
 
 
 @user_router.patch("/set_admin_privilege")
 async def set_admin_privilege(
-    user_id: uuid.UUID,
     service: UserService = Depends(get_service),
-    jwt_user: User = Depends(get_user_from_jwt),
+    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
 ) -> UpdateUserResponse:
     return await service.set_admin_privilege(
-        jwt_user=jwt_user,
-        requested_user_id=user_id,
+        target_user=user,
     )
 
 
 @user_router.patch("/revoke_admin_privilege")
 async def revoke_admin_privilege(
-    user_id: uuid.UUID,
     service: UserService = Depends(get_service),
-    jwt_user: User = Depends(get_user_from_jwt),
+    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
 ) -> UpdateUserResponse:
-    return await service.revoke_admin_privilege(
-        jwt_user=jwt_user,
-        requested_user_id=user_id,
-    )
+    return await service.revoke_admin_privilege(target_user=user)

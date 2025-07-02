@@ -103,16 +103,7 @@ class UserService:
             )
             return ShowUser.model_validate(created_user)
 
-    async def deactivate_user(
-        self,
-        requested_user_id: uuid.UUID,
-        jwt_user: User,
-    ) -> DeleteUserResponse:
-        target_user: User = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user, UserAction.DELETE
-        )
-        if not target_user.is_active:
-            raise UserNotFoundByIdException
+    async def deactivate_user(self, target_user: User) -> DeleteUserResponse:
         async with self.session.begin():
             deleted_user_id: Optional[
                 uuid.UUID
@@ -133,8 +124,7 @@ class UserService:
 
     async def update_user(
         self,
-        requested_user_id: uuid.UUID,
-        jwt_user: User,
+        target_user: User,
         user_fields: UpdateUserRequest,
     ) -> UpdateUserResponse:
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
@@ -142,9 +132,6 @@ class UserService:
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
-        target_user: User = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user, UserAction.UPDATE
-        )
         async with self.session.begin():
             updated_user_id: Optional[uuid.UUID] = await self.dao.update_user(
                 target_user.user_id,
@@ -156,32 +143,24 @@ class UserService:
 
     async def set_admin_privilege(
         self,
-        jwt_user: User,
-        requested_user_id: uuid.UUID,
+        target_user: User,
     ) -> UpdateUserResponse:
-        target_user = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user, UserAction.SET_ADMIN_PRIVILEGE
-        )
         async with self.session.begin():
             updated_user_id: Optional[
                 uuid.UUID
             ] = await self.dao.set_admin_privilege(target_user.user_id)
-            if not updated_user_id:
-                raise UserNotFoundByIdException
-            return UpdateUserResponse(updated_user_id=updated_user_id)
+        if not updated_user_id:
+            raise UserNotFoundByIdException
+        return UpdateUserResponse(updated_user_id=updated_user_id)
 
     async def revoke_admin_privilege(
         self,
-        jwt_user: User,
-        requested_user_id: uuid.UUID,
+        target_user: User,
     ) -> UpdateUserResponse:
-        target_user = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user, UserAction.SET_ADMIN_PRIVILEGE
-        )
         async with self.session.begin():
             updated_user_id: Optional[
                 uuid.UUID
             ] = await self.dao.revoke_admin_privilege(target_user.user_id)
-            if not updated_user_id:
-                raise UserNotFoundByIdException
-            return UpdateUserResponse(updated_user_id=updated_user_id)
+        if not updated_user_id:
+            raise UserNotFoundByIdException
+        return UpdateUserResponse(updated_user_id=updated_user_id)
