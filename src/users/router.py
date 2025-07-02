@@ -51,7 +51,9 @@ async def update_user(
 @user_router.patch("/set_admin_privilege")
 async def set_admin_privilege(
     service: UserService = Depends(get_service),
-    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
+    user: User = Depends(
+        validate_user_permission(UserAction.SET_ADMIN_PRIVILEGE)
+    ),
 ) -> UpdateUserResponse:
     return await service.set_admin_privilege(
         target_user=user,
@@ -61,6 +63,8 @@ async def set_admin_privilege(
 @user_router.patch("/revoke_admin_privilege")
 async def revoke_admin_privilege(
     service: UserService = Depends(get_service),
-    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
+    user: User = Depends(
+        validate_user_permission(UserAction.REVOKE_ADMIN_PRIVILEGE)
+    ),
 ) -> UpdateUserResponse:
     return await service.revoke_admin_privilege(target_user=user)
