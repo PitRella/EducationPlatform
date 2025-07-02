@@ -41,14 +41,7 @@ async def deactivate_user(
 async def get_user_by_id(
     user: User = Depends(validate_user_permission(UserAction.GET)),
 ) -> ShowUser:
-    return ShowUser(
-        user_id=user.user_id,
-        name=user.name,
-        surname=user.surname,
-        email=user.email,
-        is_active=user.is_active,
-        user_roles=user.roles,
-    )
+    return ShowUser.model_validate(user)
 
 
 @user_router.patch("/", response_model=UpdateUserResponse)

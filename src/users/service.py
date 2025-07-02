@@ -101,14 +101,7 @@ class UserService:
                 if user.user_roles
                 else [UserRoles.USER],  # noqa: F821
             )
-            return ShowUser(
-                user_id=created_user.user_id,
-                name=created_user.name,
-                surname=created_user.surname,
-                email=created_user.email,
-                is_active=created_user.is_active,
-                user_roles=created_user.roles,
-            )
+            return ShowUser.model_validate(created_user)
 
     async def deactivate_user(
         self,
@@ -136,14 +129,7 @@ class UserService:
         target_user = await self._fetch_user_with_validation(
             requested_user_id, jwt_user, UserAction.GET
         )
-        return ShowUser(
-            user_id=target_user.user_id,
-            name=target_user.name,
-            surname=target_user.surname,
-            email=target_user.email,
-            is_active=target_user.is_active,
-            user_roles=target_user.roles,
-        )
+        return ShowUser.model_validate(target_user)
 
     async def update_user(
         self,

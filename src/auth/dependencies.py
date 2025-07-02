@@ -24,13 +24,22 @@ async def get_user_from_jwt(
     token: str = Depends(oauth_scheme),
     service: AuthService = Depends(get_service),
 ) -> User:
-    user: User = await service.validate_token(token)
-    return user
+    """Get user from jwt token"""
+    return await service.validate_token(token)
 
 
 def validate_user_permission(
     action: UserAction,
 ) -> Callable[[User, User], User]:
+    """
+    Dependency factory that takes user action from enum.
+    Then calls dependencies for get user from query_id and from jwt.
+    Then validates permission between the two users.
+
+    :param: action: User action to perform. From UserAction Enum
+    :return: Target user object if validation succeeds.
+    """
+
     def user_dependencies(
         source_user: User = Depends(get_user_from_jwt),
         target_user: User = Depends(get_user_from_uuid),

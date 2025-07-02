@@ -12,8 +12,7 @@ LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 
 
 class TunedModel(BaseModel):
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ShowUser(TunedModel):
@@ -22,7 +21,7 @@ class ShowUser(TunedModel):
     surname: str
     email: str
     is_active: bool
-    user_roles: Sequence[str]
+    roles: Sequence[str]
 
 
 class DeleteUserResponse(BaseModel):
