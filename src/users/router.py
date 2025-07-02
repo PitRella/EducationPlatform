@@ -39,11 +39,8 @@ async def deactivate_user(
 
 @user_router.get("/", response_model=ShowUser)
 async def get_user_by_id(
-    user_id: uuid.UUID,
-    service: UserService = Depends(get_service),
-    _: None = Depends(validate_user_permission(UserAction.GET)),
+    user: User = Depends(validate_user_permission(UserAction.GET)),
 ) -> ShowUser:
-    user = await service.get_user_by_id(user_id=user_id)
     return ShowUser(
         user_id=user.user_id,
         name=user.name,

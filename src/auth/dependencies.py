@@ -30,15 +30,16 @@ async def get_user_from_jwt(
 
 def validate_user_permission(
     action: UserAction,
-) -> Callable[[User, User], None]:  # исправлено
+) -> Callable[[User, User], User]:
     def user_dependencies(
         source_user: User = Depends(get_user_from_jwt),
         target_user: User = Depends(get_user_from_uuid),
-    ) -> None:
+    ) -> User:
         PermissionService.validate_permission(
             target_user=target_user,
             current_user=source_user,
             action=action,
         )
+        return target_user
 
     return user_dependencies
