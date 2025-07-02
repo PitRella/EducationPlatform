@@ -67,6 +67,13 @@ class UserService:
         PermissionService.validate_permission(target_user, current_user, action)
         return target_user
 
+    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
+        async with self.session.begin():
+            user: Optional[User] = await self.dao.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFoundByIdException
+        return user
+
     async def create_new_user(
         self,
         user: CreateUser,

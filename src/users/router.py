@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends
 from .dependencies import get_service
-from src.auth.dependencies import get_user_from_jwt
+from src.auth.dependencies import get_user_from_jwt, validate_user_permission
 from src.users.models import User
 from src.users.schemas import (
     ShowUser,
@@ -13,6 +13,7 @@ from src.users.schemas import (
 )
 
 from src.users.service import UserService
+from ..auth.enums import UserAction
 
 user_router = APIRouter()
 
@@ -40,9 +41,17 @@ async def deactivate_user(
 async def get_user_by_id(
     user_id: uuid.UUID,
     service: UserService = Depends(get_service),
-    jwt_user: User = Depends(get_user_from_jwt),
+    _: None = Depends(validate_user_permission(UserAction.GET)),
 ) -> ShowUser:
-    return await service.get_user(requested_user_id=user_id, jwt_user=jwt_user)
+    user = await service.get_user_by_id(user_id=user_id)
+    return ShowUser(
+        user_id=user.user_id,
+        name=user.name,
+        surname=user.surname,
+        email=user.email,
+        is_active=user.is_active,
+        user_roles=user.roles,
+    )
 
 
 @user_router.patch("/", response_model=UpdateUserResponse)
