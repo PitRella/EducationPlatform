@@ -49,6 +49,16 @@ exclude = [
 
 [tool.ruff.format]
 quote-style = "single"
+docstring-code-format = false
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [
+  "S101", # asserts
+  "S105", # hardcoded passwords
+  "S404", # subprocess calls are for tests
+  "S603", # do not require `shell=True`
+  "S607", # partial executable paths
+]
 
 [tool.ruff.lint]
 select = [
