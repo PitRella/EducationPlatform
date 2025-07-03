@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
-from .dependencies import get_service
+from typing import Annotated
+
+from fastapi import APIRouter, Security, Depends
+from src.users.dependencies import get_service
 from src.auth.dependencies import validate_user_permission
 from src.users.models import User
 from src.users.schemas import (
@@ -27,33 +29,33 @@ async def create_user(
 @user_router.delete("/", response_model=DeleteUserResponse)
 async def deactivate_user(
     service: UserService = Depends(get_service),
-    user: User = Depends(validate_user_permission(UserAction.DELETE)),
+    user: User = Security(validate_user_permission(UserAction.DELETE)),
 ) -> DeleteUserResponse:
     return await service.deactivate_user(target_user=user)
 
 
 @user_router.get("/", response_model=ShowUser)
 async def get_user_by_id(
-    user: User = Depends(validate_user_permission(UserAction.GET)),
+    user: Annotated[User, Security(validate_user_permission(UserAction.GET))],
 ) -> ShowUser:
     return ShowUser.model_validate(user)
 
 
 @user_router.patch("/", response_model=UpdateUserResponse)
 async def update_user(
+    user: Annotated[User, Depends(validate_user_permission(UserAction.UPDATE))],
     user_fields: UpdateUserRequest,
     service: UserService = Depends(get_service),
-    user: User = Depends(validate_user_permission(UserAction.UPDATE)),
 ) -> UpdateUserResponse:
     return await service.update_user(target_user=user, user_fields=user_fields)
 
 
 @user_router.patch("/set_admin_privilege")
 async def set_admin_privilege(
+    user: Annotated[
+        User, Depends(validate_user_permission(UserAction.SET_ADMIN_PRIVILEGE))
+    ],
     service: UserService = Depends(get_service),
-    user: User = Depends(
-        validate_user_permission(UserAction.SET_ADMIN_PRIVILEGE)
-    ),
 ) -> UpdateUserResponse:
     return await service.set_admin_privilege(
         target_user=user,
@@ -62,9 +64,10 @@ async def set_admin_privilege(
 
 @user_router.patch("/revoke_admin_privilege")
 async def revoke_admin_privilege(
-    service: UserService = Depends(get_service),
-    user: User = Depends(
-        validate_user_permission(UserAction.REVOKE_ADMIN_PRIVILEGE)
-    ),
+    service: Annotated[UserService, Depends(get_service)],
+    user: Annotated[
+        User,
+        Security(validate_user_permission(UserAction.REVOKE_ADMIN_PRIVILEGE)),
+    ],
 ) -> UpdateUserResponse:
     return await service.revoke_admin_privilege(target_user=user)

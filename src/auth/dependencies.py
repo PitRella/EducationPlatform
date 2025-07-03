@@ -1,6 +1,7 @@
-from typing import Callable
+from typing import Callable, Annotated
 
 from fastapi import Depends
+from fastapi.params import Security
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,16 +16,24 @@ oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 )
 
 
-def get_service(db: AsyncSession = Depends(get_db)) -> AuthService:
+def get_service(db: Annotated[AsyncSession, Depends(get_db)]) -> AuthService:
     """Dependency for retrieving the UserService instance."""
     return AuthService(db_session=db)
 
 
 async def get_user_from_jwt(
-    token: str = Depends(oauth_scheme),
-    service: AuthService = Depends(get_service),
+    token: Annotated[str, Security(oauth_scheme)],
+    service: Annotated[AuthService, Depends(get_service)],
 ) -> User:
-    """Get user from jwt token"""
+    """
+    Provides FastAPI dependencies for authentication and permission validation.
+
+    Includes:
+    - OAuth2 password bearer scheme for JWT authentication.
+    - Dependency to retrieve an AuthService instance.
+    - Async dependency to extract a User from a JWT token.
+    - Factory for a permission validation dependency that checks if the current user can perform a specified action on a target user.
+    """
     return await service.validate_token(token)
 
 
@@ -41,8 +50,8 @@ def validate_user_permission(
     """
 
     def user_dependencies(
-        source_user: User = Depends(get_user_from_jwt),
-        target_user: User = Depends(get_user_from_uuid),
+        source_user: Annotated[User, Depends(get_user_from_jwt)],
+        target_user: Annotated[User, Depends(get_user_from_uuid)],
     ) -> User:
         PermissionService.validate_permission(
             target_user=target_user,

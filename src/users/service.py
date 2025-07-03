@@ -1,8 +1,6 @@
 import uuid
 from typing import Optional
 
-from src.auth.enums import UserAction
-from src.auth.services import PermissionService
 from src.users.dao import UserDAO
 from src.hashing import Hasher
 from src.users.models import User
@@ -35,37 +33,6 @@ class UserService:
     @property
     def session(self) -> AsyncSession:
         return self._session
-
-    async def _fetch_user_with_validation(
-        self,
-        requested_user_id: uuid.UUID,
-        current_user: User,
-        action: UserAction,
-    ) -> User:
-        """
-        Retrieve and validate user permissions between the requested and current user.
-
-        Args:
-            requested_user_id (uuid.UUID): ID of the user being requested/targeted
-            current_user (uuid.UUID): User making the request (from JWT token)
-            db (AsyncSession): Database session for transaction management
-            action (UserAction): User action to perform
-
-        Returns:
-            User: The target user object if validation succeeds
-
-        Raises:
-            UserNotFoundByIdException: If either target or current user is not found,
-            PermissionException: If the current user lacks permission to access the target user
-        """
-        async with self.session.begin():
-            target_user: Optional[User] = await self.dao.get_user_by_id(
-                user_id=requested_user_id
-            )
-        if not target_user:
-            raise UserNotFoundByIdException
-        PermissionService.validate_permission(target_user, current_user, action)
-        return target_user
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> User:
         async with self.session.begin():
@@ -101,7 +68,7 @@ class UserService:
                 if user.user_roles
                 else [UserRoles.USER],  # noqa: F821
             )
-            return ShowUser.model_validate(created_user)
+        return ShowUser.model_validate(created_user)
 
     async def deactivate_user(self, target_user: User) -> DeleteUserResponse:
         async with self.session.begin():
@@ -111,16 +78,6 @@ class UserService:
         if not deleted_user_id:
             raise UserNotFoundByIdException
         return DeleteUserResponse(deleted_user_id=deleted_user_id)
-
-    async def get_user(
-        self,
-        requested_user_id: uuid.UUID,
-        jwt_user: User,
-    ) -> ShowUser:
-        target_user = await self._fetch_user_with_validation(
-            requested_user_id, jwt_user, UserAction.GET
-        )
-        return ShowUser.model_validate(target_user)
 
     async def update_user(
         self,

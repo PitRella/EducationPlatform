@@ -1,4 +1,5 @@
 import uuid
+from typing import Annotated
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends, Response, Request
@@ -14,17 +15,10 @@ auth_router = APIRouter()
 
 @auth_router.post(path="/login", response_model=Token)
 async def login_user(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    service: Annotated[AuthService, Depends(get_service)],
     response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    service: AuthService = Depends(get_service),
 ) -> Token:
-    """
-    Endpoint to login user based on email and password.
-    :param response: User response.
-    :param form_data: Form data with password and email.
-    :param db: Async session to db.
-    :return: Pair of access token and refresh token.
-    """
     user: User = await service.auth_user(
         email=form_data.username,
         password=form_data.password,
@@ -49,7 +43,7 @@ async def login_user(
 async def refresh_token(
     request: Request,
     response: Response,
-    service: AuthService = Depends(get_service),
+    service: Annotated[AuthService, Depends(get_service)],
 ) -> Token:
     token: Token = await service.refresh_token(
         refresh_token=uuid.UUID(request.cookies.get("refresh_token"))
@@ -73,7 +67,7 @@ async def refresh_token(
 async def logout_user(
     request: Request,
     response: Response,
-    service: AuthService = Depends(get_service),
+    service: Annotated[AuthService, Depends(get_service)],
 ) -> dict[str, str]:
     await service.logout_user(request.cookies.get("refresh_token"))
     response.delete_cookie("access_token")
