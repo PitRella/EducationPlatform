@@ -1,7 +1,7 @@
 [project]
 name = "educationplatform"
 version = "0.1.0"
-description = "Add your description here"
+description = "API for your education platform"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.16.1",
@@ -30,6 +30,64 @@ dependencies = [
 [tool.mypy]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
 strict = true
+local_partial_types = true
+warn_unreachable = true
 
 [tool.ruff]
 line-length = 80
+target-version = "py313"
+
+exclude = [
+    "migrations",
+    ".venv",
+    ".qodo",
+    "build",
+    "dist",
+    "tests/fixtures",
+    "__pycache__",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = [
+  "A",    # flake8-builtins
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "C90",  # maccabe
+  "COM",  # flake8-commas
+  "D",    # pydocstyle
+  "DTZ",  # flake8-datetimez
+  "E",    # pycodestyle
+  "ERA",  # flake8-eradicate
+  "EXE",  # flake8-executable
+  "F",    # pyflakes
+  "FBT",  # flake8-boolean-trap
+  "FLY",  # pyflint
+  "FURB", # refurb
+  "G",    # flake8-logging-format
+  "I",    # isort
+  "ICN",  # flake8-import-conventions
+  "ISC",  # flake8-implicit-str-concat
+  "LOG",  # flake8-logging
+  "N",    # pep8-naming
+  "PERF", # perflint
+  "PIE",  # flake8-pie
+  "PL",   # pylint
+  "PT",   # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "Q",    # flake8-quotes
+  "RET",  # flake8-return
+  "RSE",  # flake8-raise
+  "RUF",  # ruff
+  "S",    # flake8-bandit
+  "SIM",  # flake8-simpify
+  "SLF",  # flake8-self
+  "SLOT", # flake8-slots
+  "T100", # flake8-debugger
+  "TRY",  # tryceratops
+  "UP",   # pyupgrade
+  "W",    # pycodestyle
+  "YTT",  # flake8-2020
+]
