@@ -34,9 +34,9 @@ local_partial_types = true
 warn_unreachable = true
 
 [tool.ruff]
-line-length = 80
+line-length = 80 # PEP8
 target-version = "py313"
-
+fix = true # Autofix
 exclude = [
     "migrations",
     ".venv",
@@ -49,55 +49,80 @@ exclude = [
 
 [tool.ruff.format]
 quote-style = "single"
-docstring-code-format = false
+docstring-code-format = false # Do not format docstrings
 
 [tool.ruff.lint.per-file-ignores]
+"**" = [
+    "D203", # Blank line before class
+    "D213", # Multi-line docstring summary second line
+    "COM812", # Formatting conflict
+    "Q000", # flake8-quotes
+    "Q003", # flake8-quotes
+]
 "tests/*.py" = [
-  "S101", # asserts
-  "S105", # hardcoded passwords
-  "S404", # subprocess calls are for tests
-  "S603", # do not require `shell=True`
-  "S607", # partial executable paths
+    "S101", # asserts
+    "D100", # Docstring in a public module
+    "D101", # Docstring in a public class
+    "D102", # Docstring in a public method
+    "D103", # Docstring in a public method
+    "D104", # Docstring in a public function
+    "S105", # hardcoded passwords
+    "S404", # subprocess calls are for tests
+    "S603", # do not require `shell=True`
+    "S607", # partial executable paths
+    "PT012", # simple statement in pytest.raises block
+    "S106", # hardcoded assigned values
+    "D203", # blank line before class
+    "D213", # multi-line summary in docstring
+    "COM812", # comma formatting conflicts with formatter
+    "Q000", # quote style conflicts with formatter
+    "Q003", # mixed quotes conflicts with formatter
+]
+"src/*.py" = [
+    "D100", # Docstring in a public module
+    "RUF001", # Cyrylic letter
+    "D104", # Missing docstring in a public package
+
 ]
 
 [tool.ruff.lint]
 select = [
-  "A",    # flake8-builtins
-  "B",    # flake8-bugbear
-  "C4",   # flake8-comprehensions
-  "C90",  # maccabe
-  "COM",  # flake8-commas
-  "D",    # pydocstyle
-  "DTZ",  # flake8-datetimez
-  "E",    # pycodestyle
-  "ERA",  # flake8-eradicate
-  "EXE",  # flake8-executable
-  "F",    # pyflakes
-  "FBT",  # flake8-boolean-trap
-  "FLY",  # pyflint
-  "FURB", # refurb
-  "G",    # flake8-logging-format
-  "I",    # isort
-  "ICN",  # flake8-import-conventions
-  "ISC",  # flake8-implicit-str-concat
-  "LOG",  # flake8-logging
-  "N",    # pep8-naming
-  "PERF", # perflint
-  "PIE",  # flake8-pie
-  "PL",   # pylint
-  "PT",   # flake8-pytest-style
-  "PTH",  # flake8-use-pathlib
-  "Q",    # flake8-quotes
-  "RET",  # flake8-return
-  "RSE",  # flake8-raise
-  "RUF",  # ruff
-  "S",    # flake8-bandit
-  "SIM",  # flake8-simpify
-  "SLF",  # flake8-self
-  "SLOT", # flake8-slots
-  "T100", # flake8-debugger
-  "TRY",  # tryceratops
-  "UP",   # pyupgrade
-  "W",    # pycodestyle
-  "YTT",  # flake8-2020
+    "A", # flake8-builtins
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "C90", # maccabe
+    "COM", # flake8-commas
+    "D", # pydocstyle
+    "DTZ", # flake8-datetimez
+    "E", # pycodestyle
+    "ERA", # flake8-eradicate
+    "EXE", # flake8-executable
+    "F", # pyflakes
+    "FBT", # flake8-boolean-trap
+    "FLY", # pyflint
+    "FURB", # refurb
+    "G", # flake8-logging-format
+    "I", # isort
+    "ICN", # flake8-import-conventions
+    "ISC", # flake8-implicit-str-concat
+    "LOG", # flake8-logging
+    "N", # pep8-naming
+    "PERF", # perflint
+    "PIE", # flake8-pie
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "PTH", # flake8-use-pathlib
+    "Q", # flake8-quotes
+    "RET", # flake8-return
+    "RSE", # flake8-raise
+    "RUF", # ruff
+    "S", # flake8-bandit
+    "SIM", # flake8-simpify
+    "SLF", # flake8-self
+    "SLOT", # flake8-slots
+    "T100", # flake8-debugger
+    "TRY", # tryceratops
+    "UP", # pyupgrade
+    "W", # pycodestyle
+    "YTT", # flake8-2020
 ]

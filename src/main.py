@@ -1,13 +1,13 @@
-import sentry_sdk
-from fastapi import FastAPI, APIRouter
-from starlette_exporter import handle_metrics
-from starlette_exporter import PrometheusMiddleware
+import logging
 
-from src.settings import SENTRY_URL
-from src.users.router import user_router
+import sentry_sdk
+from fastapi import APIRouter, FastAPI
+from starlette_exporter import PrometheusMiddleware, handle_metrics
+
 from src.auth.router import auth_router
 from src.logger import configure_logging
-import logging
+from src.settings import SENTRY_URL
+from src.users.router import user_router
 
 logger = logging.getLogger(__name__)
 configure_logging()
@@ -16,12 +16,12 @@ sentry_sdk.init(
     dsn=SENTRY_URL,
     send_default_pii=True,
 )
-app = FastAPI(title="EducationPlatform")
+app = FastAPI(title='EducationPlatform')
 app.add_middleware(PrometheusMiddleware)
-app.add_route("/metrics", handle_metrics)
-main_api_router = APIRouter(prefix="/api/v1")
-main_api_router.include_router(user_router, prefix="/user", tags=["user"])
-main_api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.add_route('/metrics', handle_metrics)
+main_api_router = APIRouter(prefix='/api/v1')
+main_api_router.include_router(user_router, prefix='/user', tags=['user'])
+main_api_router.include_router(auth_router, prefix='/auth', tags=['auth'])
 app.include_router(main_api_router)
 
-logger.info("Application started")
+logger.info('Application started')

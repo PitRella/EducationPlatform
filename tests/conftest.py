@@ -1,9 +1,10 @@
-import pytest_asyncio
+import uuid
+
 import pytest
+import pytest_asyncio
 from _pytest.fixtures import FixtureRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-import uuid
 
 from src.database import engine
 from src.users.models import User
@@ -18,11 +19,11 @@ def test_user(request: FixtureRequest) -> User:
 @pytest_asyncio.fixture
 async def user_schema() -> CreateUser:
     return CreateUser(
-        name="TestName",
-        surname="TestSurName",
-        email="test_user@tmail.com",
-        password="qwerty123",
-        user_roles=["user"],  # type: ignore
+        name='TestName',
+        surname='TestSurName',
+        email='test_user@tmail.com',
+        password='qwerty123',
+        user_roles=['user'],  # type: ignore
     )
 
 
@@ -30,11 +31,11 @@ async def user_schema() -> CreateUser:
 async def default_user_obj() -> User:
     return User(
         user_id=uuid.uuid4(),
-        name="TestName",
-        surname="TestSurName",
-        email="test_user@tmail.com",
-        password="qwerty123",
-        roles=["user"],
+        name='TestName',
+        surname='TestSurName',
+        email='test_user@tmail.com',
+        password='qwerty123',
+        roles=['user'],
         is_active=True,
     )
 
@@ -43,11 +44,11 @@ async def default_user_obj() -> User:
 async def admin_user_obj() -> User:
     return User(
         user_id=uuid.uuid4(),
-        name="AdminTestName",
-        surname="AdminTestSurName",
-        email="admin_test_user@tmail.com",
-        password="qwerty123",
-        roles=["admin"],
+        name='AdminTestName',
+        surname='AdminTestSurName',
+        email='admin_test_user@tmail.com',
+        password='qwerty123',
+        roles=['admin'],
         is_active=True,
     )
 
@@ -56,11 +57,11 @@ async def admin_user_obj() -> User:
 async def superadmin_user_obj() -> User:
     return User(
         user_id=uuid.uuid4(),
-        name="AdminTestName",
-        surname="AdminTestSurName",
-        email="admin_test_user@tmail.com",
-        password="qwerty123",
-        roles=["superadmin"],
+        name='AdminTestName',
+        surname='AdminTestSurName',
+        email='admin_test_user@tmail.com',
+        password='qwerty123',
+        roles=['superadmin'],
         is_active=True,
     )
 
@@ -68,16 +69,18 @@ async def superadmin_user_obj() -> User:
 @pytest_asyncio.fixture
 async def update_user_schema() -> UpdateUserRequest:
     return UpdateUserRequest(
-        name="uname",
-        surname="usurname",
-        email="uemail",
+        name='uname',
+        surname='usurname',
+        email='uemail',
     )
 
 
 @pytest_asyncio.fixture
 async def db_session():  # type: ignore
     async_session_maker = sessionmaker(  # type: ignore
-        engine, expire_on_commit=False, class_=AsyncSession
+        engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
     )
     session: AsyncSession = async_session_maker()
     try:

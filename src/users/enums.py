@@ -10,6 +10,6 @@ class UserRoles(StrEnum):
     - USER: Basic user role with standard permissions
     """
 
-    SUPERADMIN = "superadmin"
-    ADMIN = "admin"
-    USER = "user"
+    SUPERADMIN = 'superadmin'
+    ADMIN = 'admin'
+    USER = 'user'
