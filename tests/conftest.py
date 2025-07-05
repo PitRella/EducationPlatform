@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from src.database import engine
+from src.users.enums import UserRoles
 from src.users.models import User
 from src.users.schemas import CreateUser, UpdateUserRequest
 
@@ -96,3 +97,46 @@ async def db_started_session(db_session):  # type: ignore
     async with db_session.begin():
         yield db_session
         await db_session.rollback()
+
+
+class MockUserDAO:
+    def __init__(self, user_obj: User):
+        """Initialize MockUserDAO."""
+        self._user = user_obj
+
+    async def create_user(self, *args, **kwargs) -> User:  # type: ignore
+        return User(
+            user_id=self._user.user_id,
+            name=self._user.name,
+            surname=self._user.surname,
+            email=self._user.email,
+            password=self._user.password,
+            roles=self._user.roles,
+            is_active=self._user.is_active,
+        )
+
+    async def get_user_by_id(self, *args, **kwargs) -> User:  # type: ignore
+        return await self.create_user()
+
+    async def get_user_by_email(self, *args, **kwargs) -> User:  # type: ignore
+        return await self.create_user()
+
+    async def update_user(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
+        for k, v in kwargs.items():
+            setattr(self._user, k, v)
+        return self._user.user_id
+
+    async def deactivate_user(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
+        return await self.update_user(*args, **kwargs)
+
+    async def set_admin_privilege(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
+        return await self.update_user(*args, roles=[UserRoles.ADMIN])
+
+    async def revoke_admin_privilege(  # type: ignore
+        self, *args, **kwargs
+    ) -> uuid.UUID:
+        return await self.update_user(*args, roles=[UserRoles.USER])
