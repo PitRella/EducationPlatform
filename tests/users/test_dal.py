@@ -47,7 +47,7 @@ class TestUserDAL:
             surname=test_schema.surname,
             email=test_schema.email,
             password=test_schema.password,
-            user_roles=test_schema.user_roles,  # type: ignore
+            roles=test_schema.roles,  # type: ignore
         )
 
     @staticmethod
@@ -82,7 +82,7 @@ class TestUserDAL:
         assert user.email == test_user_schema.email
         assert user.password == test_user_schema.password
         assert user.is_active
-        assert user.roles == test_user_schema.user_roles
+        assert user.roles == test_user_schema.roles
 
     @staticmethod
     def _base_updated_user_assert(
@@ -293,7 +293,7 @@ class TestUserDAL:
         assert admin_user.surname == user_schema.surname
         assert admin_user.email == user_schema.email
         assert admin_user.password == user_schema.password
-        assert admin_user.roles != user_schema.user_roles
+        assert admin_user.roles != user_schema.roles
         assert 'admin' in admin_user.roles
 
     @pytest.mark.asyncio
@@ -314,7 +314,7 @@ class TestUserDAL:
             db_started_session,
         )
         assert admin_user
-        assert admin_user.roles != user_schema.user_roles
+        assert admin_user.roles != user_schema.roles
         assert 'admin' in admin_user.roles
         revoked_user_id = await self._base_revoke_admin_privilege(
             admin_user.user_id,
@@ -327,5 +327,5 @@ class TestUserDAL:
         )
         assert revoked_user
         assert revoked_user.user_id == admin_user.user_id
-        assert revoked_user.roles == user_schema.user_roles
+        assert revoked_user.roles == user_schema.roles
         assert 'admin' not in admin_user.roles

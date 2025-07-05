@@ -78,7 +78,7 @@ class CreateUser(BaseModel):
     surname: str
     email: str
     password: str
-    user_roles: Sequence[UserRoles] | None = None
+    roles: Sequence[UserRoles] | None = None
 
     @classmethod
     @field_validator('name')

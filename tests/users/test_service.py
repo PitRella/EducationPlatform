@@ -31,7 +31,7 @@ class TestUserService:
         default_user_obj: User,
     ) -> None:
         """Test create user if roles are none."""
-        user_schema.user_roles = None
+        user_schema.roles = None
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(default_user_obj),  # type: ignore
@@ -62,7 +62,7 @@ class TestUserService:
         admin_user_obj: User,
     ) -> None:
         """Test create user with admin roles."""
-        user_schema.user_roles = [UserRoles.ADMIN]
+        user_schema.roles = [UserRoles.ADMIN]
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(admin_user_obj),  # type: ignore
@@ -78,7 +78,7 @@ class TestUserService:
         superadmin_user_obj: User,
     ) -> None:
         """Test create user with superadmin roles."""
-        user_schema.user_roles = [UserRoles.SUPERADMIN]
+        user_schema.roles = [UserRoles.SUPERADMIN]
         service = UserService(
             db_session=db_session,
             dao=MockUserDAO(superadmin_user_obj),  # type: ignore

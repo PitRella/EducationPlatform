@@ -40,7 +40,7 @@ class TestUsersRouter:
             'surname': 'TestSurName',
             'email': 'test_user@tmail.com',
             'password': 'qwerty123',
-            'user_roles': ['user'],
+            'roles': ['user'],
         }
         response: dict[str, str] = client.post(
             '/api/v1/user/', json=data
@@ -48,4 +48,4 @@ class TestUsersRouter:
         assert response.get('name') == data.get('name')
         assert response.get('surname') == data.get('surname')
         assert response.get('email') == data.get('email')
-        assert response.get('roles') == data.get('user_roles')
+        assert response.get('roles') == data.get('roles')

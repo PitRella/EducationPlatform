@@ -24,7 +24,7 @@ async def user_schema() -> CreateUser:
         surname='TestSurName',
         email='test_user@tmail.com',
         password='qwerty123',
-        user_roles=['user'],  # type: ignore
+        roles=['user'],  # type: ignore
     )
 
 

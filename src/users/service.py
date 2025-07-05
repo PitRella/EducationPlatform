@@ -114,7 +114,7 @@ class UserService:
             ID, name, surname, email, active status, and roles
 
         Note:
-            If user_roles are not provided, defaults to [UserRoles.USER]
+            If roles are not provided, defaults to [UserRoles.USER]
 
         """
         async with self.session.begin():
@@ -123,9 +123,7 @@ class UserService:
                 surname=user.surname,
                 email=user.email,
                 password=Hasher.hash_password(user.password),
-                user_roles=user.user_roles
-                if user.user_roles
-                else [UserRoles.USER],
+                roles=user.roles if user.roles else [UserRoles.USER],
             )
         return ShowUser.model_validate(created_user)
 

@@ -39,7 +39,7 @@ class UserDAO:
         surname: str,
         email: str,
         password: str,
-        user_roles: Sequence[UserRoles],
+        roles: Sequence[UserRoles],
     ) -> User:
         """Create a new user in the database.
 
@@ -47,7 +47,7 @@ class UserDAO:
         :param surname: User's last name
         :param email: User's email address
         :param password: User's password
-        :param user_roles: List of roles assigned to the user
+        :param roles: List of roles assigned to the user
         :return: Created User object
         """
         new_user = User(
@@ -55,7 +55,7 @@ class UserDAO:
             surname=surname,
             email=email,
             password=password,
-            roles=[r.value for r in user_roles],
+            roles=[r.value for r in roles],
             # Convert from sequence to str
         )
         self.__db_session.add(new_user)
