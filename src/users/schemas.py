@@ -1,13 +1,25 @@
 import re
 import uuid
 from collections.abc import Sequence
+from typing import Annotated
 
-from fastapi.exceptions import HTTPException
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    field_validator,
+)
 
 from src.users.enums import UserRoles
+from src.users.exceptions import BadEmailException, BadPasswordException
 
-LETTER_MATCH_PATTERN = re.compile(r'^[а-яА-Яa-zA-Z\-]+$')
+PASSWORD_PATTERN = re.compile(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$'
+)
+
+EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
 class TunedModel(BaseModel):
@@ -38,31 +50,7 @@ class UpdateUserRequest(BaseModel):
 
     name: str | None = Field(default=None, min_length=3, max_length=10)
     surname: str | None = Field(default=None, min_length=3, max_length=10)
-    email: str | None = Field(default=None, min_length=3, max_length=50)
-
-    @classmethod
-    @field_validator('name')
-    def validate_name(cls, value: str | None) -> str | None:
-        """Validate name name field."""
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail='Name should contain only letters'
-                ' (a-z, A-Z, a-я, A-Я, -).',
-            )
-        return value
-
-    @classmethod
-    @field_validator('surname')
-    def validate_surname(cls, value: str | None) -> str | None:
-        """Validate surname name field."""
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail='Surname should contain only letters'
-                ' (a-z, A-Z, a-я, A-Я, -).',
-            )
-        return value
+    email: EmailStr | None = Field(default=None, min_length=3, max_length=50)
 
 
 class UpdateUserResponse(BaseModel):
@@ -74,32 +62,32 @@ class UpdateUserResponse(BaseModel):
 class CreateUser(BaseModel):
     """Pydantic model for creating a new user."""
 
-    name: str
-    surname: str
-    email: str
-    password: str
+    name: Annotated[
+        str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
+    ]
+    surname: Annotated[
+        str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
+    ]
+    email: Annotated[EmailStr, Field(pattern='')]
+    password: Annotated[
+        SecretStr,
+        Field(
+            min_length=8,
+            max_length=50,
+        ),
+    ]
     roles: Sequence[UserRoles] | None = None
 
-    @classmethod
-    @field_validator('name')
-    def validate_name(cls, value: str | None) -> str | None:
-        """Validate surname name field."""
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail='Name should contain only letters'
-                ' (a-z, A-Z, a-я, A-Я, -).',
-            )
+    @field_validator('email')
+    def validate_email(cls, value: str) -> str:
+        """Validate the email address using regex."""
+        if not EMAIL_PATTERN.match(value):
+            raise BadEmailException
         return value
 
-    @classmethod
-    @field_validator('surname')
-    def validate_surname(cls, value: str | None) -> str | None:
-        """Validate surname field."""
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail='Surname should contain only letters'
-                ' (a-z, A-Z, a-я, A-Я, -).',
-            )
+    @field_validator('password', mode='before')
+    def validate_password(cls, value: str) -> str:
+        """Validate the password using regex."""
+        if not PASSWORD_PATTERN.match(value):
+            raise BadPasswordException
         return value

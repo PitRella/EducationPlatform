@@ -32,3 +32,26 @@ class ForgottenParametersException(HTTPException):
             status_code=422,
             detail='Not all parameters was filled',
         )
+
+
+class BadEmailException(HTTPException):
+    """Custom exception for when an email is incorrect."""
+
+    def __init__(self) -> None:
+        """Initialize the BadEmailException with status 422."""
+        super().__init__(
+            status_code=422, detail='Email does not fill requirements.'
+        )
+
+
+class BadPasswordException(HTTPException):
+    """Custom exception for when a password is incorrect."""
+
+    def __init__(self) -> None:
+        """Initialize the BadPasswordException with status 422."""
+        super().__init__(
+            status_code=422,
+            detail='Password should contain at least one uppercase letter,'
+            ' one lowercase letter,'
+            ' one digit and one special character @$!%*?&.',
+        )

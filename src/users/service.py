@@ -122,7 +122,7 @@ class UserService:
                 name=user.name,
                 surname=user.surname,
                 email=user.email,
-                password=Hasher.hash_password(user.password),
+                password=Hasher.hash_password(user.password.get_secret_value()),
                 roles=user.roles if user.roles else [UserRoles.USER],
             )
         return ShowUser.model_validate(created_user)

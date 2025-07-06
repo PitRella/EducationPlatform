@@ -15,7 +15,7 @@ dependencies = [
     "passlib>=1.7.4",
     "pre-commit>=4.2.0",
     "psycopg2-binary>=2.9.10",
-    "pydantic>=2.11.5",
+    "pydantic[email]>=2.11.5",
     "pydantic-settings>=2.10.1",
     "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
@@ -61,6 +61,11 @@ docstring-code-format = false # Do not format docstrings
     "Q000", # flake8-quotes
     "Q003", # flake8-quotes
 ]
+
+"*schemas.py" = [
+    "N805" # Ignore first argument should be nammed self. Pydantic issue.
+]
+
 "tests/*.py" = [
     "S101", # asserts
     "D100", # Docstring in a public module
@@ -79,7 +84,9 @@ docstring-code-format = false # Do not format docstrings
     "COM812", # comma formatting conflicts with formatter
     "Q000", # quote style conflicts with formatter
     "Q003", # mixed quotes conflicts with formatter
+    "PLR2004" # magic value, for status codes
 ]
+
 "src/*.py" = [
     "D100", # Docstring in a public module
     "RUF001", # Cyrylic letter
