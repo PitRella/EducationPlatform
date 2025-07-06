@@ -1,29 +1,35 @@
-from envparse import Env  # type: ignore
+from pathlib import Path
 
-env = Env()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Settings for JWT
-SECRET_KEY: str = env.str('SECRET_KEY', default='my-secret-key')
-ALGORITHM: str = env.str('ALGORITHM', default='HS256')
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Token expire time
-ACCESS_TOKEN_EXPIRE_MINUTES: int = env.int(
-    'ACCESS_TOKEN_EXPIRE_MINUTES',
-    default=15,
-)
-REFRESH_TOKEN_EXPIRE_DAYS: int = env.int(
-    'REFRESH_TOKEN_EXPIRE_DAYS',
-    default=30,
-)
 
-# Database settings
-DATABASE_URL: str = env.str(
-    'DATABASE_URL',
-    default='postgresql+asyncpg://postgres:postgres@0.0.0.0:5432/education_db',
-)
+class Settings(BaseSettings):
+    """Base settings class for the application."""
 
-# Sentry url
-SENTRY_URL: str = env.str('SENTRY_URL', default='')
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / '.env',
+        env_file_encoding='utf-8',
+        extra='ignore',
+    )
 
-# Logger
-LOG_LEVEL: str = env.str('LOG_LEVEL', default='INFO')
+    # Log level
+    LOG_LEVEL: str = 'INFO'
+
+    # Token settings
+    TOKEN_SECRET_KEY: str = ''
+    TOKEN_ALGORITHM: str = 'HS256'  # noqa: S105
+    TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    TOKEN_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+
+    # Database settings
+    DB_DATABASE_URL: str = ''
+
+    # Logging settings
+    LOGGING_SENTRY_URL: str = ''
+
+    @classmethod
+    def load(cls) -> 'Settings':
+        """Return a new instance of Settings."""
+        return cls()

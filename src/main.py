@@ -6,14 +6,16 @@ from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from src.auth.router import auth_router
 from src.logger import configure_logging
-from src.settings import SENTRY_URL
+from src.settings import Settings
 from src.users.router import user_router
 
 logger = logging.getLogger(__name__)
+
+settings = Settings.load()
 configure_logging()
 
 sentry_sdk.init(
-    dsn=SENTRY_URL,
+    dsn=settings.LOGGING_SENTRY_URL,
     send_default_pii=True,
 )
 app = FastAPI(title='EducationPlatform')

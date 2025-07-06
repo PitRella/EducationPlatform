@@ -10,12 +10,9 @@ from src.auth.exceptions import (
     WrongCredentialsException,
 )
 from src.auth.models import RefreshSessionModel
-from src.settings import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    ALGORITHM,
-    REFRESH_TOKEN_EXPIRE_DAYS,
-    SECRET_KEY,
-)
+from src.settings import Settings
+
+settings = Settings.load()
 
 
 class TokenManager:
@@ -39,12 +36,12 @@ class TokenManager:
         to_encode: dict[str, str | datetime] = {
             'sub': str(user_id),
             'exp': datetime.now(UTC)
-            + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+            + timedelta(minutes=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES),
         }
         encoded_jwt: str = jwt.encode(
             to_encode,
-            SECRET_KEY,
-            algorithm=ALGORITHM,
+            settings.TOKEN_SECRET_KEY,
+            algorithm=settings.TOKEN_ALGORITHM,
         )
         return f'Bearer {encoded_jwt}'
 
@@ -54,7 +51,9 @@ class TokenManager:
 
         :return: Tuple of (UUID refresh token, timedelta expiration time)
         """
-        return uuid.uuid4(), timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        return uuid.uuid4(), timedelta(
+            days=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS
+        )
 
     @classmethod
     def decode_access_token(cls, token: str) -> dict[str, str | int]:
@@ -66,8 +65,8 @@ class TokenManager:
         try:
             decoded_jwt: dict[str, str | int] = jwt.decode(
                 token=token,
-                key=SECRET_KEY,
-                algorithms=ALGORITHM,
+                key=settings.TOKEN_SECRET_KEY,
+                algorithms=settings.TOKEN_ALGORITHM,
             )
         except JWTError:
             raise WrongCredentialsException from None

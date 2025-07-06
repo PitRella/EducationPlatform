@@ -7,10 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.auth.dependencies import get_service
 from src.auth.schemas import Token
 from src.auth.services import AuthService
-from src.settings import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+from src.settings import Settings
 from src.users.models import User
 
 auth_router = APIRouter()
+settings = Settings.load()
 
 
 @auth_router.post(path='/login', response_model=Token)
@@ -38,13 +39,13 @@ async def login_user(
     response.set_cookie(
         'access_token',
         token.access_token,
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
     )
     response.set_cookie(
         'refresh_token',
         token.refresh_token,
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
+        max_age=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
         httponly=True,
     )
     return token
@@ -73,13 +74,13 @@ async def refresh_token(
     response.set_cookie(
         'access_token',
         token.access_token,
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
     )
     response.set_cookie(
         'refresh_token',
         token.refresh_token,
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
+        max_age=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
         httponly=True,
     )
     return token

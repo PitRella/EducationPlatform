@@ -3,7 +3,9 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from src import settings
+from src.settings import Settings
+
+settings = Settings.load()
 
 
 class Base(DeclarativeBase):
@@ -20,7 +22,7 @@ class Base(DeclarativeBase):
     """
 
 
-engine = create_async_engine(settings.DATABASE_URL, future=True, echo=True)
+engine = create_async_engine(settings.DB_DATABASE_URL, future=True, echo=True)
 
 async_db_session = sessionmaker(  # type: ignore
     bind=engine,
