@@ -7,8 +7,8 @@ from src.auth.dao import AuthDAO
 from src.auth.exceptions import RefreshTokenException, WrongCredentialsException
 from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
+from src.auth.services.hasher import Hasher
 from src.auth.services.token import TokenManager
-from src.hashing import Hasher
 from src.users.dao import UserDAO
 from src.users.models import User
 

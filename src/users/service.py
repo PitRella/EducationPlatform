@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.hashing import Hasher
+from src.auth.services.hasher import Hasher
 from src.users.dao import UserDAO
 from src.users.enums import UserRoles
 from src.users.exceptions import (
