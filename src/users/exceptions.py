@@ -34,17 +34,19 @@ class ForgottenParametersException(HTTPException):
         )
 
 
-class BadEmailException(HTTPException):
+class BadEmailSchemaException(HTTPException):
     """Custom exception for when an email is incorrect."""
 
     def __init__(self) -> None:
         """Initialize the BadEmailException with status 422."""
         super().__init__(
-            status_code=422, detail='Email does not fill requirements.'
+            status_code=422,
+            detail='Invalid email address.'
+            ' Make sure it contains only valid characters.',
         )
 
 
-class BadPasswordException(HTTPException):
+class BadPasswordSchemaException(HTTPException):
     """Custom exception for when a password is incorrect."""
 
     def __init__(self) -> None:

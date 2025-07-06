@@ -13,7 +13,10 @@ from pydantic import (
 )
 
 from src.users.enums import UserRoles
-from src.users.exceptions import BadEmailException, BadPasswordException
+from src.users.exceptions import (
+    BadEmailSchemaException,
+    BadPasswordSchemaException,
+)
 
 PASSWORD_PATTERN = re.compile(
     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$'
@@ -23,7 +26,10 @@ EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
 class TunedModel(BaseModel):
-    """Base model for all models in the application."""
+    """Base model for all models in the application.
+
+    Provided configuration to create models from an orm object.
+    """
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -82,12 +88,12 @@ class CreateUser(BaseModel):
     def validate_email(cls, value: str) -> str:
         """Validate the email address using regex."""
         if not EMAIL_PATTERN.match(value):
-            raise BadEmailException
+            raise BadEmailSchemaException
         return value
 
     @field_validator('password', mode='before')
     def validate_password(cls, value: str) -> str:
         """Validate the password using regex."""
         if not PASSWORD_PATTERN.match(value):
-            raise BadPasswordException
+            raise BadPasswordSchemaException
         return value
