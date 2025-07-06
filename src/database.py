@@ -22,7 +22,9 @@ class Base(DeclarativeBase):
     """
 
 
-engine = create_async_engine(settings.DB_DATABASE_URL, future=True, echo=True)
+engine = create_async_engine(
+    settings.database_settings.DATABASE_URL, future=True, echo=True
+)
 
 async_db_session = sessionmaker(  # type: ignore
     bind=engine,

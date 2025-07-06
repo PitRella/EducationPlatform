@@ -15,7 +15,7 @@ settings = Settings.load()
 configure_logging()
 
 sentry_sdk.init(
-    dsn=settings.LOGGING_SENTRY_URL,
+    dsn=settings.logging_settings.SENTRY_URL,
     send_default_pii=True,
 )
 app = FastAPI(title='EducationPlatform')

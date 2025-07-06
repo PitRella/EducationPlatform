@@ -39,13 +39,16 @@ async def login_user(
     response.set_cookie(
         'access_token',
         token.access_token,
-        max_age=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.token_settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
     )
     response.set_cookie(
         'refresh_token',
         token.refresh_token,
-        max_age=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
+        max_age=settings.token_settings.REFRESH_TOKEN_EXPIRE_DAYS
+        * 30
+        * 24
+        * 60,
         httponly=True,
     )
     return token
@@ -74,13 +77,16 @@ async def refresh_token(
     response.set_cookie(
         'access_token',
         token.access_token,
-        max_age=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.token_settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
     )
     response.set_cookie(
         'refresh_token',
         token.refresh_token,
-        max_age=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS * 30 * 24 * 60,
+        max_age=settings.token_settings.REFRESH_TOKEN_EXPIRE_DAYS
+        * 30
+        * 24
+        * 60,
         httponly=True,
     )
     return token

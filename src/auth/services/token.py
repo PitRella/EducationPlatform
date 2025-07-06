@@ -36,12 +36,14 @@ class TokenManager:
         to_encode: dict[str, str | datetime] = {
             'sub': str(user_id),
             'exp': datetime.now(UTC)
-            + timedelta(minutes=settings.TOKEN_ACCESS_TOKEN_EXPIRE_MINUTES),
+            + timedelta(
+                minutes=settings.token_settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            ),
         }
         encoded_jwt: str = jwt.encode(
             to_encode,
-            settings.TOKEN_SECRET_KEY,
-            algorithm=settings.TOKEN_ALGORITHM,
+            settings.token_settings.SECRET_KEY,
+            algorithm=settings.token_settings.ALGORITHM,
         )
         return f'Bearer {encoded_jwt}'
 
@@ -52,7 +54,7 @@ class TokenManager:
         :return: Tuple of (UUID refresh token, timedelta expiration time)
         """
         return uuid.uuid4(), timedelta(
-            days=settings.TOKEN_REFRESH_TOKEN_EXPIRE_DAYS
+            days=settings.token_settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
 
     @classmethod
@@ -65,8 +67,8 @@ class TokenManager:
         try:
             decoded_jwt: dict[str, str | int] = jwt.decode(
                 token=token,
-                key=settings.TOKEN_SECRET_KEY,
-                algorithms=settings.TOKEN_ALGORITHM,
+                key=settings.token_settings.SECRET_KEY,
+                algorithms=settings.token_settings.ALGORITHM,
             )
         except JWTError:
             raise WrongCredentialsException from None
