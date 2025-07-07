@@ -18,7 +18,7 @@ type create_user_data = dict[str, str | list[str]]
 
 
 @pytest.fixture(autouse=True)
-def override_get_service(
+def override_get_service_default_user(
     default_user_obj: User, db_session: AsyncSession
 ) -> Generator[None]:
     def _mocked_service() -> Generator[UserService]:
@@ -33,9 +33,41 @@ def override_get_service(
     app.dependency_overrides = {}
 
 
+@pytest.fixture
+def override_get_service_admin_user(
+    admin_user_obj: User, db_session: AsyncSession
+) -> Generator[None]:
+    def _mocked_service() -> Generator[UserService]:
+        mocker_user_service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(admin_user_obj),  # type: ignore
+        )
+        yield mocker_user_service
+
+    app.dependency_overrides[get_service] = _mocked_service
+    yield
+    app.dependency_overrides = {}
+
+
+@pytest.fixture
+def override_get_service_superadmin_user(
+    superadmin_user_obj: User, db_session: AsyncSession
+) -> Generator[None]:
+    def _mocked_service() -> Generator[UserService]:
+        mocker_user_service = UserService(
+            db_session=db_session,
+            dao=MockUserDAO(superadmin_user_obj),  # type: ignore
+        )
+        yield mocker_user_service
+
+    app.dependency_overrides[get_service] = _mocked_service
+    yield
+    app.dependency_overrides = {}
+
+
 class TestUsersRouter:
     @staticmethod
-    def _get_use_data() -> create_user_data:
+    def _get_user_data() -> create_user_data:
         return {
             'name': 'TestName',
             'surname': 'TestSurName',
@@ -44,10 +76,30 @@ class TestUsersRouter:
             'roles': ['user'],
         }
 
+    @staticmethod
+    def _get_admin_data() -> create_user_data:
+        return {
+            'name': 'AdminTestName',
+            'surname': 'AdminTestSurName',
+            'email': 'admin_test_user@tmail.com',
+            'password': 'Qwerty@123',
+            'roles': ['admin'],
+        }
+
+    @staticmethod
+    def _get_superadmin_data() -> create_user_data:
+        return {
+            'name': 'AdminTestName',
+            'surname': 'AdminTestSurName',
+            'email': 'admin_test_user@tmail.com',
+            'password': 'Qwerty@123',
+            'roles': ['superadmin'],
+        }
+
     @pytest.mark.asyncio
     async def test_create_user(self) -> None:
         """Correct user creates data."""
-        data = self._get_use_data()
+        data = self._get_user_data()
         response: dict[str, str] = client.post(
             '/api/v1/user/', json=data
         ).json()
@@ -59,7 +111,7 @@ class TestUsersRouter:
     @pytest.mark.asyncio
     async def test_create_user_email_error(self) -> None:
         """Wrong email without @ should case an error."""
-        data = self._get_use_data()
+        data = self._get_user_data()
         data['email'] = 'wrong_email.com'
         response = client.post('/api/v1/user/', json=data)
         assert response.status_code == 422
@@ -68,7 +120,7 @@ class TestUsersRouter:
     async def test_create_user_password_error(self) -> None:
         # Weak password that does not meet the requirements should case an error
 
-        data = self._get_use_data()
+        data = self._get_user_data()
         data['password'] = 'qwerty3'
         response = client.post('/api/v1/user/', json=data)
         assert response.status_code == 422
@@ -76,7 +128,7 @@ class TestUsersRouter:
     @pytest.mark.asyncio
     async def test_create_user_name_with_numbers(self) -> None:
         """Username should not contain numbers."""
-        data = self._get_use_data()
+        data = self._get_user_data()
         data['name'] = 'John19'
         response = client.post('/api/v1/user/', json=data)
         assert response.status_code == 422
@@ -84,7 +136,7 @@ class TestUsersRouter:
     @pytest.mark.asyncio
     async def test_create_user_surname_with_numbers(self) -> None:
         """Surname should not contain numbers."""
-        data = self._get_use_data()
+        data = self._get_user_data()
         data['surname'] = 'Doe23'
         response = client.post('/api/v1/user/', json=data)
         assert response.status_code == 422
@@ -92,10 +144,28 @@ class TestUsersRouter:
     @pytest.mark.asyncio
     async def test_create_user_none_roles(self) -> None:
         """If roles not specified, a default role should be user."""
-        data = self._get_use_data()
+        data = self._get_user_data()
         data['roles'] = []
         response = client.post('/api/v1/user/', json=data).json()
         assert response.get('name') == data.get('name')
         assert response.get('surname') == data.get('surname')
         assert response.get('email') == data.get('email')
         assert response.get('roles') == ['user']
+
+    @pytest.mark.asyncio
+    async def test_create_user_admin_roles(
+        self, override_get_service_admin_user: None
+    ) -> None:
+        """Test to create an admin user."""
+        data = self._get_user_data()
+        response = client.post('/api/v1/user/', json=data).json()
+        assert response.get('roles') == ['admin']
+
+    @pytest.mark.asyncio
+    async def test_create_user_superadmin_roles(
+        self, override_get_service_superadmin_user: None
+    ) -> None:
+        """Test to create a superadmin user."""
+        data = self._get_user_data()
+        response = client.post('/api/v1/user/', json=data).json()
+        assert response.get('roles') == ['superadmin']
