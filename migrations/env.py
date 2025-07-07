@@ -21,6 +21,7 @@ if config.config_file_name is not None:
 from src.database import Base
 import src.users.models
 import src.auth.models
+import src.courses.models
 
 target_metadata = Base.metadata
 
