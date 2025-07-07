@@ -54,7 +54,7 @@ class CreateUserRequestSchema(BaseModel):
     surname: Annotated[
         str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
     ]
-    email: Annotated[EmailStr, Field(pattern='')]
+    email: EmailStr
     password: Annotated[
         SecretStr,
         Field(
