@@ -39,7 +39,7 @@ class TestUsersRouter:
             'name': 'TestName',
             'surname': 'TestSurName',
             'email': 'test_user@tmail.com',
-            'password': 'qwerty123',
+            'password': 'Qwerty@123',
             'roles': ['user'],
         }
         response: dict[str, str] = client.post(

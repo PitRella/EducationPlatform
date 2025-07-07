@@ -23,7 +23,7 @@ async def user_schema() -> CreateUser:
         name='TestName',
         surname='TestSurName',
         email='test_user@tmail.com',
-        password='qwerty123',
+        password='Qwerty@123',  # type: ignore
         roles=['user'],  # type: ignore
     )
 
@@ -72,7 +72,7 @@ async def update_user_schema() -> UpdateUserRequest:
     return UpdateUserRequest(
         name='uname',
         surname='usurname',
-        email='uemail',
+        email='uemail@gmail.com',
     )
 
 

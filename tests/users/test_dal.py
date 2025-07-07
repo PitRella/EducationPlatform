@@ -46,7 +46,7 @@ class TestUserDAL:
             name=test_schema.name,
             surname=test_schema.surname,
             email=test_schema.email,
-            password=test_schema.password,
+            password=test_schema.password.get_secret_value(),
             roles=test_schema.roles,  # type: ignore
         )
 
@@ -80,7 +80,7 @@ class TestUserDAL:
         assert user.name == test_user_schema.name
         assert user.surname == test_user_schema.surname
         assert user.email == test_user_schema.email
-        assert user.password == test_user_schema.password
+        assert user.password == test_user_schema.password.get_secret_value()
         assert user.is_active
         assert user.roles == test_user_schema.roles
 
@@ -292,7 +292,7 @@ class TestUserDAL:
         assert admin_user.name == user_schema.name
         assert admin_user.surname == user_schema.surname
         assert admin_user.email == user_schema.email
-        assert admin_user.password == user_schema.password
+        assert admin_user.password == user_schema.password.get_secret_value()
         assert admin_user.roles != user_schema.roles
         assert 'admin' in admin_user.roles
 
