@@ -1,109 +1,80 @@
-import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import get_user_from_jwt
+from src.auth.dependencies import validate_user_permission
+from src.auth.enums import UserAction
+from src.users.dependencies import get_service
 from src.users.models import User
 from src.users.schemas import (
-    ShowUser,
-    CreateUser,
-    DeleteUserResponse,
-    UpdateUserResponse,
-    UpdateUserRequest,
+    CreateUserRequestSchema,
+    CreateUserResponseShema,
+    DeleteUserResponseSchema,
+    UpdateUserRequestSchema,
+    UpdateUserResponseSchema,
 )
-from src.session import get_db
-
 from src.users.service import UserService
 
 user_router = APIRouter()
 
 
-@user_router.post("/", response_model=ShowUser)
+@user_router.post('/', response_model=CreateUserResponseShema)
 async def create_user(
-    user: CreateUser, db: AsyncSession = Depends(get_db)
-) -> ShowUser:
-    return await UserService.create_new_user(user=user, db=db)
+    user: CreateUserRequestSchema,
+    service: Annotated[UserService, Depends(get_service)],
+) -> CreateUserResponseShema:
+    """Endpoint to create a new user."""
+    return await service.create_new_user(user=user)
 
 
-@user_router.delete("/", response_model=DeleteUserResponse)
+@user_router.delete('/', response_model=DeleteUserResponseSchema)
 async def deactivate_user(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    jwt_user: User = Depends(get_user_from_jwt),
-) -> DeleteUserResponse:
-    deleted_user: DeleteUserResponse = await UserService.deactivate_user(
-        requested_user_id=user_id, jwt_user_id=jwt_user, db=db
-    )
-    return deleted_user
+    service: Annotated[UserService, Depends(get_service)],
+    user: Annotated[User, Security(validate_user_permission(UserAction.GET))],
+) -> DeleteUserResponseSchema:
+    """Endpoint to deactivate the user."""
+    return await service.deactivate_user(target_user=user)
 
 
-@user_router.get("/", response_model=ShowUser)
+@user_router.get('/', response_model=CreateUserResponseShema)
 async def get_user_by_id(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    jwt_user: User = Depends(get_user_from_jwt),
-) -> ShowUser:
-    user: ShowUser = await UserService.get_user(
-        jwt_user_id=jwt_user, requested_user_id=user_id, db=db
-    )
-    return user
+    user: Annotated[User, Security(validate_user_permission(UserAction.GET))],
+) -> CreateUserResponseShema:
+    """Endpoint to update get a user."""
+    return CreateUserResponseShema.model_validate(user)
 
 
-@user_router.patch("/", response_model=UpdateUserResponse)
+@user_router.patch('/', response_model=UpdateUserResponseSchema)
 async def update_user(
-    user_id: uuid.UUID,
-    user_fields: UpdateUserRequest,
-    db: AsyncSession = Depends(get_db),
-    jwt_user: User = Depends(get_user_from_jwt),
-) -> UpdateUserResponse:
-    """
-    Update user information for a specified user.
-
-    Args:
-        user_id (UUID): The unique identifier of the user to update.
-        user_fields (UpdateUserRequest): The fields to update for the user.
-        db (AsyncSession): Database session dependency.
-        jwt_user (User): The authenticated user making the request.
-
-    Returns:
-        UpdateUserResponse: The updated user information.
-
-    Raises:
-        HTTPException: If the user is not authorized to update the specified user,
-                      or if the user is not found.
-    """
-
-    updated_user: UpdateUserResponse = await UserService.update_user(
-        jwt_user_id=jwt_user,
-        requested_user_id=user_id,
-        user_fields=user_fields,
-        db=db,
-    )
-    return updated_user
+    user: Annotated[User, Depends(validate_user_permission(UserAction.UPDATE))],
+    user_fields: UpdateUserRequestSchema,
+    service: Annotated[UserService, Depends(get_service)],
+) -> UpdateUserResponseSchema:
+    """Endpoint to update info about a user."""
+    return await service.update_user(target_user=user, user_fields=user_fields)
 
 
-@user_router.patch("/set_admin_privilege")
+@user_router.patch('/set_admin_privilege')
 async def set_admin_privilege(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    jwt_user: User = Depends(get_user_from_jwt),
-) -> UpdateUserResponse:
-    return await UserService.set_admin_privilege(
-        jwt_user=jwt_user,
-        requested_user_id=user_id,
-        db=db,
+    user: Annotated[
+        User,
+        Depends(validate_user_permission(UserAction.SET_ADMIN_PRIVILEGE)),
+    ],
+    service: Annotated[UserService, Depends(get_service)],
+) -> UpdateUserResponseSchema:
+    """Endpoint to set admin privileges to a user."""
+    return await service.set_admin_privilege(
+        target_user=user,
     )
 
 
-@user_router.patch("/revoke_admin_privilege")
+@user_router.patch('/revoke_admin_privilege')
 async def revoke_admin_privilege(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    jwt_user: User = Depends(get_user_from_jwt),
-) -> UpdateUserResponse:
-    return await UserService.revoke_admin_privilege(
-        jwt_user=jwt_user,
-        requested_user_id=user_id,
-        db=db,
-    )
+    service: Annotated[UserService, Depends(get_service)],
+    user: Annotated[
+        User,
+        Security(validate_user_permission(UserAction.REVOKE_ADMIN_PRIVILEGE)),
+    ],
+) -> UpdateUserResponseSchema:
+    """Endpoint to revoke admin privileges from a user."""
+    return await service.revoke_admin_privilege(target_user=user)

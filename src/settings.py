@@ -1,27 +1,64 @@
-from envparse import Env  # type: ignore
+from pathlib import Path
 
-env = Env()
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Settings for JWT
-SECRET_KEY: str = env.str("SECRET_KEY", default="my-secret-key")
-ALGORITHM: str = env.str("ALGORITHM", default="HS256")
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Token expire time
-ACCESS_TOKEN_EXPIRE_MINUTES: int = env.int(
-    "ACCESS_TOKEN_EXPIRE_MINUTES", default=15
-)
-REFRESH_TOKEN_EXPIRE_DAYS: int = env.int(
-    "REFRESH_TOKEN_EXPIRE_DAYS", default=30
-)
 
-# Database settings
-DATABASE_URL: str = env.str(
-    "DATABASE_URL",
-    default="postgresql+asyncpg://postgres:postgres@0.0.0.0:5432/education_db",
-)
+class TokenSettings(BaseSettings):
+    """Token-related settings."""
 
-# Sentry url
-SENTRY_URL: str = env.str("SENTRY_URL", default="")
+    model_config = SettingsConfigDict(
+        env_prefix='TOKEN_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
 
-# Logger
-LOG_LEVEL: str = env.str("LOG_LEVEL", default="INFO")
+    SECRET_KEY: str = ''
+    ALGORITHM: str = 'HS256'
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+
+
+class DatabaseSettings(BaseSettings):
+    """Database-related settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix='DB_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
+
+    DATABASE_URL: str = ''
+
+
+class LoggingSettings(BaseSettings):
+    """Logging-related settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix='LOGGING_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
+
+    SENTRY_URL: str = ''
+
+
+class Settings(BaseSettings):
+    """Base settings class for the application."""
+
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / '.env',
+        env_file_encoding='utf-8',
+        extra='ignore',
+    )
+
+    # Log level
+    LOG_LEVEL: str = 'INFO'
+
+    # Nested settings
+    token_settings: TokenSettings = Field(default_factory=TokenSettings)
+    database_settings: DatabaseSettings = Field(
+        default_factory=DatabaseSettings
+    )
+    logging_settings: LoggingSettings = Field(default_factory=LoggingSettings)
+
+    @classmethod
+    def load(cls) -> 'Settings':
+        """Return a new instance of Settings."""
+        return cls()

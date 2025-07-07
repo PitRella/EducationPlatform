@@ -1,87 +1,99 @@
 import re
-from typing import Optional, Sequence
-from src.users.enums import UserRoles
-
-from fastapi.exceptions import HTTPException
-
-from pydantic import BaseModel, field_validator, ConfigDict, Field
-
 import uuid
+from collections.abc import Sequence
+from typing import Annotated
 
-LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    field_validator,
+)
+
+from src.users.enums import UserRoles
+from src.users.exceptions import (
+    BadEmailSchemaException,
+    BadPasswordSchemaException,
+)
+
+PASSWORD_PATTERN = re.compile(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$'
+)
+
+EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
-class TunedModel(BaseModel):
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+class BaseTunedModelSchema(BaseModel):
+    """Base model for all models in the application.
+
+    Provided configuration to create models from an orm object.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ShowUser(TunedModel):
+class CreateUserResponseShema(BaseTunedModelSchema):
+    """Pydantic model for showing user information."""
+
     user_id: uuid.UUID
     name: str
     surname: str
     email: str
     is_active: bool
-    user_roles: Sequence[str]
+    roles: Sequence[str]
 
 
-class DeleteUserResponse(BaseModel):
+class CreateUserRequestSchema(BaseModel):
+    """Pydantic model for creating a new user."""
+
+    name: Annotated[
+        str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
+    ]
+    surname: Annotated[
+        str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
+    ]
+    email: Annotated[EmailStr, Field(pattern='')]
+    password: Annotated[
+        SecretStr,
+        Field(
+            min_length=8,
+            max_length=50,
+        ),
+    ]
+    roles: Sequence[UserRoles] | None = None
+
+    @field_validator('email')
+    def validate_email(cls, value: str) -> str:
+        """Validate the email address using regex."""
+        if not EMAIL_PATTERN.match(value):
+            raise BadEmailSchemaException
+        return value
+
+    @field_validator('password', mode='before')
+    def validate_password(cls, value: str) -> str:
+        """Validate the password using regex."""
+        if not PASSWORD_PATTERN.match(value):
+            raise BadPasswordSchemaException
+        return value
+
+
+class DeleteUserResponseSchema(BaseModel):
+    """Pydantic model for deleting user response."""
+
     deleted_user_id: uuid.UUID
 
 
-class UpdateUserRequest(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=3, max_length=10)
-    surname: Optional[str] = Field(default=None, min_length=3, max_length=10)
-    email: Optional[str] = Field(default=None, min_length=3, max_length=50)
+class UpdateUserRequestSchema(BaseModel):
+    """Pydantic model for updating user information."""
 
-    @classmethod
-    @field_validator("name")
-    def validate_name(cls, value: Optional[str]) -> Optional[str]:
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail="Name should contain only letters (a-z, A-Z, а-я, А-Я, -).",
-            )
-        return value
-
-    @classmethod
-    @field_validator("surname")
-    def validate_surname(cls, value: Optional[str]) -> Optional[str]:
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail="Surname should contain only letters (a-z, A-Z, а-я, А-Я, -).",
-            )
-        return value
+    name: str | None = Field(default=None, min_length=3, max_length=10)
+    surname: str | None = Field(default=None, min_length=3, max_length=10)
+    email: EmailStr | None = Field(default=None, min_length=3, max_length=50)
 
 
-class UpdateUserResponse(BaseModel):
+class UpdateUserResponseSchema(BaseModel):
+    """Pydantic model for updating user response."""
+
     updated_user_id: uuid.UUID
-
-
-class CreateUser(BaseModel):
-    name: str
-    surname: str
-    email: str
-    password: str
-    user_roles: Optional[Sequence[UserRoles]] = None
-
-    @classmethod
-    @field_validator("name")
-    def validate_name(cls, value: Optional[str]) -> Optional[str]:
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail="Name should contain only letters (a-z, A-Z, а-я, А-Я, -).",
-            )
-        return value
-
-    @classmethod
-    @field_validator("surname")
-    def validate_surname(cls, value: Optional[str]) -> Optional[str]:
-        if value is not None and not LETTER_MATCH_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422,
-                detail="Surname should contain only letters (a-z, A-Z, а-я, А-Я, -).",
-            )
-        return value

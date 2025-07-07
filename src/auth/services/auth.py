@@ -1,225 +1,258 @@
 import uuid
-from typing import Optional, Union, cast
+from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dal import AuthDAL
-from src.auth.exceptions import WrongCredentialsException, RefreshTokenException
+from src.auth.dao import AuthDAO
+from src.auth.exceptions import RefreshTokenException, WrongCredentialsException
 from src.auth.models import RefreshSessionModel
 from src.auth.schemas import Token
+from src.auth.services.hasher import Hasher
 from src.auth.services.token import TokenManager
-from src.hashing import Hasher
-from src.users.dal import UserDAL
+from src.users.dao import UserDAO
 from src.users.models import User
 
 
 class AuthService:
-    @staticmethod
-    def _verify_user_password(user: Optional[User], password: str) -> None:
-        """
-        Verify if the provided password matches the user's stored password hash.
+    """Service for handling authentication-related operations.
+
+    This service manages user authentication workflows, including
+    verifying credentials, managing sessions, and interacting with
+    data access objects (DAOs) for users and authentication data.
+
+    """
+
+    def __init__(
+        self,
+        db_session: AsyncSession,
+        auth_dao: AuthDAO | None = None,
+        user_dao: UserDAO | None = None,
+    ) -> None:
+        """Initialize AuthService with a database session and optional DAOs.
+
+        This service handles user authentication, token management,
+        and related operations.
 
         Args:
-            user: User model instance containing the stored password hash
-            password: Plain text password to verify
+            db_session (AsyncSession): SQLAlchemy async database session
+            auth_dao (AuthDAO | None, optional): Data access object for auth
+                If None, creates a new instance. Defaults to None.
+            user_dao (UserDAO | None, optional): Data access object for user
+                If None, creates a new instance. Defaults to None.
 
-        Raises:
-            WrongCredentialsException: If user is None or password verification fails
+        Note:
+            The service will create new instances of AuthDAO and UserDAO.
+
+        """
+        self._session: AsyncSession = db_session
+        self._auth_dao: AuthDAO = auth_dao or AuthDAO(db_session)
+        self._user_dao: UserDAO = user_dao or UserDAO(db_session)
+
+    @property
+    def auth_dao(self) -> AuthDAO:
+        """Return the AuthDAO instance."""
+        return self._auth_dao
+
+    @property
+    def user_dao(self) -> UserDAO:
+        """Return the UserDAO instance."""
+        return self._user_dao
+
+    @property
+    def session(self) -> AsyncSession:
+        """Return the current AsyncSession."""
+        return self._session
+
+    @staticmethod
+    def _verify_user_password(user: User | None, password: str) -> None:
+        """Verify that the given password matches the user's password.
+
+        Raise WrongCredentialsException if verification fails.
         """
         if not user or not Hasher.verify_password(password, user.password):
             raise WrongCredentialsException
 
-    @classmethod
-    async def auth_user(
-        cls, email: str, password: str, db: AsyncSession
-    ) -> User:
-        """
-        Authenticate a user using email and password.
+    async def auth_user(self, email: str, password: str) -> User:
+        """Authenticate a user by email and password.
 
-        Args:
-            email: User's email address
-            password: User's password in plain text
-            db: AsyncSession instance for database operations
+        Fetch the user by email and verify the password.
+        Raises WrongCredentialsException if authentication fails.
 
         Returns:
-            User: Authenticated user model instance
+            User: Authenticated user instance.
 
-        Raises:
-            WrongCredentialsException: If a user is not found or password verification fails
         """
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_email(email)
-        cls._verify_user_password(user, password)
+        async with self.session.begin():
+            user: User | None = await self.user_dao.get_user_by_email(email)
+        self._verify_user_password(user, password)
         return cast(User, user)
 
     @staticmethod
     def _get_user_id_from_jwt(decoded_jwt: dict[str, str | int]) -> str:
-        """
-        Extract and validate user ID from a decoded JWT token.
+        """Extract and return user ID from decoded JWT payload.
 
-        Args:
-            decoded_jwt: Dictionary containing decoded JWT claims
+        Raises WrongCredentialsException if user ID is missing or invalid.
 
         Returns:
-            str: The validated user ID from the token
+            str: User ID extracted from JWT.
 
-        Raises:
-            WrongCredentialsException: If user ID is missing or has an invalid type
         """
-        user_id: Optional[int | str] = decoded_jwt.get("sub", None)
+        user_id: int | str | None = decoded_jwt.get('sub')
         if not user_id or isinstance(user_id, int):
             raise WrongCredentialsException
         return user_id
 
-    @classmethod
-    async def validate_token(
-        cls, user_jwt_token: str, db: AsyncSession
-    ) -> User:
-        """
-        Validate a JWT token and return the associated user.
+    async def validate_token(self, user_jwt_token: str) -> User:
+        """Validate a JWT token and retrieve the associated user.
+
+        This method decodes the provided JWT token, validates its expiration,
+        and retrieves the associated user from the database.
 
         Args:
-            user_jwt_token: JWT token string to validate
-            db: AsyncSession instance for database operations
+            user_jwt_token (str): The JWT token to validate.
 
         Returns:
-            User: User model instance associated with the token
+            User: The user associated with the token.
 
         Raises:
-            WrongCredentialsException: If the token is invalid, or the user has not found
-            AccessTokenExpiredException: If token has expired
-        """
+            WrongCredentialsException: If the token is invalid, expired,
+                or the user cannot be found.
 
+        """
         decoded_jwt: dict[str, str | int] = TokenManager.decode_access_token(
-            token=user_jwt_token
+            token=user_jwt_token,
         )
         TokenManager.validate_access_token_expired(decoded_jwt)
-        user_id: Union[uuid.UUID, str] = cls._get_user_id_from_jwt(decoded_jwt)
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                user: Optional[User] = await user_dal.get_user_by_id(user_id)
+        user_id: uuid.UUID | str = self._get_user_id_from_jwt(decoded_jwt)
+        async with self.session.begin():
+            user: User | None = await self.user_dao.get_user_by_id(user_id)
         if not user:
             raise WrongCredentialsException
         return user
 
-    @classmethod
-    async def create_token(cls, user_id: uuid.UUID, db: AsyncSession) -> Token:
-        """
-        Create a new token pair (access token and refresh token) for a user.
+    async def create_token(self, user_id: uuid.UUID) -> Token:
+        """Generate new access and refresh tokens for a user.
+
+        This method creates a new pair of tokens (access and refresh)
+        for the given user,
+        deletes any existing refresh tokens for that user,
+         and stores the new refresh token
+        in the database.
 
         Args:
-            user_id: UUID of the user to create tokens for
-            db: AsyncSession instance for database operations
+            user_id (uuid.UUID): The unique identifier
+             of the user for whom to generate tokens.
 
         Returns:
-            Token: Token schema instance containing access_token and refresh_token
+            Token: A Token object containing the new
+            access_token and refresh_token.
 
         Note:
-            The refresh token is stored in the database with its expiration time
-        """
+            The method will delete all existing refresh
+            tokens for the user before creating
+            new ones to ensure security and prevent token accumulation.
 
+        """
         access_token: str = TokenManager.generate_access_token(user_id=user_id)
         refresh_token, tm_delta = TokenManager.generate_refresh_token()
-        async with db as session:
-            async with session.begin():
-                auth_dal = AuthDAL(session)
-                await auth_dal.delete_old_tokens(
-                    user_id=user_id,
-                )
-                await auth_dal.create_token(
-                    user_id, refresh_token, tm_delta.total_seconds()
-                )
+        async with self.session.begin():
+            await self.auth_dao.delete_old_tokens(
+                user_id=user_id,
+            )
+            await self.auth_dao.create_token(
+                user_id,
+                refresh_token,
+                tm_delta.total_seconds(),
+            )
         return Token(
-            access_token=access_token, refresh_token=str(refresh_token)
+            access_token=access_token,
+            refresh_token=str(refresh_token),
         )
 
-    @classmethod
-    async def refresh_token(
-        cls, refresh_token: uuid.UUID, db: AsyncSession
-    ) -> Token:
-        """
-        Refresh an existing token pair using a refresh token.
+    async def refresh_token(self, refresh_token: uuid.UUID) -> Token:
+        """Generate new access and refresh tokens.
+
+        This method validates the provided refresh token, checks
+         if it exists and hasn't expired,
+        then generates new access and refresh tokens for the user.
 
         Args:
-            refresh_token: UUID of the refresh token to validate and update
-            db: AsyncSession instance for database operations
+        refresh_token (uuid.UUID): The current refresh token to be
+        used for generating new tokens.
 
         Returns:
-            Token: New token pair containing fresh access_token and refresh_token
+        Token: A Token object containing the new access_token and refresh_token.
 
         Raises:
-            RefreshTokenException: If the refresh token is invalid, expired, or the user is not found
+        RefreshTokenException: If the refresh token is invalid,
+        expired, or the associated user
+        cannot be found.
+
         """
+        async with self.session.begin():
+            refresh_token_model: (
+                RefreshSessionModel | None
+            ) = await self.auth_dao.get_refresh_token(
+                refresh_token=refresh_token,
+            )
+            if not refresh_token_model:
+                raise RefreshTokenException
+            TokenManager.validate_refresh_token_expired(
+                refresh_token_model=refresh_token_model,
+            )
+            user_id: uuid.UUID = refresh_token_model.user_id
+            user: User | None = await self.user_dao.get_user_by_id(
+                user_id=user_id,
+            )
+            if not user:
+                raise RefreshTokenException
+            access_token: str = TokenManager.generate_access_token(
+                user_id=user_id,
+            )
+            updated_refresh_token, tm_delta = (
+                TokenManager.generate_refresh_token()
+            )
+            updated_refresh_token_model: (
+                RefreshSessionModel | None
+            ) = await self.auth_dao.update_refresh_token(
+                refresh_token_id=refresh_token_model.id,
+                refresh_token=updated_refresh_token,
+                expires_at=tm_delta.total_seconds(),
+            )
+            if not updated_refresh_token_model:
+                raise RefreshTokenException
+            return Token(
+                access_token=access_token,
+                refresh_token=str(updated_refresh_token),
+            )
 
-        async with db as session:
-            async with session.begin():
-                auth_dal: AuthDAL = AuthDAL(db_session=db)
-                user_dal: UserDAL = UserDAL(db_session=db)
-                refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.get_refresh_token(
-                    refresh_token=refresh_token
-                )
-                if not refresh_token_model:
-                    raise RefreshTokenException
-                TokenManager.validate_refresh_token_expired(
-                    refresh_token_model=refresh_token_model,
-                )
-                user_id: uuid.UUID = refresh_token_model.user_id
-                user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=user_id
-                )
-                if not user:
-                    raise RefreshTokenException
-                access_token: str = TokenManager.generate_access_token(
-                    user_id=user_id
-                )
-                updated_refresh_token, tm_delta = (
-                    TokenManager.generate_refresh_token()
-                )
-                updated_refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.update_refresh_token(
-                    refresh_token_id=refresh_token_model.id,
-                    refresh_token=updated_refresh_token,
-                    expires_at=tm_delta.total_seconds(),
-                )
-                if not updated_refresh_token_model:
-                    raise RefreshTokenException
-                return Token(
-                    access_token=access_token,
-                    refresh_token=str(updated_refresh_token),
-                )
-
-    @classmethod
     async def logout_user(
-        cls, refresh_token: Optional[str], db: AsyncSession
+        self,
+        refresh_token: str | None,
     ) -> None:
-        """
-        Log out a user by invalidating their refresh token.
+        """Log out a user by invalidating their refresh token.
 
         Args:
-            refresh_token: UUID of the refresh token to invalidate
-            db: AsyncSession instance for database operations
+            refresh_token (str | None): The refresh token to invalidate.
+                If None, RefreshTokenException will be raised.
 
         Raises:
-            RefreshTokenException: If the refresh token is not found
+            RefreshTokenException: If the refresh token is None or invalid.
+
+        Returns:
+            None
+
         """
         if not refresh_token:
             raise RefreshTokenException
-        async with db as session:
-            async with session.begin():
-                auth_dal: AuthDAL = AuthDAL(db_session=db)
-                refresh_token_model: Optional[
-                    RefreshSessionModel
-                ] = await auth_dal.get_refresh_token(
-                    refresh_token=refresh_token
-                )
-                if not refresh_token_model:
-                    raise RefreshTokenException
-                await auth_dal.delete_refresh_token(
-                    refresh_token_id=refresh_token_model.id
-                )
+        async with self.session.begin():
+            refresh_token_model: (
+                RefreshSessionModel | None
+            ) = await self.auth_dao.get_refresh_token(
+                refresh_token=refresh_token,
+            )
+            if not refresh_token_model:
+                raise RefreshTokenException
+            await self.auth_dao.delete_refresh_token(
+                refresh_token_id=refresh_token_model.id,
+            )

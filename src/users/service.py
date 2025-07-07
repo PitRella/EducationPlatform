@@ -1,205 +1,248 @@
 import uuid
-from typing import Optional
 
-from src.auth.enums import UserAction
-from src.auth.services import PermissionService
-from src.users.dal import UserDAL
-from src.hashing import Hasher
-from src.users.models import User
-from src.users.enums import UserRoles
-from src.users.schemas import (
-    CreateUser,
-    ShowUser,
-    UpdateUserResponse,
-    UpdateUserRequest,
-    DeleteUserResponse,
-)
-from src.users.exceptions import (
-    UserNotFoundByIdException,
-    ForgottenParametersException,
-)
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.auth.services.hasher import Hasher
+from src.users.dao import UserDAO
+from src.users.enums import UserRoles
+from src.users.exceptions import (
+    ForgottenParametersException,
+    UserNotFoundByIdException,
+)
+from src.users.models import User
+from src.users.schemas import (
+    CreateUserRequestSchema,
+    CreateUserResponseShema,
+    DeleteUserResponseSchema,
+    UpdateUserRequestSchema,
+    UpdateUserResponseSchema,
+)
 
 
 class UserService:
-    @staticmethod
-    async def _fetch_user_with_validation(
-        requested_user_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession,
-        action: UserAction,
-    ) -> User:
-        """
-        Retrieve and validate user permissions between the requested and current user.
+    """Service class for handling user-related business logic and operations.
+
+    This class provides an interface between the API layer
+    and data access layer,
+    implementing business logic for user management operations
+    such as creation, retrieval, updates, and privilege management.
+
+    Attributes:
+        _session (AsyncSession): SQLAlchemy async session.
+        _dao (UserDAO): Data Access Object for user-related db operations
+
+    The service handles:
+        - User creation and retrieval
+        - User information updates
+        - User deactivation
+        - Admin privilege management
+        - Input validation and error handling
+
+    """
+
+    def __init__(
+        self,
+        db_session: AsyncSession,
+        dao: UserDAO | None = None,
+    ) -> None:
+        """Initialize a new UserService instance.
 
         Args:
-            requested_user_id (uuid.UUID): ID of the user being requested/targeted
-            current_user (uuid.UUID): User making the request (from JWT token)
-            db (AsyncSession): Database session for transaction management
-            action (UserAction): User action to perform
+            db_session (AsyncSession): The SQLAlchemy async session
+            dao (UserDAO | None, optional): Data Access Object
+             for user operations.
+                If None, creates a new UserDAO instance.
+                Defaults to None.
+
+        """
+        self._session: AsyncSession = db_session
+        self._dao: UserDAO = dao or UserDAO(db_session)
+
+    @property
+    def dao(self) -> UserDAO:
+        """Get the data access object associated with this service.
 
         Returns:
-            User: The target user object if validation succeeds
+            UserDAO: The Data Access Object for
+            user-related database operations
+
+        """
+        return self._dao
+
+    @property
+    def session(self) -> AsyncSession:
+        """Get the database session associated with this service.
+
+        Returns:
+            AsyncSession: The SQLAlchemy async session for database operations
+
+        """
+        return self._session
+
+    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
+        """Retrieve a user by their ID from the database.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier of the user to retrieve
+
+        Returns:
+            User: The user object if found
 
         Raises:
-            UserNotFoundByIdException: If either target or current user is not found,
-            PermissionException: If the current user lacks permission to access the target user
-        """
+            UserNotFoundByIdException: If no active user
+            is found with the given ID
 
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                target_user: Optional[User] = await user_dal.get_user_by_id(
-                    user_id=requested_user_id
-                )
-        if not target_user:
+        """
+        async with self.session.begin():
+            user: User | None = await self.dao.get_user_by_id(user_id)
+        if not user:
             raise UserNotFoundByIdException
-        PermissionService.validate_permission(target_user, current_user, action)
-        return target_user
+        return user
 
-    @classmethod
     async def create_new_user(
-        cls, user: CreateUser, db: AsyncSession
-    ) -> ShowUser:
-        """
-        Create a new user in the database.
+        self,
+        user: CreateUserRequestSchema,
+    ) -> CreateUserResponseShema:
+        """Create a new user in the database.
 
         Args:
-            user (CreateUser): User data containing name, surname, email, password and optional roles
-            db (AsyncSession): Database session for transaction management
+            user (CreateUserRequestSchema): User data containing
+            name, surname, email, password, and optional roles
 
         Returns:
-            ShowUser: Created user information including ID, name, surname, email, active status and roles
+            CreateUserResponseShema: Created user information including
+            ID, name, surname, email, active status, and roles
 
         Note:
-            If user_roles are not provided, defaults to [UserRoles.USER]
+            If roles are not provided, defaults to [UserRoles.USER]
+
         """
+        async with self.session.begin():
+            created_user: User = await self.dao.create_user(
+                name=user.name,
+                surname=user.surname,
+                email=user.email,
+                password=Hasher.hash_password(user.password.get_secret_value()),
+                roles=user.roles if user.roles else [UserRoles.USER],
+            )
+        return CreateUserResponseShema.model_validate(created_user)
 
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                created_user: User = await user_dal.create_user(
-                    name=user.name,
-                    surname=user.surname,
-                    email=user.email,
-                    password=Hasher.hash_password(user.password),
-                    user_roles=user.user_roles
-                    if user.user_roles
-                    else [UserRoles.USER],  # noqa: F821
-                )
-                return ShowUser(
-                    user_id=created_user.user_id,
-                    name=created_user.name,
-                    surname=created_user.surname,
-                    email=created_user.email,
-                    is_active=created_user.is_active,
-                    user_roles=created_user.roles,
-                )
-
-    @classmethod
     async def deactivate_user(
-        cls,
-        requested_user_id: uuid.UUID,
-        jwt_user_id: User,
-        db: AsyncSession,
-    ) -> DeleteUserResponse:
-        target_user: User = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.DELETE
-        )
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                deleted_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.deactivate_user(target_user.user_id)
+        self, target_user: User
+    ) -> DeleteUserResponseSchema:
+        """Deactivate a user in the system.
+
+        Args:
+            target_user (User): The user to be deactivated
+
+        Returns:
+            DeleteUserResponseSchema: Response containing the
+             ID of the deactivated user
+
+        Raises:
+            UserNotFoundByIdException: If the target user is not found
+
+        Note:
+            This operation sets the user's is_active flag to False
+
+        """
+        async with self.session.begin():
+            deleted_user_id: uuid.UUID | None = await self.dao.deactivate_user(
+                target_user.user_id,
+            )
         if not deleted_user_id:
             raise UserNotFoundByIdException
-        return DeleteUserResponse(deleted_user_id=deleted_user_id)
+        return DeleteUserResponseSchema(deleted_user_id=deleted_user_id)
 
-    @classmethod
-    async def get_user(
-        cls,
-        requested_user_id: uuid.UUID,
-        jwt_user_id: User,
-        db: AsyncSession,
-    ) -> ShowUser:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.GET
-        )
-        return ShowUser(
-            user_id=target_user.user_id,
-            name=target_user.name,
-            surname=target_user.surname,
-            email=target_user.email,
-            is_active=target_user.is_active,
-            user_roles=target_user.roles,
-        )
-
-    @classmethod
     async def update_user(
-        cls,
-        requested_user_id: uuid.UUID,
-        jwt_user_id: User,
-        user_fields: UpdateUserRequest,
-        db: AsyncSession,
-    ) -> UpdateUserResponse:
+        self,
+        target_user: User,
+        user_fields: UpdateUserRequestSchema,
+    ) -> UpdateUserResponseSchema:
+        """Update user information in the database.
+
+        Args:
+            target_user (User): The user object to be updated
+            user_fields (UpdateUserRequestSchema): Fields to update
+            containing optional name, surname, email
+
+        Returns:
+            UpdateUserResponseSchema: Response containing the ID-updated user.
+
+        Raises:
+            ForgottenParametersException: If no fields are provided for update
+            UserNotFoundByIdException: If the target user is not found
+
+        Note:
+            Only non-None fields from user_fields will be used for the update
+
+        """
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
-            exclude_none=True
+            exclude_none=True,
+            exclude_unset=True,
         )  # Delete None key value pair
         if not filtered_user_fields:
             raise ForgottenParametersException
-        target_user: User = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user_id, db, UserAction.UPDATE
-        )
-        async with db as session:
-            async with session.begin():
-                user_dal = UserDAL(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.update_user(
-                    target_user.user_id,
-                    **filtered_user_fields,
-                )
+        async with self.session.begin():
+            updated_user_id: uuid.UUID | None = await self.dao.update_user(
+                target_user.user_id,
+                **filtered_user_fields,
+            )
         if not updated_user_id:
             raise UserNotFoundByIdException
-        return UpdateUserResponse(updated_user_id=updated_user_id)
+        return UpdateUserResponseSchema(updated_user_id=updated_user_id)
 
-    @classmethod
     async def set_admin_privilege(
-        cls,
-        jwt_user: User,
-        requested_user_id: uuid.UUID,
-        db: AsyncSession,
-    ) -> UpdateUserResponse:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
-        )
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.set_admin_privilege(target_user.user_id)
-                if not updated_user_id:
-                    raise UserNotFoundByIdException
-                return UpdateUserResponse(updated_user_id=updated_user_id)
+        self,
+        target_user: User,
+    ) -> UpdateUserResponseSchema:
+        """Grant admin privileges to a user.
 
-    @classmethod
+        Args:
+            target_user (User): The user to whom admin
+             privileges will be granted
+
+        Returns:
+            UpdateUserResponseSchema: Response containing the ID-updated user.
+
+        Raises:
+            UserNotFoundByIdException: If the target user is not found
+
+        Note:
+            This operation adds the ADMIN role to the user's roles list
+
+        """
+        async with self.session.begin():
+            updated_user_id: (
+                uuid.UUID | None
+            ) = await self.dao.set_admin_privilege(target_user.user_id)
+        if not updated_user_id:
+            raise UserNotFoundByIdException
+        return UpdateUserResponseSchema(updated_user_id=updated_user_id)
+
     async def revoke_admin_privilege(
-        cls,
-        jwt_user: User,
-        requested_user_id: uuid.UUID,
-        db: AsyncSession,
-    ) -> UpdateUserResponse:
-        target_user = await cls._fetch_user_with_validation(
-            requested_user_id, jwt_user, db, UserAction.SET_ADMIN_PRIVILEGE
-        )
-        async with db as session:
-            async with session.begin():
-                user_dal: UserDAL = UserDAL(session)
-                updated_user_id: Optional[
-                    uuid.UUID
-                ] = await user_dal.revoke_admin_privilege(target_user.user_id)
-                if not updated_user_id:
-                    raise UserNotFoundByIdException
-                return UpdateUserResponse(updated_user_id=updated_user_id)
+        self,
+        target_user: User,
+    ) -> UpdateUserResponseSchema:
+        """Revoke admin privileges from a user.
+
+        Args:
+            target_user (User): The user from whom to revoke admin privileges
+
+        Returns:
+            UpdateUserResponseSchema: Response containing the ID-updated user.
+
+        Raises:
+            UserNotFoundByIdException: If the target user is not found
+
+        Note:
+            This operation removes the ADMIN role from the user's roles list
+
+        """
+        async with self.session.begin():
+            updated_user_id: (
+                uuid.UUID | None
+            ) = await self.dao.revoke_admin_privilege(target_user.user_id)
+        if not updated_user_id:
+            raise UserNotFoundByIdException
+        return UpdateUserResponseSchema(updated_user_id=updated_user_id)

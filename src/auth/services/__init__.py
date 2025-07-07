@@ -1,5 +1,6 @@
 from .auth import AuthService
-from .token import TokenManager
+from .hasher import Hasher
 from .permission import PermissionService
+from .token import TokenManager
 
-__all__ = ["AuthService", "TokenManager", "PermissionService"]
+__all__ = ['AuthService', 'Hasher', 'PermissionService', 'TokenManager']
