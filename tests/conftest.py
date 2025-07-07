@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from src.database import engine
 from src.users.enums import UserRoles
 from src.users.models import User
-from src.users.schemas import CreateUser, UpdateUserRequest
+from src.users.schemas import CreateUserRequestSchema, UpdateUserRequestSchema
 
 
 @pytest.fixture
@@ -18,8 +18,8 @@ def test_user(request: FixtureRequest) -> User:
 
 
 @pytest_asyncio.fixture
-async def user_schema() -> CreateUser:
-    return CreateUser(
+async def user_schema() -> CreateUserRequestSchema:
+    return CreateUserRequestSchema(
         name='TestName',
         surname='TestSurName',
         email='test_user@tmail.com',
@@ -68,8 +68,8 @@ async def superadmin_user_obj() -> User:
 
 
 @pytest_asyncio.fixture
-async def update_user_schema() -> UpdateUserRequest:
-    return UpdateUserRequest(
+async def update_user_schema() -> UpdateUserRequestSchema:
+    return UpdateUserRequestSchema(
         name='uname',
         surname='usurname',
         email='uemail@gmail.com',

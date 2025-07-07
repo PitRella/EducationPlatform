@@ -25,7 +25,7 @@ PASSWORD_PATTERN = re.compile(
 EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
-class TunedModel(BaseModel):
+class BaseTunedModelSchema(BaseModel):
     """Base model for all models in the application.
 
     Provided configuration to create models from an orm object.
@@ -34,7 +34,7 @@ class TunedModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ShowUser(TunedModel):
+class CreateUserResponseShema(BaseTunedModelSchema):
     """Pydantic model for showing user information."""
 
     user_id: uuid.UUID
@@ -45,27 +45,7 @@ class ShowUser(TunedModel):
     roles: Sequence[str]
 
 
-class DeleteUserResponse(BaseModel):
-    """Pydantic model for deleting user response."""
-
-    deleted_user_id: uuid.UUID
-
-
-class UpdateUserRequest(BaseModel):
-    """Pydantic model for updating user information."""
-
-    name: str | None = Field(default=None, min_length=3, max_length=10)
-    surname: str | None = Field(default=None, min_length=3, max_length=10)
-    email: EmailStr | None = Field(default=None, min_length=3, max_length=50)
-
-
-class UpdateUserResponse(BaseModel):
-    """Pydantic model for updating user response."""
-
-    updated_user_id: uuid.UUID
-
-
-class CreateUser(BaseModel):
+class CreateUserRequestSchema(BaseModel):
     """Pydantic model for creating a new user."""
 
     name: Annotated[
@@ -97,3 +77,23 @@ class CreateUser(BaseModel):
         if not PASSWORD_PATTERN.match(value):
             raise BadPasswordSchemaException
         return value
+
+
+class DeleteUserResponseSchema(BaseModel):
+    """Pydantic model for deleting user response."""
+
+    deleted_user_id: uuid.UUID
+
+
+class UpdateUserRequestSchema(BaseModel):
+    """Pydantic model for updating user information."""
+
+    name: str | None = Field(default=None, min_length=3, max_length=10)
+    surname: str | None = Field(default=None, min_length=3, max_length=10)
+    email: EmailStr | None = Field(default=None, min_length=3, max_length=50)
+
+
+class UpdateUserResponseSchema(BaseModel):
+    """Pydantic model for updating user response."""
+
+    updated_user_id: uuid.UUID

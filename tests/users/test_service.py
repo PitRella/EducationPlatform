@@ -6,7 +6,7 @@ from src.users.exceptions import (
     ForgottenParametersException,
 )
 from src.users.models import User
-from src.users.schemas import CreateUser, UpdateUserRequest
+from src.users.schemas import CreateUserRequestSchema, UpdateUserRequestSchema
 from src.users.service import UserService
 from tests.conftest import MockUserDAO
 
@@ -27,7 +27,7 @@ class TestUserService:
     async def test_create_new_user_with_none_roles(
         self,
         db_session: AsyncSession,
-        user_schema: CreateUser,
+        user_schema: CreateUserRequestSchema,
         default_user_obj: User,
     ) -> None:
         """Test create user if roles are none."""
@@ -43,7 +43,7 @@ class TestUserService:
     async def test_create_new_user_with_regular_roles(
         self,
         db_session: AsyncSession,
-        user_schema: CreateUser,
+        user_schema: CreateUserRequestSchema,
         default_user_obj: User,
     ) -> None:
         """Test create user with user roles."""
@@ -58,7 +58,7 @@ class TestUserService:
     async def test_create_new_user_with_admin_roles(
         self,
         db_session: AsyncSession,
-        user_schema: CreateUser,
+        user_schema: CreateUserRequestSchema,
         admin_user_obj: User,
     ) -> None:
         """Test create user with admin roles."""
@@ -74,7 +74,7 @@ class TestUserService:
     async def test_create_new_user_with_superadmin_roles(
         self,
         db_session: AsyncSession,
-        user_schema: CreateUser,
+        user_schema: CreateUserRequestSchema,
         superadmin_user_obj: User,
     ) -> None:
         """Test create user with superadmin roles."""
@@ -90,7 +90,7 @@ class TestUserService:
     async def test_update_user(
         self,
         db_session: AsyncSession,
-        update_user_schema: UpdateUserRequest,
+        update_user_schema: UpdateUserRequestSchema,
         default_user_obj: User,
     ) -> None:
         """Test to user update his own profile."""
@@ -109,7 +109,7 @@ class TestUserService:
     async def test_update_user_email_none(
         self,
         db_session: AsyncSession,
-        update_user_schema: UpdateUserRequest,
+        update_user_schema: UpdateUserRequestSchema,
         default_user_obj: User,
     ) -> None:
         """Test to user update email to none."""
@@ -130,7 +130,7 @@ class TestUserService:
     async def test_update_user_all_fields_none(
         self,
         db_session: AsyncSession,
-        update_user_schema: UpdateUserRequest,
+        update_user_schema: UpdateUserRequestSchema,
         default_user_obj: User,
     ) -> None:
         """Test to user update every field with none."""
