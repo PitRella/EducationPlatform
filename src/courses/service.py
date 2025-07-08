@@ -1,10 +1,14 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.courses.dao import AbstractCourseDAO, CourseDAO
+from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
     CreateCourseRequestSchema,
     CreateCourseResponseSchema,
+    GetCourseResponseSchema,
 )
 
 
@@ -46,3 +50,14 @@ class CourseService:
         async with self.session.begin():
             course: Course = await self.dao.create_course(course_schema)
         return CreateCourseResponseSchema.model_validate(course)
+
+    async def get_course(
+        self,
+        course_id: uuid.UUID,
+    ) -> GetCourseResponseSchema:
+        """Get a course by its ID."""
+        async with self.session.begin():
+            course: Course | None = await self.dao.get_course(course_id)
+        if not course:
+            raise CourseNotFoundByIdException
+        return GetCourseResponseSchema.model_validate(course)

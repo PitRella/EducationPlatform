@@ -25,13 +25,21 @@ class BaseCourseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class BaseCourseResponseSchema(BaseCourseSchema):
+    """Base course response schema."""
+
+    id: uuid.UUID
+
+
 class CreateCourseRequestSchema(BaseCourseSchema):
     """Course creation request schema."""
 
     author_id: uuid.UUID
 
 
-class CreateCourseResponseSchema(BaseCourseSchema):
+class CreateCourseResponseSchema(BaseCourseResponseSchema):
     """Course creation response schema."""
 
-    id: uuid.UUID
+
+class GetCourseResponseSchema(BaseCourseResponseSchema):
+    """Course get response schema."""

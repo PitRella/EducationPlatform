@@ -1,5 +1,8 @@
+import uuid
 from abc import ABC, abstractmethod
+from typing import Any
 
+from sqlalchemy import Result, Select, and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.courses.models import Course
@@ -27,6 +30,11 @@ class AbstractCourseDAO(ABC):
         """Create a new course in the database."""
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_course(self, course_id: uuid.UUID) -> Course | None:
+        """Get a course by its ID."""
+        raise NotImplementedError
+
 
 class CourseDAO(AbstractCourseDAO):
     """Course Data Access Object."""
@@ -39,3 +47,14 @@ class CourseDAO(AbstractCourseDAO):
         self.session.add(course)
         await self.session.flush()
         return course
+
+    async def get_course(
+        self,
+        course_id: uuid.UUID,
+    ) -> Course | None:
+        """Get a course by its ID."""
+        query: Select[Any] = select(Course).where(
+            and_(Course.id == course_id, Course.is_active)
+        )
+        result: Result[Any] = await self.session.execute(query)
+        return result.scalar_one_or_none()
