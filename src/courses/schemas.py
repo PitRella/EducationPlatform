@@ -11,9 +11,10 @@ from src.courses.enums import (
 )
 
 
-class BaseCourseSchema(BaseModel):
-    """Base course schema for creation."""
+class BaseCourseResponseSchema(BaseModel):
+    """Base course response schema."""
 
+    id: uuid.UUID
     title: Annotated[str, Field(min_length=5, max_length=40)]
     description: Annotated[str, Field(min_length=20, max_length=512)]
     level: CourseLevelEnum
@@ -25,21 +26,16 @@ class BaseCourseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BaseCourseResponseSchema(BaseCourseSchema):
-    """Base course response schema."""
-
-    id: uuid.UUID
-
-
-class CreateCourseRequestSchema(BaseCourseSchema):
-    """Course creation request schema."""
+class BaseCreateCourseSchema(BaseModel):
+    """Base course schema for creation."""
 
     author_id: uuid.UUID
+    title: Annotated[str, Field(min_length=5, max_length=40)]
+    description: Annotated[str, Field(min_length=20, max_length=512)]
+    level: CourseLevelEnum
+    logo: str
+    price: Annotated[Decimal, Field(gt=0, le=100000)]
+    currency: CurrencyEnum
+    language: AvailableLanguagesEnum
 
-
-class CreateCourseResponseSchema(BaseCourseResponseSchema):
-    """Course creation response schema."""
-
-
-class GetCourseResponseSchema(BaseCourseResponseSchema):
-    """Course get response schema."""
+    model_config = ConfigDict(from_attributes=True)

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.courses.models import Course
 from src.courses.schemas import (
-    CreateCourseRequestSchema,
+    BaseCreateCourseSchema,
 )
 
 
@@ -25,7 +25,7 @@ class AbstractCourseDAO(ABC):
 
     @abstractmethod
     async def create_course(
-        self, course_schema: CreateCourseRequestSchema
+        self, course_schema: BaseCreateCourseSchema
     ) -> Course:
         """Create a new course in the database."""
         raise NotImplementedError
@@ -40,7 +40,7 @@ class CourseDAO(AbstractCourseDAO):
     """Course Data Access Object."""
 
     async def create_course(
-        self, course_schema: CreateCourseRequestSchema
+        self, course_schema: BaseCreateCourseSchema
     ) -> Course:
         """Create a new course in the database."""
         course: Course = Course(**course_schema.model_dump())

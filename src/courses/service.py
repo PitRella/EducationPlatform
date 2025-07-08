@@ -6,9 +6,8 @@ from src.courses.dao import AbstractCourseDAO, CourseDAO
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
-    CreateCourseRequestSchema,
-    CreateCourseResponseSchema,
-    GetCourseResponseSchema,
+    BaseCourseResponseSchema,
+    BaseCreateCourseSchema,
 )
 
 
@@ -44,20 +43,20 @@ class CourseService:
         return self._dao
 
     async def create_course(
-        self, course_schema: CreateCourseRequestSchema
-    ) -> CreateCourseResponseSchema:
+        self, course_schema: BaseCreateCourseSchema
+    ) -> BaseCourseResponseSchema:
         """Create a new course in the database."""
         async with self.session.begin():
             course: Course = await self.dao.create_course(course_schema)
-        return CreateCourseResponseSchema.model_validate(course)
+        return BaseCourseResponseSchema.model_validate(course)
 
     async def get_course(
         self,
         course_id: uuid.UUID,
-    ) -> GetCourseResponseSchema:
+    ) -> BaseCourseResponseSchema:
         """Get a course by its ID."""
         async with self.session.begin():
             course: Course | None = await self.dao.get_course(course_id)
         if not course:
             raise CourseNotFoundByIdException
-        return GetCourseResponseSchema.model_validate(course)
+        return BaseCourseResponseSchema.model_validate(course)
