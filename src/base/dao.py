@@ -1,22 +1,17 @@
-from typing import Any, TypeVar
+from typing import TypeVar, cast
 
 from pydantic import BaseModel
-from sqlalchemy import ColumnElement, Result, Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import Base
 
 Model = TypeVar('Model', bound=Base)
 CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
-GetSchema = TypeVar('GetSchema', bound=BaseModel)
-DeleteSchema = TypeVar('DeleteSchema', bound=BaseModel)
 
 
 class BaseDAO[
     Model,
     CreateSchema,
-    GetSchema,
-    DeleteSchema,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -30,12 +25,22 @@ class BaseDAO[
     session and Pydantic schemas for data validation.
     """
 
-    model: type[Model]
+    def __init__(self, session: AsyncSession, model: type[Model]):
+        """Initialize a new BaseDAO instance."""
+        self._session: AsyncSession = session
+        self._model: type[Model] = model
 
-    @classmethod
-    async def create_model(
-        cls, session: AsyncSession, schema: BaseModel
-    ) -> Model:
+    @property
+    def session(self) -> AsyncSession:
+        """Return the current database session."""
+        return self._session
+
+    @property
+    def model(self) -> type[Model]:
+        """Return the current model for dao."""
+        return self._model
+
+    async def create_model(self, schema: CreateSchema) -> Model:
         """Create and save a new model instance in the database.
 
         Args:
@@ -46,33 +51,9 @@ class BaseDAO[
             Model: The created model instance.
 
         """
-        created_model: Model = cls.model(
-            **schema.model_dump(exclude_unset=True)
+        # Use cast to show mypy that our schema is inherited from BaseModel
+        created_model: Model = self.model(
+            **cast(BaseModel, schema).model_dump(exclude_unset=True)
         )
-        session.add(created_model)
-        await session.flush()
+        self.session.add(created_model)
         return created_model
-
-    @classmethod
-    async def get_model(
-        cls,
-        session: AsyncSession,
-        *filters: ColumnElement[bool],
-        **filters_by: Any,
-    ) -> Model | None:
-        """Retrieve a model instance from the database based on filters.
-
-        Args:
-            session (AsyncSession): The SQLAlchemy async session.
-            *filters (ColumnElement[bool]): Variable length filter conditions.
-            **filters_by (Any): Keyword filter conditions.
-
-        Returns:
-            Model | None: Retrieved model instance or None if not found.
-
-        """
-        query: Select[Any] = (
-            select(cls.model).filter(*filters).filter_by(**filters_by)
-        )
-        result: Result[Any] = await session.execute(query)
-        return result.scalar_one_or_none()
