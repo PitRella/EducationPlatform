@@ -1,18 +1,20 @@
 from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
-from sqlalchemy import Result, Select, select
+from sqlalchemy import Result, Select, Update, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import Base
 
 Model = TypeVar('Model', bound=Base)
 CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
+UpdateSchema = TypeVar('UpdateSchema', bound=BaseModel)
 
 
 class BaseDAO[
     Model,
     CreateSchema,
+    UpdateSchema,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -41,20 +43,30 @@ class BaseDAO[
         """Return the current model for dao."""
         return self._model
 
-    async def create(self, schema: CreateSchema) -> Model:
-        """Create a new database record from the provided schema.
+    async def create(self, data: CreateSchema | dict[str, Any]) -> Model:
+        """Create a new database record using provided data.
 
         Args:
-            schema (CreateSchema): Pydantic model instance containing the data
-                for the new record.
+            data: Either a Pydantic model instance or a dictionary containing
+                 the data for creating a new record. Dictionary input is used
+                 for special cases like creating a user with hashed password.
 
         Returns:
-            Model: Created database model instance.
+            Model: The newly created database model instance.
+
+        Note:
+            The method adds the created model to the session but does not commit
+            the transaction. The caller is responsible for that.
 
         """
-        # Use cast to show mypy that our schema is inherited from BaseModel
-        created_model: Model = self.model(
-            **cast(BaseModel, schema).model_dump(exclude_unset=True)
+        # For rare cases like to create a user with hash pass
+        if isinstance(data, dict):
+            created_model = self.model(**data)
+            self.session.add(created_model)
+            return created_model
+        # Cast to show mypy that our schema has a model_dump method
+        created_model = self.model(
+            **cast(BaseModel, data).model_dump(exclude_unset=True)
         )
         self.session.add(created_model)
         return created_model
@@ -73,7 +85,7 @@ class BaseDAO[
 
         """
         query: Select[Any] = (
-            select(self.model).filter(*filters).filter_by(**filters_by)
+            select(self.model).where(*filters).filter_by(**filters_by)
         )
         return await self.session.execute(query)
 
@@ -106,3 +118,34 @@ class BaseDAO[
         """
         result: Result[Any] = await self._get(*filters, **filters_by)
         return cast(list[Model], result.scalars().all())
+
+    async def update(
+        self,
+        update_schema: UpdateSchema,
+        *filters: Any,
+        **filters_by: Any,
+    ) -> Model | None:
+        """Update records matching the specified filters with provided data.
+
+        Args:
+            update_schema: Pydantic model containing the fields to update
+            *filters: Variable length argument list of filter conditions
+            **filters_by: Arbitrary kwargs for filtering by column values
+
+        Returns:
+            Model | None: Updated model instance or None
+
+        """
+        # Cast to show mypy that our schema has a model_dump method
+        values_to_update = cast(BaseModel, update_schema).model_dump(
+            exclude_unset=True
+        )
+        query: Update = (
+            update(self.model)
+            .where(*filters)
+            .filter_by(**filters_by)
+            .values(values_to_update)
+            .returning(self.model)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
