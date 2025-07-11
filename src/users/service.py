@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.services.hasher import Hasher
 from src.base.dao import BaseDAO
-from src.users.enums import UserRoles
 from src.users.exceptions import (
     ForgottenParametersException,
     UserNotFoundByIdException,
@@ -104,7 +103,7 @@ class UserService:
 
         """
         async with self.session.begin():
-            user: User | None = await self.dao.get_one(user_id=user_id)
+            user: User | None = await self.dao.get_one(id=user_id)
         if not user:
             raise UserNotFoundByIdException
         return user
@@ -130,7 +129,6 @@ class UserService:
         user_data = user.model_dump()
         user_secret_pass = user_data['password'].get_secret_value()
         user_data['password'] = Hasher.hash_password(user_secret_pass)
-        user_data['roles'] = [UserRoles.USER]
         async with self.session.begin():
             created_user = await self.dao.create(user_data)
         return CreateUserResponseShema.model_validate(created_user)
@@ -155,7 +153,7 @@ class UserService:
         """
         async with self.dao.session.begin():
             deleted_user: User | None = await self.dao.update(
-                self._DEACTIVATE_USER_UPDATE, user_id=target_user.id
+                self._DEACTIVATE_USER_UPDATE, id=target_user.id
             )
         if not deleted_user:
             raise UserNotFoundByIdException
@@ -192,7 +190,7 @@ class UserService:
             raise ForgottenParametersException
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                filtered_user_fields, target_user.id
+                filtered_user_fields, id=target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
@@ -220,7 +218,7 @@ class UserService:
         """
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                self._SET_ADMIN_UPDATE, user_id=target_user.id
+                self._SET_ADMIN_UPDATE, id=target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
