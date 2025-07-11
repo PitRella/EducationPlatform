@@ -16,7 +16,7 @@ class TestUserService:
         self, result_user: User, original_user: User
     ) -> None:
         assert result_user
-        assert result_user.user_id == original_user.user_id
+        assert result_user.id == original_user.id
         assert result_user.name == original_user.name
         assert result_user.surname == original_user.surname
         assert result_user.email == original_user.email
@@ -99,8 +99,8 @@ class TestUserService:
             dao=MockUserDAO(default_user_obj),  # type: ignore
         )
         await service.update_user(default_user_obj, update_user_schema)
-        updated_user = await service.get_user_by_id(default_user_obj.user_id)
-        assert updated_user.user_id == default_user_obj.user_id
+        updated_user = await service.get_user(default_user_obj.id)  # type: ignore
+        assert updated_user.id == default_user_obj.id
         assert updated_user.name == update_user_schema.name
         assert updated_user.surname == update_user_schema.surname
         assert updated_user.email == update_user_schema.email
@@ -119,8 +119,8 @@ class TestUserService:
             dao=MockUserDAO(default_user_obj),  # type: ignore
         )
         await service.update_user(default_user_obj, update_user_schema)
-        updated_user = await service.get_user_by_id(default_user_obj.user_id)
-        assert updated_user.user_id == default_user_obj.user_id
+        updated_user = await service.get_user(default_user_obj.id)  # type: ignore
+        assert updated_user.id == default_user_obj.id
         assert updated_user.name == update_user_schema.name
         assert updated_user.surname == update_user_schema.surname
         # Email should not be changed, because it is None
@@ -161,9 +161,7 @@ class TestUserService:
         deactivated_user_schema = await service.deactivate_user(
             default_user_obj
         )
-        assert (
-            deactivated_user_schema.deleted_user_id == default_user_obj.user_id
-        )
+        assert deactivated_user_schema.deleted_user_id == default_user_obj.id
 
     @pytest.mark.parametrize(
         'test_user', ['default_user_obj', 'admin_user_obj'], indirect=True
@@ -181,7 +179,7 @@ class TestUserService:
             dao=MockUserDAO(test_user),  # type: ignore
         )
         upd_user_schema = await service.set_admin_privilege(superadmin_user_obj)
-        assert test_user.user_id == upd_user_schema.updated_user_id
+        assert test_user.id == upd_user_schema.updated_user_id
         assert test_user.roles == ['admin']
 
     @pytest.mark.asyncio
@@ -199,5 +197,5 @@ class TestUserService:
         upd_user_schema = await service.revoke_admin_privilege(
             superadmin_user_obj
         )
-        assert default_user_obj.user_id == upd_user_schema.updated_user_id
+        assert default_user_obj.id == upd_user_schema.updated_user_id
         assert default_user_obj.roles == ['user']

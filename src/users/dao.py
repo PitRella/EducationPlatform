@@ -84,7 +84,7 @@ class UserDAO:
         :return: User object if found and active, None otherwise
         """
         query: Select = select(User).where(  # type: ignore
-            and_(User.user_id == user_id, User.is_active),
+            and_(User.id == user_id, User.is_active),
         )
         result: Result[Any] = await self.__db_session.execute(query)
         user: User | None = result.scalar_one_or_none()
@@ -113,9 +113,9 @@ class UserDAO:
         """
         query: Update = (
             update(User)
-            .where(and_(User.user_id == user_id, User.is_active))
+            .where(and_(User.id == user_id, User.is_active))
             .values(kwargs)
-            .returning(User.user_id)
+            .returning(User.id)
         )
         result: Result[Any] = await self.__db_session.execute(query)
         updated_user_id: uuid.UUID | None = result.scalar_one_or_none()

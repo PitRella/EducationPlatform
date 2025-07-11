@@ -35,7 +35,7 @@ async def login_user(
         email=form_data.username,
         password=form_data.password,
     )
-    token: Token = await service.create_token(user.user_id)
+    token: Token = await service.create_token(user.id)
     response.set_cookie(
         'access_token',
         token.access_token,

@@ -132,10 +132,10 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         deactivated_user_id = await self._base_user_deactivate(
-            user.user_id,
+            user.id,
             db_started_session,
         )
-        assert deactivated_user_id == user.user_id
+        assert deactivated_user_id == user.id
         assert not user.is_active
 
     @pytest.mark.asyncio
@@ -147,7 +147,7 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         deactivated_user_id = await self._base_user_deactivate(
-            user.user_id,
+            user.id,
             db_started_session,
         )
         assert deactivated_user_id
@@ -166,7 +166,7 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         get_user = await self._base_user_get_by_id(
-            user.user_id,
+            user.id,
             db_started_session,
         )
         assert get_user
@@ -223,11 +223,11 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_user_update(
-            user.user_id,
+            user.id,
             update_user_schema,
             db_started_session,
         )
-        assert updated_user_id == user.user_id
+        assert updated_user_id == user.id
         updated_user = await self._base_user_get_by_id(
             updated_user_id,
             db_started_session,
@@ -248,7 +248,7 @@ class TestUserDAL:
         update_user_schema.email = None
         with pytest.raises(IntegrityError):
             await self._base_user_update(
-                user.user_id,
+                user.id,
                 update_user_schema,
                 db_started_session,
             )
@@ -267,7 +267,7 @@ class TestUserDAL:
         update_user_schema.surname = None
         with pytest.raises(IntegrityError):
             await self._base_user_update(
-                user.user_id,
+                user.id,
                 update_user_schema,
                 db_started_session,
             )
@@ -282,10 +282,10 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_set_admin_privilege(
-            user.user_id,
+            user.id,
             db_started_session,
         )
-        assert updated_user_id == user.user_id
+        assert updated_user_id == user.id
         admin_user = await self._base_user_get_by_id(
             updated_user_id,
             db_started_session,
@@ -307,10 +307,10 @@ class TestUserDAL:
         user = await self._base_user_create(user_schema, db_started_session)
         self._base_user_assert(user, user_schema)
         updated_user_id = await self._base_set_admin_privilege(
-            user.user_id,
+            user.id,
             db_started_session,
         )
-        assert updated_user_id == user.user_id
+        assert updated_user_id == user.id
         admin_user = await self._base_user_get_by_id(
             updated_user_id,
             db_started_session,
@@ -319,7 +319,7 @@ class TestUserDAL:
         assert admin_user.roles != user_schema.roles
         assert 'admin' in admin_user.roles
         revoked_user_id = await self._base_revoke_admin_privilege(
-            admin_user.user_id,
+            admin_user.id,
             db_started_session,
         )
         assert revoked_user_id
@@ -328,6 +328,6 @@ class TestUserDAL:
             db_started_session,
         )
         assert revoked_user
-        assert revoked_user.user_id == admin_user.user_id
+        assert revoked_user.id == admin_user.id
         assert revoked_user.roles == user_schema.roles
         assert 'admin' not in admin_user.roles

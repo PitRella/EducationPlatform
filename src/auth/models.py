@@ -35,5 +35,5 @@ class RefreshSessionModel(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
-        ForeignKey('users.user_id', ondelete='CASCADE'),
+        ForeignKey('users.id', ondelete='CASCADE'),
     )

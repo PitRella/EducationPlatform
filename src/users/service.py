@@ -1,4 +1,5 @@
 import uuid
+from typing import ClassVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +42,10 @@ class UserService:
         - Input validation and error handling
 
     """
+
+    _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
+    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['user']}
+    _SET_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['admin']}
 
     def __init__(
         self,
@@ -150,7 +155,7 @@ class UserService:
         """
         async with self.dao.session.begin():
             deleted_user: User | None = await self.dao.update(
-                {'is_active': False}, user_id=target_user.user_id
+                self._DEACTIVATE_USER_UPDATE, user_id=target_user.id
             )
         if not deleted_user:
             raise UserNotFoundByIdException
@@ -187,7 +192,7 @@ class UserService:
             raise ForgottenParametersException
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                filtered_user_fields, target_user.user_id
+                filtered_user_fields, target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
@@ -215,7 +220,7 @@ class UserService:
         """
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                {'roles': ['admin']}, user_id=target_user.user_id
+                self._SET_ADMIN_UPDATE, user_id=target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
@@ -242,7 +247,7 @@ class UserService:
         """
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                {'roles': ['user']}, target_user.user_id
+                self._REVOKE_ADMIN_UPDATE, target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
