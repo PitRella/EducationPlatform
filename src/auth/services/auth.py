@@ -9,6 +9,7 @@ from src.auth.schemas import CreateRefreshTokenSchema, Token
 from src.auth.services.hasher import Hasher
 from src.auth.services.token import TokenManager
 from src.base.dao import BaseDAO
+from src.base.service import BaseService
 from src.users.models import User
 from src.users.schemas import CreateUserRequestSchema
 
@@ -16,7 +17,7 @@ type UserDAO = BaseDAO[User, CreateUserRequestSchema]
 type AuthDAO = BaseDAO[RefreshToken, CreateRefreshTokenSchema]
 
 
-class AuthService:
+class AuthService(BaseService):
     """Service for handling authentication-related operations.
 
     This service manages user authentication workflows, including
@@ -47,7 +48,7 @@ class AuthService:
             The service will create new instances of AuthDAO and UserDAO.
 
         """
-        self._session: AsyncSession = db_session
+        super().__init__(db_session)
         self._auth_dao: AuthDAO = auth_dao or BaseDAO[
             RefreshToken,
             CreateRefreshTokenSchema,

@@ -4,27 +4,21 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.params import Security
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.enums import UserAction
 from src.auth.services import AuthService, PermissionService
-from src.database import get_db
 from src.users.dependencies import get_user_from_uuid
 from src.users.models import User
-
+from src.base.dependencies import get_service
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl='/auth/login',
 )
 
 
-def get_service(db: Annotated[AsyncSession, Depends(get_db)]) -> AuthService:
-    """Dependency for retrieving the UserService instance."""
-    return AuthService(db_session=db)
-
 
 async def get_user_from_jwt(
     token: Annotated[str, Security(oauth_scheme)],
-    service: Annotated[AuthService, Depends(get_service)],
+    service: Annotated[AuthService, Depends(get_service(AuthService))],
 ) -> User:
     """Return FastAPI dependencies for authentication and validation.
 

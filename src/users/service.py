@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.services.hasher import Hasher
 from src.base.dao import BaseDAO
+from src.base.service import BaseService
 from src.users.exceptions import (
     ForgottenParametersException,
     UserNotFoundByIdException,
@@ -21,7 +22,7 @@ from src.users.schemas import (
 type UserDAO = BaseDAO[User, CreateUserRequestSchema]
 
 
-class UserService:
+class UserService(BaseService):
     """Service class for handling user-related business logic and operations.
 
     This class provides an interface between the API layer
@@ -61,7 +62,7 @@ class UserService:
                 Defaults to None.
 
         """
-        self._session: AsyncSession = db_session
+        super().__init__(db_session)
         self._dao: UserDAO = dao or BaseDAO[
             User,
             CreateUserRequestSchema,
