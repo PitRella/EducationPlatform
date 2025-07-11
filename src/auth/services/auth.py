@@ -224,10 +224,10 @@ class AuthService:
                 RefreshToken | None
             ) = await self.auth_dao.update(
                 {
-                    'refresh_token_id': refresh_token_model.id,
                     'refresh_token': updated_refresh_token,
-                    'expires_at': tm_delta.total_seconds(),
-                }
+                    'expires_in': tm_delta.total_seconds(),
+                },
+                id = refresh_token_model.id
             )
             if not updated_refresh_token_model:
                 raise RefreshTokenException
