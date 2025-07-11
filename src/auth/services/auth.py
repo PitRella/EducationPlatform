@@ -264,5 +264,5 @@ class AuthService:
             if not refresh_token_model:
                 raise RefreshTokenException
             await self.auth_dao.delete(
-                refresh_token_id=refresh_token_model.id,
+                id=refresh_token_model.id,
             )
