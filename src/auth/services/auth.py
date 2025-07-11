@@ -68,11 +68,6 @@ class AuthService(BaseService):
         """Return the UserDAO instance."""
         return self._user_dao
 
-    @property
-    def session(self) -> AsyncSession:
-        """Return the current AsyncSession."""
-        return self._session
-
     @staticmethod
     def _verify_user_password(user: User | None, password: str) -> None:
         """Verify that the given password matches the user's password.
@@ -228,7 +223,7 @@ class AuthService(BaseService):
                     'refresh_token': updated_refresh_token,
                     'expires_in': tm_delta.total_seconds(),
                 },
-                id = refresh_token_model.id
+                id=refresh_token_model.id,
             )
             if not updated_refresh_token_model:
                 raise RefreshTokenException

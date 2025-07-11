@@ -11,8 +11,8 @@ __all__ = ['get_user_from_uuid']
 
 
 async def get_user_from_uuid(
-        user_id: uuid.UUID,
-        service: Annotated[UserService, Depends(get_service(UserService))],
+    user_id: uuid.UUID,
+    service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User:
     """Retrieve a User instance by UUID using the UserService dependency.
 

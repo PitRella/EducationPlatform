@@ -79,16 +79,6 @@ class UserService(BaseService):
         """
         return self._dao
 
-    @property
-    def session(self) -> AsyncSession:
-        """Get the database session associated with this service.
-
-        Returns:
-            AsyncSession: The SQLAlchemy async session for database operations
-
-        """
-        return self._session
-
     async def get_user_by_id(self, user_id: uuid.UUID) -> User:
         """Retrieve a user by their ID from the database.
 

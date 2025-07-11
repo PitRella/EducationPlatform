@@ -1,4 +1,5 @@
-from typing import TypeVar, Annotated, Callable
+from collections.abc import Callable
+from typing import Annotated, TypeVar
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +11,7 @@ Service = TypeVar('Service', bound=BaseService)
 
 
 def get_service(
-        service_type: type[Service],
+    service_type: Type[Service],
 ) -> Callable[[AsyncSession], Service]:
     """Universal factory for creating service instances."""
 

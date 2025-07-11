@@ -7,13 +7,13 @@ from fastapi.security import OAuth2PasswordBearer
 
 from src.auth.enums import UserAction
 from src.auth.services import AuthService, PermissionService
+from src.base.dependencies import get_service
 from src.users.dependencies import get_user_from_uuid
 from src.users.models import User
-from src.base.dependencies import get_service
+
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl='/auth/login',
 )
-
 
 
 async def get_user_from_jwt(
