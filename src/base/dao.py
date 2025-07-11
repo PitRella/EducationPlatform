@@ -1,7 +1,7 @@
 from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
-from sqlalchemy import Result, Select, Update, select, update
+from sqlalchemy import Delete, Result, Select, Update, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import Base
@@ -143,3 +143,24 @@ class BaseDAO[
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def delete(
+        self,
+        *filters: Any,
+        **filters_by: Any,
+    ) -> None:
+        """Delete records matching the specified filters.
+
+        Args:
+            *filters: Variable length argument list of filter conditions
+            **filters_by: Arbitrary kwargs for filtering by column values
+
+        Note:
+            The method executes the delete query but does not commit
+            the transaction. The caller is responsible for that.
+
+        """
+        query: Delete = (
+            Delete(self.model).where(*filters).filter_by(**filters_by)
+        )
+        await self.session.execute(query)

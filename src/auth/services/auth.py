@@ -3,14 +3,17 @@ from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dao import AuthDAO
 from src.auth.exceptions import RefreshTokenException, WrongCredentialsException
-from src.auth.models import RefreshSessionModel
-from src.auth.schemas import Token
+from src.auth.models import RefreshToken
+from src.auth.schemas import CreateRefreshTokenSchema, Token
 from src.auth.services.hasher import Hasher
 from src.auth.services.token import TokenManager
-from src.users.dao import UserDAO
+from src.base.dao import BaseDAO
 from src.users.models import User
+from src.users.schemas import CreateUserRequestSchema
+
+type UserDAO = BaseDAO[User, CreateUserRequestSchema]
+type AuthDAO = BaseDAO[RefreshToken, CreateRefreshTokenSchema]
 
 
 class AuthService:
@@ -45,8 +48,14 @@ class AuthService:
 
         """
         self._session: AsyncSession = db_session
-        self._auth_dao: AuthDAO = auth_dao or AuthDAO(db_session)
-        self._user_dao: UserDAO = user_dao or UserDAO(db_session)
+        self._auth_dao: AuthDAO = auth_dao or BaseDAO[
+            RefreshToken,
+            CreateRefreshTokenSchema,
+        ](session=db_session, model=RefreshToken)
+        self._user_dao: UserDAO = user_dao or BaseDAO[
+            User,
+            CreateUserRequestSchema,
+        ](session=db_session, model=User)
 
     @property
     def auth_dao(self) -> AuthDAO:
@@ -83,13 +92,13 @@ class AuthService:
 
         """
         async with self.session.begin():
-            user: User | None = await self.user_dao.get_user_by_email(email)
+            user: User | None = await self.user_dao.get_one(email=email)
         self._verify_user_password(user, password)
         return cast(User, user)
 
     @staticmethod
     def _get_user_id_from_jwt(decoded_jwt: dict[str, str | int]) -> str:
-        """Extract and return user ID from decoded JWT payload.
+        """Extract and return user ID from a decoded JWT payload.
 
         Raises WrongCredentialsException if user ID is missing or invalid.
 
@@ -125,7 +134,7 @@ class AuthService:
         TokenManager.validate_access_token_expired(decoded_jwt)
         user_id: uuid.UUID | str = self._get_user_id_from_jwt(decoded_jwt)
         async with self.session.begin():
-            user: User | None = await self.user_dao.get_user_by_id(user_id)
+            user: User | None = await self.user_dao.get_one(id=user_id)
         if not user:
             raise WrongCredentialsException
         return user
@@ -155,15 +164,14 @@ class AuthService:
         """
         access_token: str = TokenManager.generate_access_token(user_id=user_id)
         refresh_token, tm_delta = TokenManager.generate_refresh_token()
+        create_token_schema = CreateRefreshTokenSchema(
+            user_id=user_id,
+            refresh_token=refresh_token,
+            expires_in=tm_delta.total_seconds(),
+        )
         async with self.session.begin():
-            await self.auth_dao.delete_old_tokens(
-                user_id=user_id,
-            )
-            await self.auth_dao.create_token(
-                user_id,
-                refresh_token,
-                tm_delta.total_seconds(),
-            )
+            await self.auth_dao.delete(RefreshToken.user_id == user_id)
+            await self.auth_dao.create(create_token_schema)
         return Token(
             access_token=access_token,
             refresh_token=str(refresh_token),
@@ -191,8 +199,8 @@ class AuthService:
         """
         async with self.session.begin():
             refresh_token_model: (
-                RefreshSessionModel | None
-            ) = await self.auth_dao.get_refresh_token(
+                RefreshToken | None
+            ) = await self.auth_dao.get_one(
                 refresh_token=refresh_token,
             )
             if not refresh_token_model:
@@ -201,8 +209,8 @@ class AuthService:
                 refresh_token_model=refresh_token_model,
             )
             user_id: uuid.UUID = refresh_token_model.user_id
-            user: User | None = await self.user_dao.get_user_by_id(
-                user_id=user_id,
+            user: User | None = await self.user_dao.get_one(
+                id=user_id,
             )
             if not user:
                 raise RefreshTokenException
@@ -213,11 +221,13 @@ class AuthService:
                 TokenManager.generate_refresh_token()
             )
             updated_refresh_token_model: (
-                RefreshSessionModel | None
-            ) = await self.auth_dao.update_refresh_token(
-                refresh_token_id=refresh_token_model.id,
-                refresh_token=updated_refresh_token,
-                expires_at=tm_delta.total_seconds(),
+                RefreshToken | None
+            ) = await self.auth_dao.update(
+                {
+                    'refresh_token_id': refresh_token_model.id,
+                    'refresh_token': updated_refresh_token,
+                    'expires_at': tm_delta.total_seconds(),
+                }
             )
             if not updated_refresh_token_model:
                 raise RefreshTokenException
@@ -247,12 +257,12 @@ class AuthService:
             raise RefreshTokenException
         async with self.session.begin():
             refresh_token_model: (
-                RefreshSessionModel | None
-            ) = await self.auth_dao.get_refresh_token(
+                RefreshToken | None
+            ) = await self.auth_dao.get_one(
                 refresh_token=refresh_token,
             )
             if not refresh_token_model:
                 raise RefreshTokenException
-            await self.auth_dao.delete_refresh_token(
+            await self.auth_dao.delete(
                 refresh_token_id=refresh_token_model.id,
             )

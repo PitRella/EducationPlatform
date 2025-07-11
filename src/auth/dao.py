@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import Delete, Result, Select, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.models import RefreshSessionModel
+from src.auth.models import RefreshToken
 
 
 class AuthDAO:
@@ -39,8 +39,8 @@ class AuthDAO:
             user_id (uuid.UUID): The ID of the user whose tokens to delete.
 
         """
-        query: Delete = Delete(RefreshSessionModel).where(
-            RefreshSessionModel.user_id == user_id,
+        query: Delete = Delete(RefreshToken).where(
+            RefreshToken.user_id == user_id,
         )
         await self.__db_session.execute(query)
 
@@ -49,7 +49,7 @@ class AuthDAO:
         user_id: uuid.UUID,
         refresh_token: uuid.UUID,
         refresh_token_expires_total_seconds: float,
-    ) -> RefreshSessionModel | None:
+    ) -> RefreshToken | None:
         """Create a new refresh token session for a user.
 
         Args:
@@ -58,36 +58,35 @@ class AuthDAO:
             refresh_token_expires_total_seconds (float): Token expiration time.
 
         Returns:
-            RefreshSessionModel | None: The newly created refresh session model.
+            RefreshToken | None: The newly created refresh session model.
 
         """
-        new_token = RefreshSessionModel(
+        new_token = RefreshToken(
             refresh_token=refresh_token,
             expires_in=refresh_token_expires_total_seconds,
             user_id=user_id,
         )
         self.__db_session.add(new_token)
-        await self.__db_session.flush()
         return new_token
 
     async def get_refresh_token(
         self,
         refresh_token: uuid.UUID | str,
-    ) -> RefreshSessionModel | None:
+    ) -> RefreshToken | None:
         """Retrieve a refresh token session by its token value.
 
         Args:
             refresh_token (uuid.UUID | str): The refresh token to look up.
 
         Returns:
-            RefreshSessionModel | None: The matching refresh session.
+            RefreshToken | None: The matching refresh session.
 
         """
-        query: Select[RefreshSessionModel] = Select(RefreshSessionModel).where(  # type: ignore
-            RefreshSessionModel.refresh_token == refresh_token,
+        query: Select[RefreshToken] = Select(RefreshToken).where(
+            RefreshToken.refresh_token == refresh_token,
         )
-        result: Result = await self.__db_session.execute(query)  # type: ignore
-        token: RefreshSessionModel | None = result.scalar_one_or_none()
+        result: Result = await self.__db_session.execute(query)  
+        token: RefreshToken | None = result.scalar_one_or_none()
         return token
 
     async def update_refresh_token(
@@ -95,7 +94,7 @@ class AuthDAO:
         refresh_token_id: int,
         refresh_token: uuid.UUID,
         expires_at: float,
-    ) -> RefreshSessionModel | None:
+    ) -> RefreshToken | None:
         """Update an existing refresh token and its expiration.
 
         Args:
@@ -104,19 +103,19 @@ class AuthDAO:
             expires_at (float): The new expiration time.
 
         Returns:
-            RefreshSessionModel | None: The updated refresh session
+            RefreshToken | None: The updated refresh session
 
         """
         query: Update = (
-            Update(RefreshSessionModel)
-            .where(RefreshSessionModel.id == refresh_token_id)
+            Update(RefreshToken)
+            .where(RefreshToken.id == refresh_token_id)
             .values(refresh_token=refresh_token, expires_in=expires_at)
-            .returning(RefreshSessionModel.id)
+            .returning(RefreshToken.id)
         )
-        result: Result[RefreshSessionModel] = await self.__db_session.execute(  # type: ignore
+        result: Result[RefreshToken] = await self.__db_session.execute(  # type: ignore
             query,
         )
-        updated_token: RefreshSessionModel | None = result.scalar_one_or_none()
+        updated_token: RefreshToken | None = result.scalar_one_or_none()
         return updated_token
 
     async def delete_refresh_token(self, refresh_token_id: int) -> None:
@@ -126,7 +125,7 @@ class AuthDAO:
             refresh_token_id (int): The ID of the refresh token to delete.
 
         """
-        query: Delete = Delete(RefreshSessionModel).where(
-            RefreshSessionModel.id == refresh_token_id,
+        query: Delete = Delete(RefreshToken).where(
+            RefreshToken.id == refresh_token_id,
         )
         await self.__db_session.execute(query)
