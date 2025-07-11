@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from src.database import Base
 
 
-class RefreshSessionModel(Base):
+class RefreshToken(Base):
     """SQLAlchemy model representing a refresh token session.
 
     Attributes:
