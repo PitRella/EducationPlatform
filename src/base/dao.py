@@ -8,13 +8,11 @@ from src.database import Base
 
 Model = TypeVar('Model', bound=Base)
 CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
-UpdateSchema = TypeVar('UpdateSchema', bound=BaseModel)
 
 
 class BaseDAO[
     Model,
     CreateSchema,
-    UpdateSchema,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -121,14 +119,14 @@ class BaseDAO[
 
     async def update(
         self,
-        update_schema: UpdateSchema,
+        update_data: dict[str, Any],
         *filters: Any,
         **filters_by: Any,
     ) -> Model | None:
         """Update records matching the specified filters with provided data.
 
         Args:
-            update_schema: Pydantic model containing the fields to update
+            update_data: Pydantic model containing the fields to update
             *filters: Variable length argument list of filter conditions
             **filters_by: Arbitrary kwargs for filtering by column values
 
@@ -136,15 +134,11 @@ class BaseDAO[
             Model | None: Updated model instance or None
 
         """
-        # Cast to show mypy that our schema has a model_dump method
-        values_to_update = cast(BaseModel, update_schema).model_dump(
-            exclude_unset=True
-        )
         query: Update = (
             update(self.model)
             .where(*filters)
             .filter_by(**filters_by)
-            .values(values_to_update)
+            .values(update_data)
             .returning(self.model)
         )
         result = await self.session.execute(query)
