@@ -2,7 +2,8 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.courses.dao import AbstractCourseDAO, CourseDAO
+from src.base.dao import BaseDAO
+from src.base.service import BaseService
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
@@ -10,14 +11,16 @@ from src.courses.schemas import (
     BaseCreateCourseSchema,
 )
 
+type CourseDAO = BaseDAO[Course, BaseCreateCourseSchema]
 
-class CourseService:
+
+class CourseService(BaseService):
     """Service class for handling course-related business logic."""
 
     def __init__(
         self,
         db_session: AsyncSession,
-        dao: AbstractCourseDAO | None = None,
+        dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -29,16 +32,14 @@ class CourseService:
                 Defaults to None.
 
         """
-        self._session: AsyncSession = db_session
-        self._dao: AbstractCourseDAO = dao or CourseDAO(db_session)
+        super().__init__(db_session)
+        self._dao: CourseDAO = dao or BaseDAO[Course, BaseCreateCourseSchema](
+            db_session,
+            Course,
+        )
 
     @property
-    def session(self) -> AsyncSession:
-        """Return the current SQLAlchemy session."""
-        return self._session
-
-    @property
-    def dao(self) -> AbstractCourseDAO:
+    def dao(self) -> CourseDAO:
         """Return current course DAO."""
         return self._dao
 
@@ -47,7 +48,7 @@ class CourseService:
     ) -> BaseCourseResponseSchema:
         """Create a new course in the database."""
         async with self.session.begin():
-            course: Course = await self.dao.create_course(course_schema)
+            course: Course = await self.dao.create(course_schema)
         return BaseCourseResponseSchema.model_validate(course)
 
     async def get_course(
@@ -56,7 +57,7 @@ class CourseService:
     ) -> BaseCourseResponseSchema:
         """Get a course by its ID."""
         async with self.session.begin():
-            course: Course | None = await self.dao.get_course(course_id)
+            course: Course | None = await self.dao.get_one(id=course_id)
         if not course:
             raise CourseNotFoundByIdException
         return BaseCourseResponseSchema.model_validate(course)

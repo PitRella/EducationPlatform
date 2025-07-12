@@ -32,8 +32,8 @@ class Course(Base):
         description: Course description (max 512 chars).
         level: Course level (enum).
         logo: Path or URL to logo image.
-        author_id: Author's user ID (UUID).
-        author: User object (relationship).
+        user_id: User ID (UUID).
+        user: User object (relationship).
         is_active: Is the course active.
         rating: Course rating (decimal).
         price: Course price (decimal).

@@ -12,8 +12,8 @@ class CourseLevelEnum(StrEnum):
 class CurrencyEnum(StrEnum):
     """Enum class representing currencies in the system."""
 
-    USD = 'usd'
-    EUR = 'eur'
+    USD = 'usd'  # USD
+    EUR = 'eur'  # Euro
 
 
 class AvailableLanguagesEnum(StrEnum):
