@@ -1,8 +1,8 @@
 import uuid
 
-from sqlalchemy import Boolean, String
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, Enum, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 from src.users.enums import UserRoles
@@ -52,14 +52,15 @@ class User(Base):
         nullable=False,
     )
     roles: Mapped[list[str]] = mapped_column(
-        ARRAY(String),
+        Enum(UserRoles),
         nullable=False,
-        server_default='{"user"}',
+        server_default='USER',
     )
     is_active: Mapped[bool] = mapped_column(
         Boolean(),
         default=True,
     )
+    courses = relationship('Course', back_populates='user', lazy='joined')
 
     @property
     def is_user_admin(self) -> bool:

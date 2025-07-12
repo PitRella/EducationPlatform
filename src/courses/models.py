@@ -12,7 +12,7 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from src.courses.enums import (
@@ -65,9 +65,10 @@ class Course(Base):
     logo: Mapped[str] = mapped_column(
         String(512), nullable=False, comment='Path or URL to logo image'
     )
-    author_id: Mapped[uuid.UUID] = mapped_column(
+    user = relationship('User', back_populates='courses')
+    user_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
-        ForeignKey('users.user_id', ondelete='CASCADE'),
+        ForeignKey('users.id', ondelete='CASCADE'),
         comment='Author ID',
     )
     is_active: Mapped[bool] = mapped_column(
