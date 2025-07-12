@@ -1,10 +1,11 @@
 import uuid
+from typing import ClassVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.services.hasher import Hasher
-from src.users.dao import UserDAO
-from src.users.enums import UserRoles
+from src.base.dao import BaseDAO
+from src.base.service import BaseService
 from src.users.exceptions import (
     ForgottenParametersException,
     UserNotFoundByIdException,
@@ -18,8 +19,10 @@ from src.users.schemas import (
     UpdateUserResponseSchema,
 )
 
+type UserDAO = BaseDAO[User, CreateUserRequestSchema]
 
-class UserService:
+
+class UserService(BaseService):
     """Service class for handling user-related business logic and operations.
 
     This class provides an interface between the API layer
@@ -40,6 +43,10 @@ class UserService:
 
     """
 
+    _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
+    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['user']}
+    _SET_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['admin']}
+
     def __init__(
         self,
         db_session: AsyncSession,
@@ -55,8 +62,11 @@ class UserService:
                 Defaults to None.
 
         """
-        self._session: AsyncSession = db_session
-        self._dao: UserDAO = dao or UserDAO(db_session)
+        super().__init__(db_session)
+        self._dao: UserDAO = dao or BaseDAO[
+            User,
+            CreateUserRequestSchema,
+        ](session=db_session, model=User)
 
     @property
     def dao(self) -> UserDAO:
@@ -68,16 +78,6 @@ class UserService:
 
         """
         return self._dao
-
-    @property
-    def session(self) -> AsyncSession:
-        """Get the database session associated with this service.
-
-        Returns:
-            AsyncSession: The SQLAlchemy async session for database operations
-
-        """
-        return self._session
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> User:
         """Retrieve a user by their ID from the database.
@@ -94,7 +94,7 @@ class UserService:
 
         """
         async with self.session.begin():
-            user: User | None = await self.dao.get_user_by_id(user_id)
+            user: User | None = await self.dao.get_one(id=user_id)
         if not user:
             raise UserNotFoundByIdException
         return user
@@ -117,27 +117,23 @@ class UserService:
             If roles are not provided, defaults to [UserRoles.USER]
 
         """
+        user_data = user.model_dump()
+        user_secret_pass = user_data['password'].get_secret_value()
+        user_data['password'] = Hasher.hash_password(user_secret_pass)
         async with self.session.begin():
-            created_user: User = await self.dao.create_user(
-                name=user.name,
-                surname=user.surname,
-                email=user.email,
-                password=Hasher.hash_password(user.password.get_secret_value()),
-                roles=user.roles if user.roles else [UserRoles.USER],
-            )
+            created_user = await self.dao.create(user_data)
         return CreateUserResponseShema.model_validate(created_user)
 
     async def deactivate_user(
         self, target_user: User
     ) -> DeleteUserResponseSchema:
-        """Deactivate a user in the system.
+        """Deactivate a user in the database.
 
         Args:
             target_user (User): The user to be deactivated
 
         Returns:
-            DeleteUserResponseSchema: Response containing the
-             ID of the deactivated user
+            DeleteUserResponseSchema: Response with the deactivated user ID
 
         Raises:
             UserNotFoundByIdException: If the target user is not found
@@ -146,13 +142,13 @@ class UserService:
             This operation sets the user's is_active flag to False
 
         """
-        async with self.session.begin():
-            deleted_user_id: uuid.UUID | None = await self.dao.deactivate_user(
-                target_user.user_id,
+        async with self.dao.session.begin():
+            deleted_user: User | None = await self.dao.update(
+                self._DEACTIVATE_USER_UPDATE, id=target_user.id
             )
-        if not deleted_user_id:
+        if not deleted_user:
             raise UserNotFoundByIdException
-        return DeleteUserResponseSchema(deleted_user_id=deleted_user_id)
+        return DeleteUserResponseSchema.model_validate(deleted_user)
 
     async def update_user(
         self,
@@ -162,19 +158,19 @@ class UserService:
         """Update user information in the database.
 
         Args:
-            target_user (User): The user object to be updated
-            user_fields (UpdateUserRequestSchema): Fields to update
-            containing optional name, surname, email
+            target_user (User): The user whose information will be updated
+            user_fields (UpdateUserRequestSchema): Schema containing
+             the fields to update
 
         Returns:
-            UpdateUserResponseSchema: Response containing the ID-updated user.
+            UpdateUserResponseSchema: Response containing the updated user
 
         Raises:
             ForgottenParametersException: If no fields are provided for update
             UserNotFoundByIdException: If the target user is not found
 
         Note:
-            Only non-None fields from user_fields will be used for the update
+            Only non-null fields from the request schema will be updated
 
         """
         filtered_user_fields: dict[str, str] = user_fields.model_dump(
@@ -184,13 +180,12 @@ class UserService:
         if not filtered_user_fields:
             raise ForgottenParametersException
         async with self.session.begin():
-            updated_user_id: uuid.UUID | None = await self.dao.update_user(
-                target_user.user_id,
-                **filtered_user_fields,
+            updated_user: User | None = await self.dao.update(
+                filtered_user_fields, id=target_user.id
             )
-        if not updated_user_id:
+        if not updated_user:
             raise UserNotFoundByIdException
-        return UpdateUserResponseSchema(updated_user_id=updated_user_id)
+        return UpdateUserResponseSchema.model_validate(updated_user)
 
     async def set_admin_privilege(
         self,
@@ -213,12 +208,12 @@ class UserService:
 
         """
         async with self.session.begin():
-            updated_user_id: (
-                uuid.UUID | None
-            ) = await self.dao.set_admin_privilege(target_user.user_id)
-        if not updated_user_id:
+            updated_user: User | None = await self.dao.update(
+                self._SET_ADMIN_UPDATE, id=target_user.id
+            )
+        if not updated_user:
             raise UserNotFoundByIdException
-        return UpdateUserResponseSchema(updated_user_id=updated_user_id)
+        return UpdateUserResponseSchema.model_validate(updated_user)
 
     async def revoke_admin_privilege(
         self,
@@ -240,9 +235,9 @@ class UserService:
 
         """
         async with self.session.begin():
-            updated_user_id: (
-                uuid.UUID | None
-            ) = await self.dao.revoke_admin_privilege(target_user.user_id)
-        if not updated_user_id:
+            updated_user: User | None = await self.dao.update(
+                self._REVOKE_ADMIN_UPDATE, target_user.id
+            )
+        if not updated_user:
             raise UserNotFoundByIdException
-        return UpdateUserResponseSchema(updated_user_id=updated_user_id)
+        return UpdateUserResponseSchema.model_validate(updated_user)

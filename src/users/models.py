@@ -12,7 +12,7 @@ class User(Base):
     """SQLAlchemy model representing a user in the system.
 
     Attributes:
-        user_id (UUID): Primary key, unique identifier for the user.
+        id (UUID): Primary key, unique identifier for the user.
         name (str): User's first name.
         surname (str): User's last name.
         email (str): User's email an address must be unique.
@@ -29,17 +29,37 @@ class User(Base):
     """
 
     __tablename__ = 'users'
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    surname: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(String, nullable=False)
-    roles: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    name: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+    surname: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+    email: Mapped[str] = mapped_column(
+        String(254),
+        nullable=False,
+        unique=True,
+    )
+    password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    roles: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        server_default='{"user"}',
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean(),
+        default=True,
+    )
 
     @property
     def is_user_admin(self) -> bool:

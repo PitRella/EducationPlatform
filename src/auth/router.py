@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.auth.dependencies import get_service
 from src.auth.schemas import Token
 from src.auth.services import AuthService
+from src.base.dependencies import get_service
 from src.settings import Settings
 from src.users.models import User
 
@@ -17,7 +17,7 @@ settings = Settings.load()
 @auth_router.post(path='/login', response_model=Token)
 async def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    service: Annotated[AuthService, Depends(get_service)],
+    service: Annotated[AuthService, Depends(get_service(AuthService))],
     response: Response,
 ) -> Token:
     """Authenticate user and issue JWT access and refresh tokens.
@@ -35,7 +35,7 @@ async def login_user(
         email=form_data.username,
         password=form_data.password,
     )
-    token: Token = await service.create_token(user.user_id)
+    token: Token = await service.create_token(user.id)
     response.set_cookie(
         'access_token',
         token.access_token,
@@ -58,7 +58,7 @@ async def login_user(
 async def refresh_token(
     request: Request,
     response: Response,
-    service: Annotated[AuthService, Depends(get_service)],
+    service: Annotated[AuthService, Depends(get_service(AuthService))],
 ) -> Token:
     """Refresh the access and refresh tokens.
 
@@ -96,7 +96,7 @@ async def refresh_token(
 async def logout_user(
     request: Request,
     response: Response,
-    service: Annotated[AuthService, Depends(get_service)],
+    service: Annotated[AuthService, Depends(get_service(AuthService))],
 ) -> dict[str, str]:
     """Log out the user.
 

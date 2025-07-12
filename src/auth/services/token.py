@@ -9,10 +9,12 @@ from src.auth.exceptions import (
     RefreshTokenException,
     WrongCredentialsException,
 )
-from src.auth.models import RefreshSessionModel
+from src.auth.models import RefreshToken
 from src.settings import Settings
 
 settings = Settings.load()
+
+type access_token = dict[str, str | datetime]
 
 
 class TokenManager:
@@ -33,7 +35,7 @@ class TokenManager:
         :param user_id: UUID of the user to generate token for
         :return: Bearer token string containing the JWT
         """
-        to_encode: dict[str, str | datetime] = {
+        to_encode: access_token = {
             'sub': str(user_id),
             'exp': datetime.now(UTC)
             + timedelta(
@@ -92,7 +94,7 @@ class TokenManager:
     @classmethod
     def validate_refresh_token_expired(
         cls,
-        refresh_token_model: RefreshSessionModel,
+        refresh_token_model: RefreshToken,
     ) -> None:
         """Check if the refresh token has expired.
 

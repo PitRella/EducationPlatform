@@ -2,33 +2,17 @@ import uuid
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import get_db
+from src.base.dependencies import get_service
 from src.users.models import User
 from src.users.service import UserService
 
-__all__ = ['get_service', 'get_user_from_uuid']
-
-
-def get_service(db: Annotated[AsyncSession, Depends(get_db)]) -> UserService:
-    """Return a UserService instance with a database session dependency.
-
-    Args:
-        db (AsyncSession, optional): Database session provided
-        by dependency injection.
-
-    Returns:
-        UserService: An instance of UserService initialized
-         with the given session.
-
-    """
-    return UserService(db_session=db)
+__all__ = ['get_user_from_uuid']
 
 
 async def get_user_from_uuid(
     user_id: uuid.UUID,
-    service: Annotated[UserService, Depends(get_service)],
+    service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User:
     """Retrieve a User instance by UUID using the UserService dependency.
 

@@ -106,7 +106,7 @@ class MockUserDAO:
 
     async def create_user(self, *args, **kwargs) -> User:  # type: ignore
         return User(
-            user_id=self._user.user_id,
+            user_id=self._user.id,
             name=self._user.name,
             surname=self._user.surname,
             email=self._user.email,
@@ -124,7 +124,7 @@ class MockUserDAO:
     async def update_user(self, *args, **kwargs) -> uuid.UUID:  # type: ignore
         for k, v in kwargs.items():
             setattr(self._user, k, v)
-        return self._user.user_id
+        return self._user.id
 
     async def deactivate_user(  # type: ignore
         self, *args, **kwargs

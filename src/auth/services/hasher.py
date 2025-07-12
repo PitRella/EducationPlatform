@@ -8,7 +8,7 @@ class Hasher:
     hashed passwords using bcrypt algorithm.
 
     Attributes:
-        __crypt_context (CryptContext): Configured CryptContext instance using
+        _crypt_context (CryptContext): Configured CryptContext instance using
             bcrypt scheme with auto-deprecation.
 
     Methods:
@@ -17,7 +17,7 @@ class Hasher:
 
     """
 
-    __crypt_context: CryptContext = CryptContext(
+    _crypt_context: CryptContext = CryptContext(
         schemes=['bcrypt'],
         deprecated='auto',
     )
@@ -29,7 +29,7 @@ class Hasher:
         :param unhashed_password: A password to hash
         :return: hashed password
         """
-        return cls.__crypt_context.hash(unhashed_password)
+        return cls._crypt_context.hash(unhashed_password)
 
     @classmethod
     def verify_password(
@@ -43,4 +43,4 @@ class Hasher:
         :param hashed_password: Hashed password
         :return: True if hashed password identical to raw, false otherwise
         """
-        return cls.__crypt_context.verify(unhashed_password, hashed_password)
+        return cls._crypt_context.verify(unhashed_password, hashed_password)
