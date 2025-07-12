@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from src.database import Base
 
 
-class RefreshSessionModel(Base):
+class RefreshToken(Base):
     """SQLAlchemy model representing a refresh token session.
 
     Attributes:
@@ -35,5 +35,5 @@ class RefreshSessionModel(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
-        ForeignKey('users.user_id', ondelete='CASCADE'),
+        ForeignKey('users.id', ondelete='CASCADE'),
     )

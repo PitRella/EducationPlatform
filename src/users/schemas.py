@@ -5,13 +5,13 @@ from typing import Annotated
 
 from pydantic import (
     BaseModel,
-    ConfigDict,
     EmailStr,
     Field,
     SecretStr,
     field_validator,
 )
 
+from src.base.schemas import BaseSchema
 from src.users.enums import UserRoles
 from src.users.exceptions import (
     BadEmailSchemaException,
@@ -25,24 +25,14 @@ PASSWORD_PATTERN = re.compile(
 EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
-class BaseTunedModelSchema(BaseModel):
-    """Base model for all models in the application.
-
-    Provided configuration to create models from an orm object.
-    """
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CreateUserResponseShema(BaseTunedModelSchema):
+class CreateUserResponseShema(BaseSchema):
     """Pydantic model for showing user information."""
 
-    user_id: uuid.UUID
+    id: uuid.UUID
     name: str
     surname: str
     email: str
     is_active: bool
-    roles: Sequence[str]
 
 
 class CreateUserRequestSchema(BaseModel):
@@ -79,10 +69,10 @@ class CreateUserRequestSchema(BaseModel):
         return value
 
 
-class DeleteUserResponseSchema(BaseModel):
+class DeleteUserResponseSchema(BaseSchema):
     """Pydantic model for deleting user response."""
 
-    deleted_user_id: uuid.UUID
+    id: uuid.UUID
 
 
 class UpdateUserRequestSchema(BaseModel):
@@ -93,7 +83,7 @@ class UpdateUserRequestSchema(BaseModel):
     email: EmailStr | None = Field(default=None, min_length=3, max_length=50)
 
 
-class UpdateUserResponseSchema(BaseModel):
+class UpdateUserResponseSchema(BaseSchema):
     """Pydantic model for updating user response."""
 
-    updated_user_id: uuid.UUID
+    id: uuid.UUID

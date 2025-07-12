@@ -123,7 +123,7 @@ class PermissionService:
 
         """
         # If user admin or superadmin, he cannot delete himself
-        if current_user.user_id == target_user.user_id:
+        if current_user.id == target_user.id:
             match action:
                 case (
                     UserAction.DELETE
@@ -173,7 +173,7 @@ class PermissionService:
             to modify another user's account
 
         """
-        if current_user.user_id == target_user.user_id:
+        if current_user.id == target_user.id:
             match action:
                 case (
                     UserAction.SET_ADMIN_PRIVILEGE
