@@ -20,8 +20,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 from src.database import Base
-from src.author.model import Author
-from src.users.models import User
+from src.users.models import User, Author, UserCourses
 from src.auth.models import RefreshToken
 from src.courses.models import Course
 
