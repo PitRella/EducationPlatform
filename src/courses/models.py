@@ -20,10 +20,15 @@ from src.courses.enums import (
     CourseLevelEnum,
     CurrencyEnum,
 )
-from src.database import Base
+from typing import TYPE_CHECKING
+from src.base.models import BaseUUIDMixin, BaseTimeStampMixin
+
+if TYPE_CHECKING:
+    from src.author.model import Author
+    from src.users.models import User
 
 
-class Course(Base):
+class Course(BaseUUIDMixin, BaseTimeStampMixin):
     """Class representing a course model in a platform.
 
     Attributes:
@@ -47,14 +52,15 @@ class Course(Base):
 
     __tablename__ = 'courses'
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
+    slug: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False,
+        index=True
     )
     # Main fields
     title: Mapped[str] = mapped_column(
-        String(40), nullable=False, index=True, comment='A course title'
+        String(200), nullable=False, index=True, comment='A course title'
     )
     description: Mapped[str] = mapped_column(
         String(512), nullable=False, comment='Course description'
@@ -65,18 +71,27 @@ class Course(Base):
     logo: Mapped[str] = mapped_column(
         String(512), nullable=False, comment='Path or URL to logo image'
     )
-    user = relationship('User', back_populates='courses')
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID,
-        ForeignKey('users.id', ondelete='CASCADE'),
+    author: Mapped["Author"] = relationship(
+        back_populates='courses'
+    )
+    author_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('authors.id', ondelete='CASCADE'),
         comment='Author ID',
     )
+    students: Mapped["User"] = relationship(
+        secondary='student_courses',
+        back_populates='purchased_courses'
+    )
     is_active: Mapped[bool] = mapped_column(
-        Boolean, comment='Course is active', server_default='false'
+        Boolean, comment='Course is active', default=False,
     )
     rating: Mapped[Decimal] = mapped_column(
-        Numeric(10, 2), default=0.0, index=True, comment='Course rating'
+        Numeric(10, 2),
+        default=0.0,
+        index=True,
+        comment='Course rating'
     )
+
     # Price fields
     price: Mapped[Decimal] = mapped_column(
         Numeric(7, 2),
@@ -98,13 +113,4 @@ class Course(Base):
         Enum(AvailableLanguagesEnum),
         nullable=False,
         comment='Course available languages',
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        server_default=func.now(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now,
     )
