@@ -1,7 +1,7 @@
 import uuid
 
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import Boolean, Enum, String
+from sqlalchemy import Boolean, Enum, String, UniqueConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.base.models import BaseUUIDMixin, BaseTimeStampMixin
@@ -26,8 +26,8 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
         is_active (bool): Flag indicating if the user account is active.
 
     Properties:
-        is_user_admin (bool): Check if user has an admin role.
-        is_user_superadmin (bool): Check if user has a superadmin role.
+        is_user_admin (bool): Check if the user has an admin role.
+        is_user_superadmin (bool): Check if the user has a superadmin role.
         is_user_in_admin_group (bool): Check if a user has either admin
          or superadmin role.
 
@@ -67,8 +67,8 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     )
     purchased_courses: Mapped["Course"] = relationship(
         'Course',
-        secondary='student_courses',
-        back_populates='students'
+        secondary='user_courses',
+        back_populates='users'
     )
 
     @property

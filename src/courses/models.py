@@ -78,8 +78,8 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
         ForeignKey('authors.id', ondelete='CASCADE'),
         comment='Author ID',
     )
-    students: Mapped["User"] = relationship(
-        secondary='student_courses',
+    users: Mapped["User"] = relationship(
+        secondary='user_courses',
         back_populates='purchased_courses'
     )
     is_active: Mapped[bool] = mapped_column(
