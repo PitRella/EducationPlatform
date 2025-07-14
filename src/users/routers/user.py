@@ -1,6 +1,7 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Depends, Security, Path
 
 from src.auth.dependencies import validate_user_permission
 from src.auth.enums import UserAction
@@ -27,7 +28,7 @@ async def create_user(
     return await service.create_new_user(user=user)
 
 
-@user_router.delete('/', response_model=DeleteUserResponseSchema)
+@user_router.delete('/{user_id}', response_model=DeleteUserResponseSchema)
 async def deactivate_user(
     user: Annotated[User, Security(validate_user_permission(UserAction.GET))],
     service: Annotated[UserService, Depends(get_service(UserService))],
@@ -36,7 +37,7 @@ async def deactivate_user(
     return await service.deactivate_user(target_user=user)
 
 
-@user_router.get('/', response_model=CreateUserResponseShema)
+@user_router.get('/{user_id}', response_model=CreateUserResponseShema)
 async def get_user_by_id(
     user: Annotated[User, Security(validate_user_permission(UserAction.GET))],
 ) -> CreateUserResponseShema:
@@ -44,7 +45,7 @@ async def get_user_by_id(
     return CreateUserResponseShema.model_validate(user)
 
 
-@user_router.patch('/', response_model=UpdateUserResponseSchema)
+@user_router.patch('/{user_id}', response_model=UpdateUserResponseSchema)
 async def update_user(
     user: Annotated[User, Depends(validate_user_permission(UserAction.UPDATE))],
     user_fields: UpdateUserRequestSchema,
@@ -54,7 +55,7 @@ async def update_user(
     return await service.update_user(target_user=user, user_fields=user_fields)
 
 
-@user_router.patch('/set_admin_privilege')
+@user_router.patch('/set_admin_privilege/{user_id}')
 async def set_admin_privilege(
     user: Annotated[
         User,
@@ -68,7 +69,7 @@ async def set_admin_privilege(
     )
 
 
-@user_router.patch('/revoke_admin_privilege')
+@user_router.patch('/revoke_admin_privilege/{user_id}')
 async def revoke_admin_privilege(
     service: Annotated[UserService, Depends(get_service(UserService))],
     user: Annotated[
