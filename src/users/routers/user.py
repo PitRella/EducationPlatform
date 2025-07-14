@@ -13,7 +13,7 @@ from src.users.schemas import (
     UpdateUserRequestSchema,
     UpdateUserResponseSchema,
 )
-from src.users.service import UserService
+from src.users.services import UserService
 
 user_router = APIRouter()
 

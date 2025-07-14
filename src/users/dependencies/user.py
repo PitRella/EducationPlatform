@@ -5,7 +5,7 @@ from fastapi import Depends
 
 from src.base.dependencies import get_service
 from src.users.models import User
-from src.users.service import UserService
+from src.users.services import UserService
 
 __all__ = ['get_user_from_uuid']
 
