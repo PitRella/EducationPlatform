@@ -6,6 +6,8 @@ from .user import (
     UpdateUserResponseSchema,
 )
 
+from .author import CreateAuthorRequestSchema
+
 __all__ = [
     # User schemas
     'CreateUserResponseShema',
@@ -13,4 +15,6 @@ __all__ = [
     'DeleteUserResponseSchema',
     'UpdateUserRequestSchema',
     'UpdateUserResponseSchema',
+    # Author schemas
+    'CreateAuthorRequestSchema',
 ]
