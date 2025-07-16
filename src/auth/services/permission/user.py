@@ -3,11 +3,12 @@ from typing import ClassVar, cast
 
 from src.auth.enums import UserAction
 from src.auth.exceptions import PermissionException
+from src.auth.services.permission.base import BasePermissionService
 from src.users.enums import UserRoles
 from src.users.models import User
 
 
-class PermissionService:
+class UserPermissionService(BasePermissionService):
     """Service class for managing user permissions and access control.
 
     This class provides functionality to validate and enforce permission rules

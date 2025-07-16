@@ -6,7 +6,7 @@ from fastapi.params import Security
 from fastapi.security import OAuth2PasswordBearer
 
 from src.auth.enums import UserAction
-from src.auth.services import AuthService, PermissionService
+from src.auth.services import AuthService, UserPermissionService
 from src.base.dependencies import get_service
 from src.users.dependencies import get_user_from_uuid
 from src.users.models import User
@@ -47,7 +47,7 @@ def validate_user_permission(
         source_user: Annotated[User, Depends(get_user_from_jwt)],
         target_user: Annotated[User, Depends(get_user_from_uuid)],
     ) -> User:
-        PermissionService.validate_permission(
+        UserPermissionService.validate_permission(
             target_user=target_user,
             current_user=source_user,
             action=action,
