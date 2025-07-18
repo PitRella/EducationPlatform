@@ -48,7 +48,7 @@ def validate_user_permission(
         target_user: Annotated[User, Depends(get_user_from_uuid)],
     ) -> User:
         UserPermissionService.validate_permission(
-            target_user=target_user,
+            target_model=target_user,
             current_user=source_user,
             action=action,
         )

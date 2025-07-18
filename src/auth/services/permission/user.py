@@ -3,12 +3,12 @@ from typing import ClassVar, cast
 
 from src.auth.enums import UserAction
 from src.auth.exceptions import PermissionException
-from src.auth.services.permission.base import BasePermissionService
+from src.base.permission import BasePermissionService
 from src.users.enums import UserRoles
 from src.users.models import User
 
 
-class UserPermissionService(BasePermissionService):
+class UserPermissionService(BasePermissionService[User, UserAction]):
     """Service class for managing user permissions and access control.
 
     This class provides functionality to validate and enforce permission rules
@@ -46,27 +46,27 @@ class UserPermissionService(BasePermissionService):
     @classmethod
     def validate_permission(
         cls,
-        target_user: User,
+        target_model: User,
         current_user: User,
         action: UserAction,
     ) -> None:
         """Validate whether the current user permission.
 
         Args:
-            target_user (User): The user being acted upon.
+            target_model (User): The user being acted upon.
             current_user (User): The user performing the action.
             action (UserAction): The action being performed.
 
         """
         if current_user.is_user_in_admin_group:  # Admin group permissions
             cls._validate_admin_group_permissions(
-                target_user,
+                target_model,
                 current_user,
                 action,
             )
         else:  # Regular user permissions
             cls._validate_user_permissions(
-                target_user,
+                target_model,
                 current_user,
                 action,
             )

@@ -1,3 +1,3 @@
 from .user import UserPermissionService
 
-__all__ = ['UserPermissionService', ]
+__all__ = ['UserPermissionService']

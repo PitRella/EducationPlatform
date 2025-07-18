@@ -1,7 +1,6 @@
-import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Security, Path
+from fastapi import APIRouter, Depends, Security
 
 from src.auth.dependencies import validate_user_permission
 from src.auth.enums import UserAction

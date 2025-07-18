@@ -8,7 +8,7 @@ from src.auth.router import auth_router
 from src.courses.router import course_router
 from src.logger import configure_logging
 from src.settings import Settings
-from src.users.routers import user_router, author_router
+from src.users.routers import author_router, user_router
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,7 @@ main_api_router = APIRouter(prefix='/api/v1')
 main_api_router.include_router(user_router, prefix='/user', tags=['user'])
 main_api_router.include_router(author_router, prefix='/author', tags=['author'])
 main_api_router.include_router(auth_router, prefix='/auth', tags=['auth'])
-main_api_router.include_router(course_router, prefix='/course',
-                               tags=['course'])
+main_api_router.include_router(course_router, prefix='/course', tags=['course'])
 app.include_router(main_api_router)
 
 logger.info('Application started')

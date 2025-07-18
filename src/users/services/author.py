@@ -11,9 +11,9 @@ type AuthorDAO = BaseDAO[Author, CreateAuthorRequestSchema]
 
 class AuthorService(BaseService):
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: AuthorDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: AuthorDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -27,10 +27,8 @@ class AuthorService(BaseService):
         """
         super().__init__(db_session)
         self._dao: AuthorDAO = dao or BaseDAO[
-            Author, CreateAuthorRequestSchema](
-            session=db_session, model=Author)
+            Author, CreateAuthorRequestSchema
+        ](session=db_session, model=Author)
 
     async def create_new_author(self, user: User):
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"create_new_author, {user}")
+        print(f'create_new_author, {user}')

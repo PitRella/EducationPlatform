@@ -1,33 +1,22 @@
 from abc import ABC, abstractmethod
+from enum import StrEnum
+from typing import TypeVar
 
 from src.database import Base
 from src.users.models import User
-from typing import Protocol, TypeVar
 
 Model = TypeVar('Model', bound=Base)
+ActionEnum = TypeVar('ActionEnum', bound=StrEnum)
 
 
-class EnumWithCRUD(Protocol):
-    """Protocol for enum's actions."""
-    CREATE: str
-    GET: str
-    DELETE: str
-    UPDATE: str
-
-
-class BasePermissionService[Model](ABC):
-
+class BasePermissionService[Model, ActionEnum](ABC):
     @classmethod
     @abstractmethod
     def validate_permission(
-            cls,
-            target_model: Model,
-            current_user: User,
-            action: EnumWithCRUD
+        cls, target_model: Model, current_user: User, action: ActionEnum
     ) -> None:
-        """
-        Validate if the current user has permission
-        to perform an action on a target model.
+        """Validate if the current user has permission
+        to perform an a ction on a target model.
 
         Args:
             target_model: The database model instance to check permissions against
@@ -40,6 +29,6 @@ class BasePermissionService[Model](ABC):
         Raises:
             NotImplementedError: When a child does not implement a method
             PermissionError: When the user doesn't have required permissions
-        """
 
-        raise NotImplementedError()
+        """
+        raise NotImplementedError

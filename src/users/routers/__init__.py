@@ -1,7 +1,7 @@
-from .user import user_router
 from .author import author_router
+from .user import user_router
 
 __all__ = [
-    'user_router',
     'author_router',
+    'user_router',
 ]

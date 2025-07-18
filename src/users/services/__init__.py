@@ -1,6 +1,7 @@
-from .user import UserService
 from .author import AuthorService
+from .user import UserService
+
 __all__ = [
-    'UserService',
     'AuthorService',
+    'UserService',
 ]

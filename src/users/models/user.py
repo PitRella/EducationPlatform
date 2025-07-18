@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import Boolean, Enum, String
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.base.models import BaseUUIDMixin, BaseTimeStampMixin
 
+from sqlalchemy import Enum, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.base.models import BaseTimeStampMixin, BaseUUIDMixin
 from src.users.enums import UserRoles
 
 if TYPE_CHECKING:
-    from src.users.models import Author
     from src.courses.models import Course
+    from src.users.models import Author
 
 
 class User(BaseUUIDMixin, BaseTimeStampMixin):
@@ -55,18 +55,14 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
         nullable=False,
         server_default='USER',
     )
-    author: Mapped[Optional["Author"]] = relationship(
-        'Author',
-        back_populates='user',
-        uselist=False
+    author: Mapped[Optional['Author']] = relationship(
+        'Author', back_populates='user', uselist=False
     )
     is_active: Mapped[bool] = mapped_column(
         default=True,
     )
-    purchased_courses: Mapped["Course"] = relationship(
-        'Course',
-        secondary='user_courses',
-        back_populates='users'
+    purchased_courses: Mapped['Course'] = relationship(
+        'Course', secondary='user_courses', back_populates='users'
     )
 
     @property
@@ -83,6 +79,3 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     def is_user_in_admin_group(self) -> bool:
         """Check if user in an admin group or not."""
         return self.is_user_admin or self.is_user_superadmin
-
-
-
