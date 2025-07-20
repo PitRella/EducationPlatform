@@ -51,7 +51,7 @@ class AuthorService(BaseService):
             self,
             user: User,
             author_schema: CreateAuthorRequestSchema
-    ) -> CreateAuthorRequestSchema:
+    ) -> Author:
         if user.is_user_in_admin_group:
             raise AdminCannotBeAuthorException
         user_data: dict[str, Any] = author_schema.model_dump(mode="json")
@@ -59,4 +59,4 @@ class AuthorService(BaseService):
         user_data["slug"] = make_slug(user.name or user.surname)
         async with self.session.begin():
             new_author: Author = await self._dao.create(user_data)
-        return CreateAuthorRequestSchema.model_validate(new_author)
+        return new_author
