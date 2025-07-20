@@ -22,7 +22,11 @@ async def create_course(
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Endpoint to create a new course."""
-    return await service.create_course(author=author, course_schema = course_schema)
+    course = await service.create_course(
+        author=author,
+        course_schema=course_schema
+    )
+    return BaseCourseResponseSchema.model_validate(course)
 
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
@@ -31,4 +35,5 @@ async def get_course(
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Endpoint to get a course by its ID."""
-    return await service.get_course(course_id)
+    course = await service.get_course(course_id)
+    return BaseCourseResponseSchema.model_validate(course)

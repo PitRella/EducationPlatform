@@ -7,7 +7,6 @@ from src.base.service import BaseService
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
-    BaseCourseResponseSchema,
     BaseCreateCourseSchema,
 )
 from src.users.models import Author
@@ -49,19 +48,19 @@ class CourseService(BaseService):
             self,
             author: Author,
             course_schema: BaseCreateCourseSchema
-    ) -> BaseCourseResponseSchema:
+    ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
         course_data['author_id'] = author.id
         course_data['slug'] = make_slug(course_data.get('title'))
         async with self.session.begin():
             course: Course = await self.dao.create(course_data)
-        return BaseCourseResponseSchema.model_validate(course)
+        return course
 
     async def get_course(
             self,
             course_id: uuid.UUID,
-    ) -> BaseCourseResponseSchema:
+    ) -> Course:
         """Get a course by its ID."""
         async with self.session.begin():
             course: Course | None = await self.dao.get_one(
@@ -70,4 +69,4 @@ class CourseService(BaseService):
             )
         if not course:
             raise CourseNotFoundByIdException
-        return BaseCourseResponseSchema.model_validate(course)
+        return course
