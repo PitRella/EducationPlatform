@@ -1,14 +1,17 @@
 from typing import Any
 
-from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.users import User
-from src.users.exceptions.author import AdminCannotBeAuthorException
+from src.users.exceptions.author import (
+    AdminCannotBeAuthorException,
+    UserIsNotAuthorException
+)
 from src.users.models import Author
 from src.users.schemas import CreateAuthorRequestSchema
+from src.utils import make_slug
 
 type AuthorDAO = BaseDAO[Author, CreateAuthorRequestSchema]
 
@@ -34,6 +37,16 @@ class AuthorService(BaseService):
             Author, CreateAuthorRequestSchema
         ](session=db_session, model=Author)
 
+    async def is_user_author(self, user: User) -> Author:
+        async with self.session.begin():
+            author: Author | None = await self._dao.get_one(
+                user_id=user.id,
+                is_verified=True
+            )
+        if not author:
+            raise UserIsNotAuthorException
+        return author
+
     async def become_author(
             self,
             user: User,
@@ -43,8 +56,7 @@ class AuthorService(BaseService):
             raise AdminCannotBeAuthorException
         user_data: dict[str, Any] = author_schema.model_dump(mode="json")
         user_data['user_id'] = user.id
-        user_data["slug"] = slugify(str(user.name or user.surname))
-
+        user_data["slug"] = make_slug(user.name or user.surname)
         async with self.session.begin():
             new_author: Author = await self._dao.create(user_data)
         return CreateAuthorRequestSchema.model_validate(new_author)

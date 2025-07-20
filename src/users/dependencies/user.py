@@ -7,8 +7,6 @@ from src.base.dependencies import get_service
 from src.users.models import User
 from src.users.services import UserService
 
-__all__ = ['get_user_from_uuid']
-
 
 async def get_user_from_uuid(
     user_id: uuid.UUID,

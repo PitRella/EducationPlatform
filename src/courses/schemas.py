@@ -38,5 +38,3 @@ class BaseCourseResponseSchema(_BaseCourseSchema, BaseSchema):
 
 class BaseCreateCourseSchema(_BaseCourseSchema):
     """Base course schema for creation."""
-
-    user_id: uuid.UUID

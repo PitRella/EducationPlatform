@@ -10,6 +10,8 @@ from src.courses.schemas import (
     BaseCourseResponseSchema,
     BaseCreateCourseSchema,
 )
+from src.users.models import Author
+from src.utils import make_slug
 
 type CourseDAO = BaseDAO[Course, BaseCreateCourseSchema]
 
@@ -18,9 +20,9 @@ class CourseService(BaseService):
     """Service class for handling course-related business logic."""
 
     def __init__(
-        self,
-        db_session: AsyncSession,
-        dao: CourseDAO | None = None,
+            self,
+            db_session: AsyncSession,
+            dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -44,16 +46,21 @@ class CourseService(BaseService):
         return self._dao
 
     async def create_course(
-        self, course_schema: BaseCreateCourseSchema
+            self,
+            author: Author,
+            course_schema: BaseCreateCourseSchema
     ) -> BaseCourseResponseSchema:
         """Create a new course in the database."""
+        course_data = course_schema.model_dump()
+        course_data['author_id'] = author.id
+        course_data['slug'] = make_slug(course_data.get('title'))
         async with self.session.begin():
-            course: Course = await self.dao.create(course_schema)
+            course: Course = await self.dao.create(course_data)
         return BaseCourseResponseSchema.model_validate(course)
 
     async def get_course(
-        self,
-        course_id: uuid.UUID,
+            self,
+            course_id: uuid.UUID,
     ) -> BaseCourseResponseSchema:
         """Get a course by its ID."""
         async with self.session.begin():
