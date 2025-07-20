@@ -16,5 +16,5 @@ async def become_author(
         author_schema: CreateAuthorRequestSchema,
         user: Annotated[User, Depends(get_user_from_jwt)],
         service: Annotated[AuthorService, Depends(get_service(AuthorService))],
-):
+) -> CreateAuthorRequestSchema:
     return await service.become_author(user=user, author_schema=author_schema)
