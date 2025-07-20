@@ -25,7 +25,7 @@ async def create_course(
     return await service.create_course(author=author, course_schema = course_schema)
 
 
-@course_router.get('/', response_model=BaseCourseResponseSchema)
+@course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
         course_id: uuid.UUID,
         service: Annotated[CourseService, Depends(get_service(CourseService))],

@@ -64,7 +64,10 @@ class CourseService(BaseService):
     ) -> BaseCourseResponseSchema:
         """Get a course by its ID."""
         async with self.session.begin():
-            course: Course | None = await self.dao.get_one(id=course_id)
+            course: Course | None = await self.dao.get_one(
+                id=course_id,
+                is_active=True,
+            )
         if not course:
             raise CourseNotFoundByIdException
         return BaseCourseResponseSchema.model_validate(course)
