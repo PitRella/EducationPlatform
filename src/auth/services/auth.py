@@ -111,7 +111,7 @@ class AuthService(BaseService):
             raise WrongCredentialsException
         return user_id
 
-    async def validate_token(self, user_jwt_token: str) -> User:
+    async def validate_token_for_user(self, user_jwt_token: str) -> User:
         """Validate a JWT token and retrieve the associated user.
 
         This method decodes the provided JWT token, validates its expiration,

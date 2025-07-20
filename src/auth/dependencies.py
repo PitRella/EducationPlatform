@@ -28,7 +28,7 @@ async def get_user_from_jwt(
     - Async dependency to extract a User from a JWT token.
     - Factory for a permission validation dependency
     """
-    return await service.validate_token(token)
+    return await service.validate_token_for_user(token)
 
 
 def validate_user_permission(
