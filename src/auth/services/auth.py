@@ -89,7 +89,10 @@ class AuthService(BaseService):
 
         """
         async with self.session.begin():
-            user: User | None = await self.user_dao.get_one(email=email)
+            user: User | None = await self.user_dao.get_one(
+                email=email,
+                is_active=True
+            )
         self._verify_user_password(user, password)
         return cast(User, user)
 
