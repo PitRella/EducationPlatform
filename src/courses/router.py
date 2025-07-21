@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends
 from src.base.dependencies import get_service
 from src.courses.schemas import (
     BaseCourseResponseSchema,
-    BaseCreateCourseRequestSchema, UpdateCourseRequestSchema,
+    BaseCreateCourseRequestSchema,
+    UpdateCourseRequestSchema,
 )
 from src.courses.service import CourseService
 from src.users.dependencies.author import get_author_from_jwt
@@ -17,22 +18,21 @@ course_router = APIRouter()
 
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
-        course_schema: BaseCreateCourseRequestSchema,
-        author: Annotated[Author, Depends(get_author_from_jwt)],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_schema: BaseCreateCourseRequestSchema,
+    author: Annotated[Author, Depends(get_author_from_jwt)],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Endpoint to create a new course."""
     course = await service.create_course(
-        author=author,
-        course_schema=course_schema
+        author=author, course_schema=course_schema
     )
     return BaseCourseResponseSchema.model_validate(course)
 
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
-        course_id: uuid.UUID,
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_id: uuid.UUID,
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Endpoint to get a course by its ID."""
     course = await service.get_course(course_id)
@@ -41,11 +41,24 @@ async def get_course(
 
 @course_router.patch('/{course_id}', response_model=BaseCourseResponseSchema)
 async def update_course(
-        course_id: uuid.UUID,
-        course_fields: UpdateCourseRequestSchema,
-        author: Annotated[Author, Depends(get_author_from_jwt)],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_id: uuid.UUID,
+    course_fields: UpdateCourseRequestSchema,
+    author: Annotated[Author, Depends(get_author_from_jwt)],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
-    updated_course = await service.update_course(course_id=course_id, author=author,
-                                           course_fields=course_fields)
+    """Update an existing course by its ID.
+
+    Args:
+        course_id (uuid.UUID): The unique identifier of the course to update.
+        course_fields (UpdateCourseRequestSchema): Fields to update.
+        author (Author): The authenticated author performing the update.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        BaseCourseResponseSchema: The updated course data.
+
+    """
+    updated_course = await service.update_course(
+        course_id=course_id, author=author, course_fields=course_fields
+    )
     return BaseCourseResponseSchema.model_validate(updated_course)

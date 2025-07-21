@@ -14,7 +14,14 @@ if TYPE_CHECKING:
 
 
 class Author(BaseUUIDMixin, BaseTimeStampMixin):
-    """Courses author"""
+    """Model representing an author profile.
+
+    Includes user association, unique slug, verification status, balance,
+    related courses, social network links, education,
+    geographic info, and contact details.
+
+    Enforces a one-to-one relationship with the user.
+    """
 
     __tablename__ = 'authors'
 

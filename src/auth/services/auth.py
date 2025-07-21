@@ -3,8 +3,7 @@ from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.exceptions import RefreshTokenException, \
-    WrongCredentialsException
+from src.auth.exceptions import RefreshTokenException, WrongCredentialsException
 from src.auth.models import RefreshToken
 from src.auth.schemas import CreateRefreshTokenSchema, Token
 from src.auth.services.hasher import Hasher
@@ -28,10 +27,10 @@ class AuthService(BaseService):
     """
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            auth_dao: AuthDAO | None = None,
-            user_dao: UserDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        auth_dao: AuthDAO | None = None,
+        user_dao: UserDAO | None = None,
     ) -> None:
         """Initialize AuthService with a database session and optional DAOs.
 
@@ -90,8 +89,7 @@ class AuthService(BaseService):
         """
         async with self.session.begin():
             user: User | None = await self.user_dao.get_one(
-                email=email,
-                is_active=True
+                email=email, is_active=True
             )
         self._verify_user_password(user, password)
         return cast(User, user)
@@ -111,7 +109,9 @@ class AuthService(BaseService):
             raise WrongCredentialsException
         return user_id
 
-    async def validate_token_for_user(self, user_jwt_token: str) -> uuid.UUID | str:
+    async def validate_token_for_user(
+        self, user_jwt_token: str
+    ) -> uuid.UUID | str:
         """Validate a JWT token and retrieve the associated user.
 
         This method decodes the provided JWT token, validates its expiration,
@@ -136,7 +136,6 @@ class AuthService(BaseService):
         if not user_id:
             raise WrongCredentialsException
         return user_id
-
 
     async def create_token(self, user_id: uuid.UUID) -> Token:
         """Generate new access and refresh tokens for a user.
@@ -198,7 +197,7 @@ class AuthService(BaseService):
         """
         async with self.session.begin():
             refresh_token_model: (
-                    RefreshToken | None
+                RefreshToken | None
             ) = await self.auth_dao.get_one(
                 refresh_token=refresh_token,
             )
@@ -220,7 +219,7 @@ class AuthService(BaseService):
                 TokenManager.generate_refresh_token()
             )
             updated_refresh_token_model: (
-                    RefreshToken | None
+                RefreshToken | None
             ) = await self.auth_dao.update(
                 {
                     'refresh_token': updated_refresh_token,
@@ -236,8 +235,8 @@ class AuthService(BaseService):
             )
 
     async def logout_user(
-            self,
-            refresh_token: str | None,
+        self,
+        refresh_token: str | None,
     ) -> None:
         """Log out a user by invalidating their refresh token.
 
@@ -256,7 +255,7 @@ class AuthService(BaseService):
             raise RefreshTokenException
         async with self.session.begin():
             refresh_token_model: (
-                    RefreshToken | None
+                RefreshToken | None
             ) = await self.auth_dao.get_one(
                 refresh_token=refresh_token,
             )

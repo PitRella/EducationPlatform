@@ -7,10 +7,9 @@ from .user import (
 )
 
 __all__ = [
-    # User exceptions
-    'UserQueryIdMissmatchException',
-    'UserNotFoundByIdException',
-    'ForgottenParametersException',
     'BadEmailSchemaException',
     'BadPasswordSchemaException',
+    'ForgottenParametersException',
+    'UserNotFoundByIdException',
+    'UserQueryIdMissmatchException',
 ]

@@ -7,7 +7,8 @@ from src.base.service import BaseService
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
-    BaseCreateCourseRequestSchema, UpdateCourseRequestSchema,
+    BaseCreateCourseRequestSchema,
+    UpdateCourseRequestSchema,
 )
 from src.users.models import Author
 from src.utils import make_slug
@@ -19,9 +20,9 @@ class CourseService(BaseService):
     """Service class for handling course-related business logic."""
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: CourseDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -35,7 +36,8 @@ class CourseService(BaseService):
         """
         super().__init__(db_session)
         self._dao: CourseDAO = dao or BaseDAO[
-            Course, BaseCreateCourseRequestSchema](
+            Course, BaseCreateCourseRequestSchema
+        ](
             db_session,
             Course,
         )
@@ -46,9 +48,7 @@ class CourseService(BaseService):
         return self._dao
 
     async def create_course(
-            self,
-            author: Author,
-            course_schema: BaseCreateCourseRequestSchema
+        self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
@@ -59,8 +59,8 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-            self,
-            course_id: uuid.UUID,
+        self,
+        course_id: uuid.UUID,
     ) -> Course:
         """Get a course by its ID."""
         async with self.session.begin():
@@ -73,16 +73,32 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author,
-            course_fields: UpdateCourseRequestSchema
-    ):
-        filtered_course_fields: dict[
-            str, str] = self._validate_schema_for_update_request(course_fields)
+        self,
+        course_id: uuid.UUID,
+        author: Author,
+        course_fields: UpdateCourseRequestSchema,
+    ) -> Course:
+        """Update an existing course by ID and author with the provided fields.
+
+        Args:
+            course_id (uuid.UUID): The ID of the course to update.
+            author (Author): The author of the course.
+            course_fields (UpdateCourseRequestSchema): Fields to update.
+
+        Returns:
+            Course: The updated course instance.
+
+        Raises:
+            CourseNotFoundByIdException: If the course does not exist.
+
+        """
+        filtered_course_fields: dict[str, str] = (
+            self._validate_schema_for_update_request(course_fields)
+        )
         async with self.session.begin():
             updated_course: Course | None = await self.dao.update(
-                filtered_course_fields, id=course_id, author_id=author.id)
+                filtered_course_fields, id=course_id, author_id=author.id
+            )
         if not updated_course:
             raise CourseNotFoundByIdException
         return updated_course

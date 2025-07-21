@@ -10,16 +10,21 @@ ActionEnum = TypeVar('ActionEnum', bound=StrEnum)
 
 
 class BasePermissionService[Model, ActionEnum](ABC):
+    """Abstract base class for permission services.
+
+    Defines an interface for validating whether a user has permission
+    to perform a specific action on a given model instance.
+    """
+
     @classmethod
     @abstractmethod
     def validate_permission(
         cls, target_model: Model, current_user: User, action: ActionEnum
     ) -> None:
-        """Validate if the current user has permission
-        to perform an a ction on a target model.
+        """Validate if the current user has permission to perform an action.
 
         Args:
-            target_model: The database model instance to check permissions against
+            target_model: The model instance to check permissions against
             current_user: The user attempting to perform the action
             action: The action being attempted (CREATE, GET, DELETE, UPDATE)
 

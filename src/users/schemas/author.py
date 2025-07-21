@@ -1,10 +1,16 @@
 from typing import Annotated
 
-from pydantic import HttpUrl, Field
+from pydantic import Field, HttpUrl
+
 from src.base.schemas import BaseSchema
 
 
 class CreateAuthorRequestSchema(BaseSchema):
+    """Schema for creating a creation author.
+
+    Include Facebook and LinkedIn URLs and validated education information.
+    """
+
     facebook_url: HttpUrl
     linkedin_url: HttpUrl
     education: Annotated[

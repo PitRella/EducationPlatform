@@ -8,12 +8,10 @@ from .user import (
 )
 
 __all__ = [
-    # User schemas
-    'CreateUserResponseShema',
+    'CreateAuthorRequestSchema',
     'CreateUserRequestSchema',
+    'CreateUserResponseShema',
     'DeleteUserResponseSchema',
     'UpdateUserRequestSchema',
     'UpdateUserResponseSchema',
-    # Author schemas
-    'CreateAuthorRequestSchema',
 ]

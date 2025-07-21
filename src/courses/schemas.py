@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
@@ -42,12 +42,14 @@ class BaseCreateCourseRequestSchema(_BaseCourseSchema):
 
 class UpdateCourseRequestSchema(BaseModel):
     """Base course schema for updating."""
-    title: Optional[Annotated[str, Field(min_length=5, max_length=40)]] = None
-    description: Optional[
-        Annotated[str, Field(min_length=20, max_length=512)]] = None
-    level: Optional[CourseLevelEnum] = None
-    logo: Optional[str] = None
-    price: Optional[Annotated[Decimal, Field(gt=0, le=100000)]] = None
-    currency: Optional[CurrencyEnum] = None
-    language: Optional[AvailableLanguagesEnum] = None
-    discount: Optional[int] = None
+
+    title: Annotated[str, Field(min_length=5, max_length=40)] | None = None
+    description: Annotated[str, Field(min_length=20, max_length=512)] | None = (
+        None
+    )
+    level: CourseLevelEnum | None = None
+    logo: str | None = None
+    price: Annotated[Decimal, Field(gt=0, le=100000)] | None = None
+    currency: CurrencyEnum | None = None
+    language: AvailableLanguagesEnum | None = None
+    discount: int | None = None

@@ -7,16 +7,12 @@ from src.auth.services.hasher import Hasher
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.users.exceptions import (
-    ForgottenParametersException,
     UserNotFoundByIdException,
 )
 from src.users.models import User
 from src.users.schemas import (
     CreateUserRequestSchema,
-    CreateUserResponseShema,
-    DeleteUserResponseSchema,
     UpdateUserRequestSchema,
-    UpdateUserResponseSchema,
 )
 
 type UserDAO = BaseDAO[User, CreateUserRequestSchema]
@@ -48,9 +44,9 @@ class UserService(BaseService):
     _SET_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['admin']}
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: UserDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: UserDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -79,7 +75,7 @@ class UserService(BaseService):
         """
         return self._dao
 
-    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
+    async def get_user_by_id(self, user_id: uuid.UUID | str) -> User:
         """Retrieve a user by their ID from the database.
 
         Args:
@@ -100,8 +96,8 @@ class UserService(BaseService):
         return user
 
     async def create_new_user(
-            self,
-            user: CreateUserRequestSchema,
+        self,
+        user: CreateUserRequestSchema,
     ) -> User:
         """Create a new user in the database.
 
@@ -124,9 +120,7 @@ class UserService(BaseService):
             created_user: User = await self.dao.create(user_data)
         return created_user
 
-    async def deactivate_user(
-            self, target_user: User
-    ) -> None:
+    async def deactivate_user(self, target_user: User) -> None:
         """Deactivate a user in the database.
 
         Args:
@@ -150,9 +144,9 @@ class UserService(BaseService):
             raise UserNotFoundByIdException
 
     async def update_user(
-            self,
-            target_user: User,
-            user_fields: UpdateUserRequestSchema,
+        self,
+        target_user: User,
+        user_fields: UpdateUserRequestSchema,
     ) -> User:
         """Update user information in the database.
 
@@ -172,7 +166,9 @@ class UserService(BaseService):
             Only non-null fields from the request schema will be updated
 
         """
-        filtered_user_fields: dict[str, str] = self._validate_schema_for_update_request(user_fields)
+        filtered_user_fields: dict[str, str] = (
+            self._validate_schema_for_update_request(user_fields)
+        )
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
                 filtered_user_fields, id=target_user.id
@@ -182,8 +178,8 @@ class UserService(BaseService):
         return updated_user
 
     async def set_admin_privilege(
-            self,
-            target_user: User,
+        self,
+        target_user: User,
     ) -> User:
         """Grant admin privileges to a user.
 
@@ -208,9 +204,10 @@ class UserService(BaseService):
         if not updated_user:
             raise UserNotFoundByIdException
         return updated_user
+
     async def revoke_admin_privilege(
-            self,
-            target_user: User,
+        self,
+        target_user: User,
     ) -> User:
         """Revoke admin privileges from a user.
 
