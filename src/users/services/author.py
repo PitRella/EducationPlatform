@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,10 +38,10 @@ class AuthorService(BaseService):
             Author, CreateAuthorRequestSchema
         ](session=db_session, model=Author)
 
-    async def is_user_author(self, user: User) -> Author:
+    async def is_user_author(self, user_id: uuid.UUID | str) -> Author:
         async with self.session.begin():
             author: Author | None = await self._dao.get_one(
-                user_id=user.id,
+                user_id=user_id,
                 is_verified=True
             )
         if not author:
