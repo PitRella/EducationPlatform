@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pydantic import BaseModel, Field
 
@@ -36,5 +36,5 @@ class BaseCourseResponseSchema(_BaseCourseSchema, BaseSchema):
     id: uuid.UUID
 
 
-class BaseCreateCourseSchema(_BaseCourseSchema):
+class BaseCreateCourseRequestSchema(_BaseCourseSchema):
     """Base course schema for creation."""

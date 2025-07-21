@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from src.base.dependencies import get_service
 from src.courses.schemas import (
     BaseCourseResponseSchema,
-    BaseCreateCourseSchema,
+    BaseCreateCourseRequestSchema,
 )
 from src.courses.service import CourseService
 from src.users.dependencies.author import get_author_from_jwt
@@ -17,7 +17,7 @@ course_router = APIRouter()
 
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
-        course_schema: BaseCreateCourseSchema,
+        course_schema: BaseCreateCourseRequestSchema,
         author: Annotated[Author, Depends(get_author_from_jwt)],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:

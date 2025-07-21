@@ -7,12 +7,12 @@ from src.base.service import BaseService
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
-    BaseCreateCourseSchema,
+    BaseCreateCourseRequestSchema,
 )
 from src.users.models import Author
 from src.utils import make_slug
 
-type CourseDAO = BaseDAO[Course, BaseCreateCourseSchema]
+type CourseDAO = BaseDAO[Course, BaseCreateCourseRequestSchema]
 
 
 class CourseService(BaseService):
@@ -34,7 +34,7 @@ class CourseService(BaseService):
 
         """
         super().__init__(db_session)
-        self._dao: CourseDAO = dao or BaseDAO[Course, BaseCreateCourseSchema](
+        self._dao: CourseDAO = dao or BaseDAO[Course, BaseCreateCourseRequestSchema](
             db_session,
             Course,
         )
@@ -47,7 +47,7 @@ class CourseService(BaseService):
     async def create_course(
             self,
             author: Author,
-            course_schema: BaseCreateCourseSchema
+            course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
