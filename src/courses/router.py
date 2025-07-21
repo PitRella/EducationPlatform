@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from src.base.dependencies import get_service
 from src.courses.schemas import (
     BaseCourseResponseSchema,
-    BaseCreateCourseRequestSchema,
+    BaseCreateCourseRequestSchema, UpdateCourseRequestSchema,
 )
 from src.courses.service import CourseService
 from src.users.dependencies.author import get_author_from_jwt
@@ -37,3 +37,15 @@ async def get_course(
     """Endpoint to get a course by its ID."""
     course = await service.get_course(course_id)
     return BaseCourseResponseSchema.model_validate(course)
+
+
+@course_router.patch('/{course_id}', response_model=BaseCourseResponseSchema)
+async def update_course(
+        course_id: uuid.UUID,
+        course_fields: UpdateCourseRequestSchema,
+        author: Annotated[Author, Depends(get_author_from_jwt)],
+        service: Annotated[CourseService, Depends(get_service(CourseService))],
+) -> BaseCourseResponseSchema:
+    updated_course = await service.update_course(course_id=course_id, author=author,
+                                           course_fields=course_fields)
+    return BaseCourseResponseSchema.model_validate(updated_course)

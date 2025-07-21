@@ -7,7 +7,7 @@ from src.base.service import BaseService
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
-    BaseCreateCourseRequestSchema,
+    BaseCreateCourseRequestSchema, UpdateCourseRequestSchema,
 )
 from src.users.models import Author
 from src.utils import make_slug
@@ -34,7 +34,8 @@ class CourseService(BaseService):
 
         """
         super().__init__(db_session)
-        self._dao: CourseDAO = dao or BaseDAO[Course, BaseCreateCourseRequestSchema](
+        self._dao: CourseDAO = dao or BaseDAO[
+            Course, BaseCreateCourseRequestSchema](
             db_session,
             Course,
         )
@@ -70,3 +71,18 @@ class CourseService(BaseService):
         if not course:
             raise CourseNotFoundByIdException
         return course
+
+    async def update_course(
+            self,
+            course_id: uuid.UUID,
+            author: Author,
+            course_fields: UpdateCourseRequestSchema
+    ):
+        filtered_course_fields: dict[
+            str, str] = self._validate_schema_for_update_request(course_fields)
+        async with self.session.begin():
+            updated_course: Course | None = await self.dao.update(
+                filtered_course_fields, id=course_id, author_id=author.id)
+        if not updated_course:
+            raise CourseNotFoundByIdException
+        return updated_course

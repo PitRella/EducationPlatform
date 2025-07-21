@@ -38,3 +38,16 @@ class BaseCourseResponseSchema(_BaseCourseSchema, BaseSchema):
 
 class BaseCreateCourseRequestSchema(_BaseCourseSchema):
     """Base course schema for creation."""
+
+
+class UpdateCourseRequestSchema(BaseModel):
+    """Base course schema for updating."""
+    title: Optional[Annotated[str, Field(min_length=5, max_length=40)]] = None
+    description: Optional[
+        Annotated[str, Field(min_length=20, max_length=512)]] = None
+    level: Optional[CourseLevelEnum] = None
+    logo: Optional[str] = None
+    price: Optional[Annotated[Decimal, Field(gt=0, le=100000)]] = None
+    currency: Optional[CurrencyEnum] = None
+    language: Optional[AvailableLanguagesEnum] = None
+    discount: Optional[int] = None
