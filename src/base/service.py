@@ -1,4 +1,9 @@
+from typing import final
+
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.users.exceptions import ForgottenParametersException
 
 
 class BaseService:
@@ -17,3 +22,16 @@ class BaseService:
     def session(self) -> AsyncSession:
         """Return the current AsyncSession."""
         return self._session
+
+    @staticmethod
+    @final
+    def _validate_schema_for_update_request(
+            schema: BaseModel
+    ) -> dict[str, str]:
+        schema_fields: dict[str, str] = schema.model_dump(
+            exclude_none=True,
+            exclude_unset=True,
+        )  # Delete None key value pair
+        if not schema_fields:
+            raise ForgottenParametersException
+        return schema_fields

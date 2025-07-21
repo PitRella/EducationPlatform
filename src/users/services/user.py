@@ -172,12 +172,7 @@ class UserService(BaseService):
             Only non-null fields from the request schema will be updated
 
         """
-        filtered_user_fields: dict[str, str] = user_fields.model_dump(
-            exclude_none=True,
-            exclude_unset=True,
-        )  # Delete None key value pair
-        if not filtered_user_fields:
-            raise ForgottenParametersException
+        filtered_user_fields: dict[str, str] = self._validate_schema_for_update_request(user_fields)
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
                 filtered_user_fields, id=target_user.id
