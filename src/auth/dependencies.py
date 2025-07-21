@@ -10,6 +10,7 @@ from src.auth.services import AuthService, UserPermissionService
 from src.base.dependencies import get_service
 from src.users.dependencies import get_user_from_uuid
 from src.users.models import User
+from src.users.services import UserService
 
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl='/auth/login',
@@ -18,7 +19,8 @@ oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 
 async def get_user_from_jwt(
     token: Annotated[str, Security(oauth_scheme)],
-    service: Annotated[AuthService, Depends(get_service(AuthService))],
+    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
+    user_service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User:
     """Return FastAPI dependencies for authentication and validation.
 
@@ -28,7 +30,8 @@ async def get_user_from_jwt(
     - Async dependency to extract a User from a JWT token.
     - Factory for a permission validation dependency
     """
-    return await service.validate_token_for_user(token)
+    user_id =  await auth_service.validate_token_for_user(token)
+    return await user_service.get_user_by_id(user_id)
 
 
 def validate_user_permission(
