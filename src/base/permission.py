@@ -1,39 +1,50 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import TypeVar
+from typing import TypeVar, Optional, Annotated
 
+from fastapi import Depends, HTTPException
+from starlette.requests import Request
+
+from src.auth.services import AuthService
+from src.base.dependencies import get_service
 from src.database import Base
 from src.users.models import User
-
-Model = TypeVar('Model', bound=Base)
-ActionEnum = TypeVar('ActionEnum', bound=StrEnum)
+from src.users.services import UserService
 
 
-class BasePermissionService[Model, ActionEnum](ABC):
-    """Abstract base class for permission services.
-
-    Defines an interface for validating whether a user has permission
-    to perform a specific action on a given model instance.
-    """
+class BasePermissionService(ABC):
+    def __init__(self, user: User):
+        self.user = user
 
     @classmethod
+    async def create(
+            cls,
+            request: Request,
+            auth_service: Annotated[
+                AuthService, Depends(get_service(AuthService))],
+            user_service: Annotated[
+                UserService, Depends(get_service(UserService))],
+    ) -> BasePermissionService:
+        token: str | None = request.cookies.get("access_token")
+        if not token:
+            raise HTTPException(status_code=404,
+                                detail="No access token found")
+        user_id = await auth_service.validate_token_for_user(token)
+        user = await user_service.get_user_by_id(user_id)
+        return cls(user)
+
     @abstractmethod
     def validate_permission(
-        cls, target_model: Model, current_user: User, action: ActionEnum
+            self,
+            request: Request
     ) -> None:
-        """Validate if the current user has permission to perform an action.
+        ...
 
-        Args:
-            target_model: The model instance to check permissions against
-            current_user: The user attempting to perform the action
-            action: The action being attempted (CREATE, GET, DELETE, UPDATE)
 
-        Returns:
-            None if validation succeeds
+class PermissionDependency:
+    def __init__(self, permissions: list[BasePermissionService]):
+        self.permissions = permissions
 
-        Raises:
-            NotImplementedError: When a child does not implement a method
-            PermissionError: When the user doesn't have required permissions
-
-        """
-        raise NotImplementedError
+    def __call__(self, request: Request) -> None:
+        for permission in self.permissions:
+            permission.validate_permission(request)
