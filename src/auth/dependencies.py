@@ -1,12 +1,10 @@
-from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.params import Security
 from fastapi.security import OAuth2PasswordBearer
 
-from src.auth.enums import UserAction
-from src.auth.services import AuthService, UserPermissionService
+from src.auth.services import AuthService
 from src.base.dependencies import get_service
 from src.users.dependencies import get_user_from_uuid
 from src.users.models import User
@@ -32,29 +30,3 @@ async def get_user_from_jwt(
     """
     user_id = await auth_service.validate_token_for_user(token)
     return await user_service.get_user_by_id(user_id)
-
-
-def validate_user_permission(
-    action: UserAction,
-) -> Callable[[User, User], User]:
-    """Dependency factory that takes user action from enum.
-
-    Then calls dependencies for get user from query_id and from jwt.
-    Then validates permission between the two users.
-
-    :param: action: User action to perform. From UserAction Enum
-    :return: Target user object if validation succeeds.
-    """
-
-    def user_dependencies(
-        source_user: Annotated[User, Depends(get_user_from_jwt)],
-        target_user: Annotated[User, Depends(get_user_from_uuid)],
-    ) -> User:
-        UserPermissionService.validate_permission(
-            target_model=target_user,
-            current_user=source_user,
-            action=action,
-        )
-        return target_user
-
-    return user_dependencies

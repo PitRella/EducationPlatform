@@ -1,12 +1,16 @@
 import logging
+import uuid
 from abc import ABC, abstractmethod
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends
 from starlette.requests import Request
 
 from src.auth.dependencies import get_user_from_jwt
+from src.base.dependencies import get_service
+from src.users.enums import UserRoles
 from src.users.models import User
+from src.users.services import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +19,9 @@ logger = logging.getLogger(__name__)
 # Enforces a contract for permission validation logic.
 class BasePermissionService(ABC):
     def __init__(
-        self,
-        user: User,
-        request: Request,
+            self,
+            user: User,
+            request: Request,
     ):
         # The current authenticated user
         self.user: User = user
@@ -26,8 +30,8 @@ class BasePermissionService(ABC):
         self.request: Request = request
 
     @abstractmethod
-    def validate_permission(
-        self,
+    async def validate_permission(
+            self,
     ) -> None:
         """Abstract method that must be implemented by all permission classes.
         Should raise an exception if the permission check fails.
@@ -35,15 +39,44 @@ class BasePermissionService(ABC):
         ...
 
 
-# Concrete permission that checks if a user is authenticated.
-# Can be extended to perform additional checks if needed.
 class IsAuthenticated(BasePermissionService):
-    def validate_permission(
-        self,
+    async def validate_permission(
+            self,
     ) -> None:
-        """Implement actual logic to verify if the user is authenticated.
-        Raise exception if not.
+        """Explicitly indicates that the user must be authenticated;
+
+        Actual check is handled in the base class.
         """
+
+
+class DeleteUser(BasePermissionService):
+    async def _get_user_from_id(
+            self,
+            service: Optional[Annotated[
+                UserService, Depends(get_service(UserService))]] = None,
+    ) -> User:
+        user_id = self.request.path_params.get('user_id')
+        if not isinstance(user_id, str):
+            raise ValueError('Invalid user ID')  # TODO: Change exceptions
+        if not service:
+            raise ValueError(
+                'Service dependency not provided')  # TODO: Change exceptions
+        return await service.get_user_by_id(user_id)
+
+    def _validate_admin_group(self, target_user: User) -> None:
+        pass
+
+    def _validate_user(self, target_user: User) -> None:
+        pass
+
+    async def validate_permission(
+            self,
+    ) -> None:
+        target_user = await self._get_user_from_id()
+        if self.user.is_user_in_admin_group:
+            self._validate_admin_group(target_user)
+        else:
+            self._validate_user(target_user)
 
 
 # Dependency that applies a list of permission classes to a route.
@@ -53,10 +86,10 @@ class PermissionDependency:
         # Store a list of permission class types to be validated later
         self.permissions = permissions
 
-    def __call__(
-        self,
-        request: Request,
-        user: Annotated[User, Depends(get_user_from_jwt)],
+    async def __call__(
+            self,
+            request: Request,
+            user: Annotated[User, Depends(get_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency. It receives the request and
         authenticated user, applies all permission classes, and raises
@@ -67,7 +100,7 @@ class PermissionDependency:
             p_class = permission_cls(request=request, user=user)
 
             # Perform the actual permission check
-            p_class.validate_permission()
+            await p_class.validate_permission()
 
         # If all checks pass, return the user
         return user
