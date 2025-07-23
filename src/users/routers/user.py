@@ -11,10 +11,8 @@ from src.users.schemas import (
 )
 from src.users.services import UserService
 
-from src.base.permission import (
-    PermissionDependency,
-    IsAuthenticated,
-)
+from src.auth.dependencies import PermissionDependency
+from src.auth.permissions import IsAuthenticated
 
 user_router = APIRouter()
 @user_router.get(
