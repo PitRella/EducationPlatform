@@ -194,7 +194,7 @@ class UserService(BaseService):
             UserNotFoundByIdException: If the target user is not found
 
         Note:
-            This operation adds the ADMIN role to the user's roles list
+            This operation adds the ADMIN role to the user's role list
 
         """
         async with self.session.begin():
@@ -221,7 +221,7 @@ class UserService(BaseService):
             UserNotFoundByIdException: If the target user is not found
 
         Note:
-            This operation removes the ADMIN role from the user's roles list
+            This operation removes the ADMIN role from the user's role list
 
         """
         async with self.session.begin():

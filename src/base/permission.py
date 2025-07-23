@@ -43,40 +43,11 @@ class IsAuthenticated(BasePermissionService):
     async def validate_permission(
             self,
     ) -> None:
-        """Explicitly indicates that the user must be authenticated;
+        """
+        Explicitly indicates that the user must be authenticated;
 
         Actual check is handled in the base class.
         """
-
-
-class DeleteUser(BasePermissionService):
-    async def _get_user_from_id(
-            self,
-            service: Optional[Annotated[
-                UserService, Depends(get_service(UserService))]] = None,
-    ) -> User:
-        user_id = self.request.path_params.get('user_id')
-        if not isinstance(user_id, str):
-            raise ValueError('Invalid user ID')  # TODO: Change exceptions
-        if not service:
-            raise ValueError(
-                'Service dependency not provided')  # TODO: Change exceptions
-        return await service.get_user_by_id(user_id)
-
-    def _validate_admin_group(self, target_user: User) -> None:
-        pass
-
-    def _validate_user(self, target_user: User) -> None:
-        pass
-
-    async def validate_permission(
-            self,
-    ) -> None:
-        target_user = await self._get_user_from_id()
-        if self.user.is_user_in_admin_group:
-            self._validate_admin_group(target_user)
-        else:
-            self._validate_user(target_user)
 
 
 # Dependency that applies a list of permission classes to a route.
@@ -98,8 +69,7 @@ class PermissionDependency:
         for permission_cls in self.permissions:
             # Instantiate permission with request and user
             p_class = permission_cls(request=request, user=user)
-
-            # Perform the actual permission check
+            #  the actual permission check
             await p_class.validate_permission()
 
         # If all checks pass, return the user

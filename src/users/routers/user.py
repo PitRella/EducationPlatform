@@ -5,7 +5,7 @@ from src.base.dependencies import get_service
 from src.users.models import User
 from src.users.schemas import (
     CreateUserRequestSchema,
-    CreateUserResponseShema,
+    UserResponseShema,
     UpdateUserRequestSchema,
     UpdateUserResponseSchema,
 )
@@ -13,46 +13,44 @@ from src.users.services import UserService
 
 from src.base.permission import (
     PermissionDependency,
-    IsAuthenticated, DeleteUser
+    IsAuthenticated,
 )
 
 user_router = APIRouter()
-
-
-@user_router.post('/', response_model=CreateUserResponseShema)
-async def create_user(
-        user: CreateUserRequestSchema,
-        service: Annotated[UserService, Depends(get_service(UserService))],
-) -> CreateUserResponseShema:
-    """Endpoint to create a new user."""
-    new_user = await service.create_new_user(user=user)
-    return CreateUserResponseShema.model_validate(new_user)
-
-
-@user_router.delete('/{user_id}', status_code=204)
-async def deactivate_user(
-        user: Annotated[
-            User, Security(PermissionDependency([DeleteUser]))
-        ],
-        service: Annotated[UserService, Depends(get_service(UserService))],
-) -> None:
-    """Endpoint to deactivate the user."""
-    return await service.deactivate_user(target_user=user)
-
-
-@user_router.get('/{user_id}', response_model=CreateUserResponseShema)
-async def get_user_by_id(
+@user_router.get(
+    '/me',
+    description='Get information about current user',
+    response_model=UserResponseShema,
+)
+async def get_me(
         user: Annotated[
             User,
             Security(PermissionDependency([IsAuthenticated]))
         ],
+) -> UserResponseShema:
+    """Endpoint to update get a user from token."""
+    return UserResponseShema.model_validate(user)
 
-) -> CreateUserResponseShema:
-    """Endpoint to update get a user."""
-    return CreateUserResponseShema.model_validate(user)
+
+@user_router.post(
+    '/me',
+    description='Create a new user',
+    response_model=UserResponseShema
+)
+async def create_user(
+        user_schema: CreateUserRequestSchema,
+        service: Annotated[UserService, Depends(get_service(UserService))],
+) -> UserResponseShema:
+    """Endpoint to create a new user."""
+    new_user = await service.create_new_user(user=user_schema)
+    return UserResponseShema.model_validate(new_user)
 
 
-@user_router.patch('/{user_id}', response_model=UpdateUserResponseSchema)
+@user_router.patch(
+    '/me',
+    description='Update information about current user',
+    response_model=UpdateUserResponseSchema
+)
 async def update_user(
         user: Annotated[
             User, Security(PermissionDependency([IsAuthenticated]))
@@ -66,28 +64,12 @@ async def update_user(
     )
     return UpdateUserResponseSchema.model_validate(updated_user)
 
-
-@user_router.patch('/set_admin_privilege/{user_id}')
-async def set_admin_privilege(
+@user_router.delete('/me', status_code=204)
+async def deactivate_user(
         user: Annotated[
             User, Security(PermissionDependency([IsAuthenticated]))
         ],
         service: Annotated[UserService, Depends(get_service(UserService))],
-) -> UpdateUserResponseSchema:
-    """Endpoint to set admin privileges to a user."""
-    updated_user = await service.set_admin_privilege(
-        target_user=user,
-    )
-    return UpdateUserResponseSchema.model_validate(updated_user)
-
-
-@user_router.patch('/revoke_admin_privilege/{user_id}')
-async def revoke_admin_privilege(
-        service: Annotated[UserService, Depends(get_service(UserService))],
-        user: Annotated[
-            User, Security(PermissionDependency([IsAuthenticated]))
-        ],
-) -> UpdateUserResponseSchema:
-    """Endpoint to revoke admin privileges from a user."""
-    updated_user = await service.revoke_admin_privilege(target_user=user)
-    return UpdateUserResponseSchema.model_validate(updated_user)
+) -> None:
+    """Endpoint to deactivate the user."""
+    return await service.deactivate_user(target_user=user)
