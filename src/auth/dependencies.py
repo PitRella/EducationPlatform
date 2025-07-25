@@ -32,19 +32,52 @@ async def get_user_from_jwt(
     user_id = await auth_service.validate_token_for_user(token)
     return await user_service.get_user_by_id(user_id)
 
-# Dependency that applies a list of permission classes to a route.
-# Each permission is initialized, and its validate_permission() is called.
+
 class PermissionDependency:
+    """Permission dependency for permission validation to FastAPI routes.
+
+    This class provides a FastAPI dependency that enforces permission checks
+    by validating a list of permission classes against the current request
+    and authenticated user.
+
+    The dependency receives:
+    - The HTTP request
+    - An authenticated user (from JWT token)
+
+    It validates all specified permissions by instantiating each permission
+    and calling its validate_permission() method.
+    If any permission check fails, an exception is raised.
+
+    Usage:
+        @app.get("/protected")
+        async def protected_route(
+            user: Annotated[User, Depends(
+                PermissionDependency([SomePermission])
+            )]
+        ):
+            return {"message": "Access granted"}
+    """
+
     def __init__(self, permissions: list[type[BasePermissionService]]):
+        """Initialize PermissionDependency with a list of permission classes.
+
+        Args:
+            permissions (list[type[BasePermissionService]]): List of permission
+                class types that will be validated when the dependency is used.
+                Each permission class must inherit from BasePermissionService.
+
+        """
         # Store a list of permission class types to be validated later
         self.permissions = permissions
 
     async def __call__(
-            self,
-            request: Request,
-            user: Annotated[User, Depends(get_user_from_jwt)],
+        self,
+        request: Request,
+        user: Annotated[User, Depends(get_user_from_jwt)],
     ) -> User:
-        """Callable used as a FastAPI dependency. It receives the request and
+        """Callable used as a FastAPI dependency.
+
+        It receives the request and
         authenticated user, applies all permission classes, and raises
         if any permission fails.
         """

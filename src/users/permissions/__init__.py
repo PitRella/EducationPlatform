@@ -1,3 +1,3 @@
 from .user import BaseUserPermission
 
-__all__ = ['BaseUserPermission',]
+__all__ = ['BaseUserPermission']

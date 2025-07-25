@@ -12,7 +12,6 @@ class UserNotFoundByIdException(HTTPException):
         )
 
 
-
 class ForgottenParametersException(HTTPException):
     """Custom exception for when a forgotten parameter is missing."""
 
@@ -47,6 +46,7 @@ class BadPasswordSchemaException(HTTPException):
             ' one lowercase letter,'
             ' one digit and one special character @$!%*?&.',
         )
+
 
 class UserPermissionException(HTTPException):
     """Custom exception for when a user doesn't have permission."""
