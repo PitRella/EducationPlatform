@@ -60,12 +60,15 @@ class BaseUserPermission(BasePermissionService):
             UserPermissionException: If permission validation fails
 
         """
-        if (
+        if ( # Superadmin cannot interact with another superadmin
             self.user.roles == UserRoles.SUPERADMIN
             and self.target_user.roles == UserRoles.SUPERADMIN
-        ) or (
+        ) or ( # Admin cannot interact with another superadmin
             self.user.roles == UserRoles.ADMIN
             and self.target_user.roles == UserRoles.ADMIN
+        ) or ( # Admin cannot interact with superadmin
+            self.user.roles == UserRoles.ADMIN
+            and self.target_user.roles == UserRoles.SUPERADMIN
         ):
             raise UserPermissionException
         raise UserPermissionException

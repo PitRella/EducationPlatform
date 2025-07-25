@@ -1,5 +1,6 @@
-from typing import Annotated
-
+import uuid
+from typing import Annotated, Optional
+from decimal import Decimal
 from pydantic import Field, HttpUrl
 
 from src.base.schemas import BaseSchema
@@ -16,3 +17,18 @@ class CreateAuthorRequestSchema(BaseSchema):
     education: Annotated[
         str, Field(min_length=10, max_length=50, pattern=r'^[a-zA-Z ]+$')
     ]
+
+class AuthorResponseSchema(BaseSchema):
+    """Schema for author response."""
+    id: uuid.UUID
+    user_id: uuid.UUID
+    slug: str
+    is_verified: bool
+    balance: Decimal
+    facebook_url: str
+    linkedin_url: str
+    education: str
+    country: Optional[str]
+    city: Optional[str]
+    phone: Optional[str]
+    website: Optional[str]

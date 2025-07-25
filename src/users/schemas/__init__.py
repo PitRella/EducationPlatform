@@ -1,4 +1,4 @@
-from .author import CreateAuthorRequestSchema
+from .author import CreateAuthorRequestSchema, AuthorResponseSchema
 from .user import (
     CreateUserRequestSchema,
     DeleteUserResponseSchema,
@@ -9,6 +9,7 @@ from .user import (
 
 __all__ = [
     'CreateAuthorRequestSchema',
+    'AuthorResponseSchema',
     'CreateUserRequestSchema',
     'DeleteUserResponseSchema',
     'UpdateUserRequestSchema',

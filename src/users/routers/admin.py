@@ -13,7 +13,6 @@ admin_router = APIRouter()
 
 @admin_router.get('/{user_id}')
 def get_user_by_id(
-    user_id: uuid.UUID,
     user: Annotated[
         User, Security(UserPermissionDependency([BaseUserPermission]))
     ],
