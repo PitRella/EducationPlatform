@@ -53,3 +53,4 @@ async def get_current_author(
     """
 
     return AuthorResponseSchema.model_validate(author)
+

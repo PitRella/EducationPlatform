@@ -46,7 +46,7 @@ class AuthorService(BaseService):
             Author, CreateAuthorRequestSchema
         ](session=db_session, model=Author)
 
-    async def is_user_author(self, user_id: uuid.UUID | str) -> Author:
+    async def get_author_by_id(self, user_id: uuid.UUID | str) -> Author:
         """Check if a user is a verified author.
 
         Args:
