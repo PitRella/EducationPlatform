@@ -22,22 +22,34 @@ async def become_author(
         user: Annotated[User, Depends(get_user_from_jwt)],
         service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
-    """Endpoint for users to request author status.
+    """Endpoint to create a new author profile for a user.
 
-    Creates a new author profile for the authenticated user if eligible
-    and returns the created author data.
+    Args:
+        author_schema (CreateAuthorRequestSchema): The author creation data.
+        user (User): The authenticated user attempting to become an author.
+        service (AuthorService): The author service instance.
+
+    Returns:
+        AuthorResponseSchema: The newly created author data.
     """
     new_author: Author = await service.become_author(
         user=user, author_schema=author_schema
     )
     return AuthorResponseSchema.model_validate(new_author)
 
+
 @author_router.get(
     '/me',
     description='Get information about current author',
     response_model=AuthorResponseSchema
 )
-async def get_author(
-        author: Annotated[User, Depends(get_author_from_jwt)],
+async def get_current_author(
+        author: Annotated[Author, Depends(get_author_from_jwt)],
 ) -> AuthorResponseSchema:
+    """Endpoint to retrieve the current authenticated author's information.
+
+    Returns:
+        AuthorResponseSchema: The author data for the user.
+    """
+
     return AuthorResponseSchema.model_validate(author)
