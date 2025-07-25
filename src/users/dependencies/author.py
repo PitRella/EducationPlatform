@@ -34,4 +34,4 @@ async def get_author_from_jwt(
 
     """
     potential_author_id = await auth_service.validate_token_for_user(token)
-    return await author_service.get_author_by_id(potential_author_id)
+    return await author_service.get_author_by_user_id(potential_author_id)

@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -52,5 +53,18 @@ async def get_current_author(
         AuthorResponseSchema: The author data for the user.
     """
 
+    return AuthorResponseSchema.model_validate(author)
+
+
+@author_router.get(
+    '/{author_id}',
+    description='Get information about an author by ID',
+    response_model=AuthorResponseSchema
+)
+async def get_author_by_id(
+        author_id: uuid.UUID,
+        service: Annotated[AuthorService, Depends(get_service(AuthorService))],
+) -> AuthorResponseSchema:
+    author = await service.get_author_by_id(author_id)
     return AuthorResponseSchema.model_validate(author)
 

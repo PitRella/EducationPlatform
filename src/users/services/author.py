@@ -46,7 +46,7 @@ class AuthorService(BaseService):
             Author, CreateAuthorRequestSchema
         ](session=db_session, model=Author)
 
-    async def get_author_by_id(self, user_id: uuid.UUID | str) -> Author:
+    async def get_author_by_user_id(self, user_id: uuid.UUID | str) -> Author:
         """Check if a user is a verified author.
 
         Args:
@@ -62,6 +62,16 @@ class AuthorService(BaseService):
         async with self.session.begin():
             author: Author | None = await self._dao.get_one(
                 user_id=user_id, is_verified=True
+            )
+        if not author:
+            raise UserIsNotAuthorException
+        return author
+
+    async def get_author_by_id(self, author_id: uuid.UUID | str) -> Author:
+
+        async with self.session.begin():
+            author: Author | None = await self._dao.get_one(
+                id=author_id, is_verified=True
             )
         if not author:
             raise UserIsNotAuthorException
