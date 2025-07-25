@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_user_from_jwt
 from src.base.dependencies import get_service
-from src.base.permission import BasePermissionService
 from src.database import get_db
 from src.users.models import User
 from src.users.permissions.user import BaseUserPermission
@@ -43,8 +42,8 @@ class UserPermissionDependency:
     async def __call__(
             self,
             request: Request,
-            user: Annotated[User, Depends(get_user_from_jwt)],
-            db: Annotated[AsyncSession, Depends(get_db)],
+            target_user: Annotated[User, Depends(get_user_from_uuid)],
+            source_user: Annotated[User, Depends(get_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency. It receives the request and
         authenticated user, applies all permission classes, and raises
@@ -52,9 +51,13 @@ class UserPermissionDependency:
         """
         for permission_cls in self.permissions:
             # Instantiate permission with request and user
-            p_class = permission_cls(request=request, user=user, db=db)
+            p_class = permission_cls(
+                request=request,
+                user=source_user,
+                target_user=target_user
+            )
             #  the actual permission check
             await p_class.validate_permission()
 
         # If all checks pass, return the user
-        return user
+        return target_user
