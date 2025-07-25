@@ -3,13 +3,14 @@ from .user import (
     BadPasswordSchemaException,
     ForgottenParametersException,
     UserNotFoundByIdException,
-    UserQueryIdMissmatchException,
+    UserPermissionException
 )
+from .author import AdminCannotBeAuthorException, UserIsNotAuthorException
 
 __all__ = [
     'BadEmailSchemaException',
     'BadPasswordSchemaException',
     'ForgottenParametersException',
     'UserNotFoundByIdException',
-    'UserQueryIdMissmatchException',
+    'UserPermissionException'
 ]
