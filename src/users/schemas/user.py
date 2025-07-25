@@ -25,7 +25,7 @@ PASSWORD_PATTERN = re.compile(
 EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
-class CreateUserResponseShema(BaseSchema):
+class UserResponseShema(BaseSchema):
     """Pydantic model for showing user information."""
 
     id: uuid.UUID

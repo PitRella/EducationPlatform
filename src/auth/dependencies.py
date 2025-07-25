@@ -1,14 +1,13 @@
-from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.params import Security
 from fastapi.security import OAuth2PasswordBearer
+from starlette.requests import Request
 
-from src.auth.enums import UserAction
-from src.auth.services import AuthService, UserPermissionService
+from src.auth.services import AuthService
 from src.base.dependencies import get_service
-from src.users.dependencies import get_user_from_uuid
+from src.base.permission import BasePermissionService
 from src.users.models import User
 from src.users.services import UserService
 
@@ -34,27 +33,59 @@ async def get_user_from_jwt(
     return await user_service.get_user_by_id(user_id)
 
 
-def validate_user_permission(
-    action: UserAction,
-) -> Callable[[User, User], User]:
-    """Dependency factory that takes user action from enum.
+class PermissionDependency:
+    """Permission dependency for permission validation to FastAPI routes.
 
-    Then calls dependencies for get user from query_id and from jwt.
-    Then validates permission between the two users.
+    This class provides a FastAPI dependency that enforces permission checks
+    by validating a list of permission classes against the current request
+    and authenticated user.
 
-    :param: action: User action to perform. From UserAction Enum
-    :return: Target user object if validation succeeds.
+    The dependency receives:
+    - The HTTP request
+    - An authenticated user (from JWT token)
+
+    It validates all specified permissions by instantiating each permission
+    and calling its validate_permission() method.
+    If any permission check fails, an exception is raised.
+
+    Usage:
+        @app.get("/protected")
+        async def protected_route(
+            user: Annotated[User, Depends(
+                PermissionDependency([SomePermission])
+            )]
+        ):
+            return {"message": "Access granted"}
     """
 
-    def user_dependencies(
-        source_user: Annotated[User, Depends(get_user_from_jwt)],
-        target_user: Annotated[User, Depends(get_user_from_uuid)],
-    ) -> User:
-        UserPermissionService.validate_permission(
-            target_model=target_user,
-            current_user=source_user,
-            action=action,
-        )
-        return target_user
+    def __init__(self, permissions: list[type[BasePermissionService]]):
+        """Initialize PermissionDependency with a list of permission classes.
 
-    return user_dependencies
+        Args:
+            permissions (list[type[BasePermissionService]]): List of permission
+                class types that will be validated when the dependency is used.
+                Each permission class must inherit from BasePermissionService.
+
+        """
+        # Store a list of permission class types to be validated later
+        self.permissions = permissions
+
+    async def __call__(
+        self,
+        request: Request,
+        user: Annotated[User, Depends(get_user_from_jwt)],
+    ) -> User:
+        """Callable used as a FastAPI dependency.
+
+        It receives the request and
+        authenticated user, applies all permission classes, and raises
+        if any permission fails.
+        """
+        for permission_cls in self.permissions:
+            # Instantiate permission with request and user
+            p_class = permission_cls(request=request, user=user)
+            #  the actual permission check
+            await p_class.validate_permission()
+
+        # If all checks pass, return the user
+        return user

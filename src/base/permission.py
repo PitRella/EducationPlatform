@@ -1,39 +1,59 @@
+import logging
 from abc import ABC, abstractmethod
-from enum import StrEnum
-from typing import TypeVar
 
-from src.database import Base
+from starlette.requests import Request
+
 from src.users.models import User
 
-Model = TypeVar('Model', bound=Base)
-ActionEnum = TypeVar('ActionEnum', bound=StrEnum)
+logger = logging.getLogger(__name__)
 
 
-class BasePermissionService[Model, ActionEnum](ABC):
-    """Abstract base class for permission services.
+# Abstract base class for all permission services.
+# Enforces a contract for permission validation logic.
+class BasePermissionService(ABC):
+    """Abstract base class for implementing permission validation.
 
-    Defines an interface for validating whether a user has permission
-    to perform a specific action on a given model instance.
+    Provides a standardized interface for permission checking.
+    All permission services must inherit from this class and implement the
+    validate_permission() method to enforce their specific access control rules.
+
+    Attributes:
+        user (User): The authenticated user making the request
+        request (Request): The current HTTP request being processed
+
     """
 
-    @classmethod
-    @abstractmethod
-    def validate_permission(
-        cls, target_model: Model, current_user: User, action: ActionEnum
-    ) -> None:
-        """Validate if the current user has permission to perform an action.
+    def __init__(
+        self,
+        user: User,
+        request: Request,
+    ):
+        """Initialize BasePermissionService with user and request.
+
+        Base class for implementing permission validation logic.
+        All permission services should inherit from this class
+        and implement validate_permission().
 
         Args:
-            target_model: The model instance to check permissions against
-            current_user: The user attempting to perform the action
-            action: The action being attempted (CREATE, GET, DELETE, UPDATE)
+            user (User): The authenticated user making the request
+            request (Request): The current HTTP request being processed
 
-        Returns:
-            None if validation succeeds
-
-        Raises:
-            NotImplementedError: When a child does not implement a method
-            PermissionError: When the user doesn't have required permissions
+        The class provides core functionality for permission checking
+        by storing the authenticated user and current request context.
 
         """
-        raise NotImplementedError
+        # The current authenticated user
+        self.user: User = user
+
+        # The current HTTP request
+        self.request: Request = request
+
+    @abstractmethod
+    async def validate_permission(
+        self,
+    ) -> None:
+        """Abstract method that must be implemented by all permission classes.
+
+        Should raise an exception if the permission check fails.
+        """
+        ...

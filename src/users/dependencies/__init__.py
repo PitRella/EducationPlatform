@@ -1,5 +1,7 @@
-from .user import get_user_from_uuid
+from .author import get_author_from_jwt
+from .user import UserPermissionDependency
 
 __all__ = [
-    'get_user_from_uuid',
+    'UserPermissionDependency',
+    'get_author_from_jwt',
 ]

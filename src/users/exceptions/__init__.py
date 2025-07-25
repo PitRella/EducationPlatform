@@ -1,15 +1,18 @@
+from .author import AdminCannotBeAuthorException, UserIsNotAuthorException
 from .user import (
     BadEmailSchemaException,
     BadPasswordSchemaException,
     ForgottenParametersException,
     UserNotFoundByIdException,
-    UserQueryIdMissmatchException,
+    UserPermissionException,
 )
 
 __all__ = [
+    'AdminCannotBeAuthorException',
     'BadEmailSchemaException',
     'BadPasswordSchemaException',
     'ForgottenParametersException',
+    'UserIsNotAuthorException',
     'UserNotFoundByIdException',
-    'UserQueryIdMissmatchException',
+    'UserPermissionException',
 ]

@@ -12,17 +12,6 @@ class UserNotFoundByIdException(HTTPException):
         )
 
 
-class UserQueryIdMissmatchException(HTTPException):
-    """Custom exception for when a query uuid and uuid in JWT is missmatch."""
-
-    def __init__(self) -> None:
-        """Initialize the UserQueryIdMissmatchException with status 404."""
-        super().__init__(
-            status_code=404,
-            detail="JWT token doesn't belong to requested user",
-        )
-
-
 class ForgottenParametersException(HTTPException):
     """Custom exception for when a forgotten parameter is missing."""
 
@@ -56,4 +45,15 @@ class BadPasswordSchemaException(HTTPException):
             detail='Password should contain at least one uppercase letter,'
             ' one lowercase letter,'
             ' one digit and one special character @$!%*?&.',
+        )
+
+
+class UserPermissionException(HTTPException):
+    """Custom exception for when a user doesn't have permission."""
+
+    def __init__(self) -> None:
+        """Initialize the UserPermissionException with status 404."""
+        super().__init__(
+            status_code=404,
+            detail="This user doesn't have permission to do this action",
         )
