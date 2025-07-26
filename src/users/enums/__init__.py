@@ -1,3 +1,3 @@
-from .user_roles import UserRoles
+from .user_roles import UserRole
 
-__all__ = ['UserRoles']
+__all__ = ['UserRole']

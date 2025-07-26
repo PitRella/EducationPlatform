@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class UserRoles(StrEnum):
+class UserRole(StrEnum):
     """Enum class representing user roles in the system.
 
     Defines a hierarchy of user roles with different permission levels:

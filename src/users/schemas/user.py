@@ -12,7 +12,7 @@ from pydantic import (
 )
 
 from src.base.schemas import BaseSchema
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 from src.users.exceptions import (
     BadEmailSchemaException,
     BadPasswordSchemaException,
@@ -52,7 +52,7 @@ class CreateUserRequestSchema(BaseModel):
             max_length=50,
         ),
     ]
-    role: Sequence[UserRoles] | None = None
+    role: Sequence[UserRole] | None = None
 
     @field_validator('email')
     def validate_email(cls, value: str) -> str:

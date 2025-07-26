@@ -4,7 +4,7 @@ from sqlalchemy import Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.base.models import BaseTimeStampMixin, BaseUUIDMixin
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 
 if TYPE_CHECKING:
     from src.courses.models import Course
@@ -50,8 +50,8 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
         String(255),
         nullable=False,
     )
-    role: Mapped[UserRoles] = mapped_column(
-        Enum(UserRoles),
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole),
         nullable=False,
         server_default='USER',
     )
@@ -68,12 +68,12 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     @property
     def is_user_admin(self) -> bool:
         """Check if a user is admin or not."""
-        return self.role == UserRoles.ADMIN
+        return self.role == UserRole.ADMIN
 
     @property
     def is_user_superadmin(self) -> bool:
         """Check if a user is superadmin or not."""
-        return self.role == UserRoles.SUPERADMIN
+        return self.role == UserRole.SUPERADMIN
 
     @property
     def is_user_in_admin_group(self) -> bool:

@@ -2,7 +2,7 @@ from fastapi.requests import Request
 
 from src.base.permission import BasePermissionService
 from src.users import User
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 from src.users.exceptions import (
     UserPermissionException,
 )
@@ -61,14 +61,14 @@ class BaseUserPermission(BasePermissionService):
 
         """
         if (  # Superadmin cannot interact with another superadmin
-                self.user.role == UserRoles.SUPERADMIN
-                and self.target_user.role == UserRoles.SUPERADMIN
+                self.user.role == UserRole.SUPERADMIN
+                and self.target_user.role == UserRole.SUPERADMIN
         ) or (  # Admin cannot interact with another superadmin
-                self.user.role == UserRoles.ADMIN
-                and self.target_user.role == UserRoles.ADMIN
+                self.user.role == UserRole.ADMIN
+                and self.target_user.role == UserRole.ADMIN
         ) or (  # Admin cannot interact with superadmin
-                self.user.role == UserRoles.ADMIN
-                and self.target_user.role == UserRoles.SUPERADMIN
+                self.user.role == UserRole.ADMIN
+                and self.target_user.role == UserRole.SUPERADMIN
         ):
             raise UserPermissionException
         return None
@@ -79,9 +79,9 @@ class SuperadminPermission(BaseUserPermission):
             self,
     ) -> None:
         if (
-                self.user.role != UserRoles.SUPERADMIN
+                self.user.role != UserRole.SUPERADMIN
         ) or (
-                self.target_user.role == UserRoles.SUPERADMIN
+                self.target_user.role == UserRole.SUPERADMIN
         ):
             raise UserPermissionException
         return None

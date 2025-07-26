@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.services.hasher import Hasher
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 from src.users.exceptions import (
     UserNotFoundByIdException,
 )
@@ -41,10 +41,10 @@ class UserService(BaseService):
     """
 
     _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
-    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
-        'role': UserRoles.USER}
-    _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
-        'role': UserRoles.ADMIN}
+    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRole]] = {
+        'role': UserRole.USER}
+    _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRole]] = {
+        'role': UserRole.ADMIN}
 
     def __init__(
             self,
@@ -113,7 +113,7 @@ class UserService(BaseService):
             ID, name, surname, email, active status, and roles
 
         Note:
-            If roles are not provided, defaults to [UserRoles.USER]
+            If roles are not provided, defaults to [UserRole.USER]
 
         """
         user_data = user.model_dump()
