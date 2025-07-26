@@ -61,14 +61,14 @@ class BaseUserPermission(BasePermissionService):
 
         """
         if (  # Superadmin cannot interact with another superadmin
-                self.user.role == UserRole.SUPERADMIN
-                and self.target_user.role == UserRole.SUPERADMIN
+                self.user.is_user_superadmin
+                and self.target_user.is_user_superadmin
         ) or (  # Admin cannot interact with another superadmin
-                self.user.role == UserRole.ADMIN
-                and self.target_user.role == UserRole.ADMIN
+                self.user.is_user_admin
+                and self.target_user.is_user_admin
         ) or (  # Admin cannot interact with superadmin
-                self.user.role == UserRole.ADMIN
-                and self.target_user.role == UserRole.SUPERADMIN
+                self.user.is_user_admin
+                and self.target_user.is_user_superadmin
         ):
             raise UserPermissionException
         return None
@@ -78,10 +78,10 @@ class SuperadminPermission(BaseUserPermission):
     async def validate_permission(
             self,
     ) -> None:
-        if (
-                self.user.role != UserRole.SUPERADMIN
+        if not (
+                self.user.is_user_superadmin
         ) or (
-                self.target_user.role == UserRole.SUPERADMIN
+                self.target_user.is_user_superadmin
         ):
             raise UserPermissionException
         return None
