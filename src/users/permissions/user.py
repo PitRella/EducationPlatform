@@ -23,10 +23,10 @@ class BaseUserPermission(BasePermissionService):
     """
 
     def __init__(
-        self,
-        user: User,
-        request: Request,
-        target_user: User,
+            self,
+            user: User,
+            request: Request,
+            target_user: User,
     ):
         """Initialize BaseUserPermission with an authenticated users.
 
@@ -43,7 +43,7 @@ class BaseUserPermission(BasePermissionService):
         self.target_user = target_user
 
     async def validate_permission(
-        self,
+            self,
     ) -> None:
         """Validate permissions between the authenticated users.
 
@@ -60,15 +60,28 @@ class BaseUserPermission(BasePermissionService):
             UserPermissionException: If permission validation fails
 
         """
-        if ( # Superadmin cannot interact with another superadmin
-            self.user.roles == UserRoles.SUPERADMIN
-            and self.target_user.roles == UserRoles.SUPERADMIN
-        ) or ( # Admin cannot interact with another superadmin
-            self.user.roles == UserRoles.ADMIN
-            and self.target_user.roles == UserRoles.ADMIN
-        ) or ( # Admin cannot interact with superadmin
-            self.user.roles == UserRoles.ADMIN
-            and self.target_user.roles == UserRoles.SUPERADMIN
+        if (  # Superadmin cannot interact with another superadmin
+                self.user.roles == UserRoles.SUPERADMIN
+                and self.target_user.roles == UserRoles.SUPERADMIN
+        ) or (  # Admin cannot interact with another superadmin
+                self.user.roles == UserRoles.ADMIN
+                and self.target_user.roles == UserRoles.ADMIN
+        ) or (  # Admin cannot interact with superadmin
+                self.user.roles == UserRoles.ADMIN
+                and self.target_user.roles == UserRoles.SUPERADMIN
         ):
             raise UserPermissionException
-        raise UserPermissionException
+        return None
+
+
+class SuperadminPermission(BaseUserPermission):
+    async def validate_permission(
+            self,
+    ) -> None:
+        if (
+                self.user.roles != UserRoles.SUPERADMIN
+        ) or (
+                self.target_user.roles == UserRoles.SUPERADMIN
+        ):
+            raise UserPermissionException
+        return None

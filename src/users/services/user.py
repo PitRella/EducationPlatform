@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.services.hasher import Hasher
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
+from src.users.enums import UserRoles
 from src.users.exceptions import (
     UserNotFoundByIdException,
 )
@@ -40,8 +41,8 @@ class UserService(BaseService):
     """
 
     _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
-    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['user']}
-    _SET_ADMIN_UPDATE: ClassVar[dict[str, list[str]]] = {'roles': ['admin']}
+    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {'roles': UserRoles.USER}
+    _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {'roles': UserRoles.ADMIN}
 
     def __init__(
         self,
