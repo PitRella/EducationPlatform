@@ -1,21 +1,23 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, Security, Depends
 
+from src.base.dependencies import get_service
 from src.users import User
 from src.users.dependencies import UserPermissionDependency
-from src.users.permissions import BaseUserPermission
+from src.users.permissions import BaseUserPermission, SuperadminPermission
 from src.users.schemas import UserResponseShema
+from src.users.services import UserService
 
 admin_router = APIRouter()
 
 
 @admin_router.get('/{user_id}')
 def get_user_by_id(
-    user: Annotated[
-        User, Security(UserPermissionDependency([BaseUserPermission]))
-    ],
+        user: Annotated[
+            User, Security(UserPermissionDependency([BaseUserPermission]))
+        ],
 ) -> UserResponseShema:
     """Get user information by their UUID if permissions allow.
 
@@ -33,3 +35,17 @@ def get_user_by_id(
 
     """
     return UserResponseShema.model_validate(user)
+
+
+@admin_router.delete(
+    '/{user_id}',
+    description='Deactivate user by id',
+    status_code=204
+)
+async def deactivate_user_by_id(
+        service: Annotated[UserService, Depends(get_service(UserService))],
+        user: Annotated[
+            User, Security(UserPermissionDependency([BaseUserPermission]))
+        ],
+) -> None:
+    return await service.deactivate_user(target_user=user)
