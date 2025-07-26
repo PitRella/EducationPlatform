@@ -51,7 +51,6 @@ async def deactivate_user_by_id(
     return await service.deactivate_user(target_user=user)
 
 
-
 @admin_router.patch('/set_admin_privilege/{user_id}',
                     description='Give admin privilege to user',
                     response_model=UserResponseShema
@@ -65,3 +64,17 @@ async def set_admin_privilege(
     updated_user = await service.set_admin_privilege(target_user=user)
     return UserResponseShema.model_validate(updated_user)
 
+
+@admin_router.patch(
+    '/revoke_admin_privilege/{user_id}',
+    description='Revoke admin privilege from user',
+    response_model=UserResponseShema
+)
+async def revoke_admin_privilege(
+        service: Annotated[UserService, Depends(get_service(UserService))],
+        user: Annotated[
+            User, Security(UserPermissionDependency([SuperadminPermission]))
+        ],
+) -> UserResponseShema:
+    updated_user = await service.revoke_admin_privilege(target_user=user)
+    return UserResponseShema.model_validate(updated_user)

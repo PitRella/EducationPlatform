@@ -41,13 +41,15 @@ class UserService(BaseService):
     """
 
     _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
-    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {'roles': UserRoles.USER}
-    _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {'roles': UserRoles.ADMIN}
+    _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
+        'roles': UserRoles.USER}
+    _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
+        'roles': UserRoles.ADMIN}
 
     def __init__(
-        self,
-        db_session: AsyncSession,
-        dao: UserDAO | None = None,
+            self,
+            db_session: AsyncSession,
+            dao: UserDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -97,8 +99,8 @@ class UserService(BaseService):
         return user
 
     async def create_new_user(
-        self,
-        user: CreateUserRequestSchema,
+            self,
+            user: CreateUserRequestSchema,
     ) -> User:
         """Create a new user in the database.
 
@@ -145,9 +147,9 @@ class UserService(BaseService):
             raise UserNotFoundByIdException
 
     async def update_user(
-        self,
-        target_user: User,
-        user_fields: UpdateUserRequestSchema,
+            self,
+            target_user: User,
+            user_fields: UpdateUserRequestSchema,
     ) -> User:
         """Update user information in the database.
 
@@ -179,8 +181,8 @@ class UserService(BaseService):
         return updated_user
 
     async def set_admin_privilege(
-        self,
-        target_user: User,
+            self,
+            target_user: User,
     ) -> User:
         """Grant admin privileges to a user.
 
@@ -207,8 +209,8 @@ class UserService(BaseService):
         return updated_user
 
     async def revoke_admin_privilege(
-        self,
-        target_user: User,
+            self,
+            target_user: User,
     ) -> User:
         """Revoke admin privileges from a user.
 
@@ -227,7 +229,7 @@ class UserService(BaseService):
         """
         async with self.session.begin():
             updated_user: User | None = await self.dao.update(
-                self._REVOKE_ADMIN_UPDATE, target_user.id
+                self._REVOKE_ADMIN_UPDATE, id=target_user.id
             )
         if not updated_user:
             raise UserNotFoundByIdException
