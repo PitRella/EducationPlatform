@@ -42,9 +42,9 @@ class UserService(BaseService):
 
     _DEACTIVATE_USER_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
     _REVOKE_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
-        'roles': UserRoles.USER}
+        'role': UserRoles.USER}
     _SET_ADMIN_UPDATE: ClassVar[dict[str, UserRoles]] = {
-        'roles': UserRoles.ADMIN}
+        'role': UserRoles.ADMIN}
 
     def __init__(
             self,

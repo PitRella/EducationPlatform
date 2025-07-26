@@ -12,7 +12,7 @@ class UserAdmin(ModelView, model=User):
         User.id,
         User.email,
         User.name,
-        User.roles,
+        User.role,
         User.is_active,
     ]
     form_excluded_columns: ClassVar = [User.password]

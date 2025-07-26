@@ -61,14 +61,14 @@ class BaseUserPermission(BasePermissionService):
 
         """
         if (  # Superadmin cannot interact with another superadmin
-                self.user.roles == UserRoles.SUPERADMIN
-                and self.target_user.roles == UserRoles.SUPERADMIN
+                self.user.role == UserRoles.SUPERADMIN
+                and self.target_user.role == UserRoles.SUPERADMIN
         ) or (  # Admin cannot interact with another superadmin
-                self.user.roles == UserRoles.ADMIN
-                and self.target_user.roles == UserRoles.ADMIN
+                self.user.role == UserRoles.ADMIN
+                and self.target_user.role == UserRoles.ADMIN
         ) or (  # Admin cannot interact with superadmin
-                self.user.roles == UserRoles.ADMIN
-                and self.target_user.roles == UserRoles.SUPERADMIN
+                self.user.role == UserRoles.ADMIN
+                and self.target_user.role == UserRoles.SUPERADMIN
         ):
             raise UserPermissionException
         return None
@@ -79,9 +79,9 @@ class SuperadminPermission(BaseUserPermission):
             self,
     ) -> None:
         if (
-                self.user.roles != UserRoles.SUPERADMIN
+                self.user.role != UserRoles.SUPERADMIN
         ) or (
-                self.target_user.roles == UserRoles.SUPERADMIN
+                self.target_user.role == UserRoles.SUPERADMIN
         ):
             raise UserPermissionException
         return None

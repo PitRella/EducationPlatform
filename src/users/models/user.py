@@ -50,7 +50,7 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
         String(255),
         nullable=False,
     )
-    roles: Mapped[UserRoles] = mapped_column(
+    role: Mapped[UserRoles] = mapped_column(
         Enum(UserRoles),
         nullable=False,
         server_default='USER',
@@ -68,12 +68,12 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     @property
     def is_user_admin(self) -> bool:
         """Check if a user is admin or not."""
-        return self.roles == UserRoles.ADMIN
+        return self.role == UserRoles.ADMIN
 
     @property
     def is_user_superadmin(self) -> bool:
         """Check if a user is superadmin or not."""
-        return self.roles == UserRoles.SUPERADMIN
+        return self.role == UserRoles.SUPERADMIN
 
     @property
     def is_user_in_admin_group(self) -> bool:
