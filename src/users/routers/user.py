@@ -30,7 +30,7 @@ async def get_me(
 
 
 @user_router.post(
-    '/me',
+    '/',
     description='Create a new user',
     response_model=UserResponseShema
 )
