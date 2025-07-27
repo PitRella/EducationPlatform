@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from src.database import engine
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 from src.users.models import User
 from src.users.schemas import CreateUserRequestSchema, UpdateUserRequestSchema
 
@@ -24,7 +24,7 @@ async def user_schema() -> CreateUserRequestSchema:
         surname='TestSurName',
         email='test_user@tmail.com',
         password='Qwerty@123',  # type: ignore
-        roles=['user'],  # type: ignore
+        roles=['user'],
     )
 
 
@@ -111,7 +111,7 @@ class MockUserDAO:
             surname=self._user.surname,
             email=self._user.email,
             password=self._user.password,
-            roles=self._user.roles,
+            roles=self._user.role,
             is_active=self._user.is_active,
         )
 
@@ -134,9 +134,9 @@ class MockUserDAO:
     async def set_admin_privilege(  # type: ignore
         self, *args, **kwargs
     ) -> uuid.UUID:
-        return await self.update_user(*args, roles=[UserRoles.ADMIN])
+        return await self.update_user(*args, roles=[UserRole.ADMIN])
 
     async def revoke_admin_privilege(  # type: ignore
         self, *args, **kwargs
     ) -> uuid.UUID:
-        return await self.update_user(*args, roles=[UserRoles.USER])
+        return await self.update_user(*args, roles=[UserRole.USER])

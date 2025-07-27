@@ -21,7 +21,7 @@ class RefreshToken(Base):
 
     """
 
-    __tablename__ = 'refresh_session'
+    __tablename__ = 'refresh_tokens'
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

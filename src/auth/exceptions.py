@@ -32,14 +32,3 @@ class RefreshTokenException(HTTPException):
             "expired, doesn't exist or"
             ' attached to deleted user.',
         )
-
-
-class PermissionException(HTTPException):
-    """Custom exception for when a user doesn't have permission."""
-
-    def __init__(self) -> None:
-        """Initialize the PermissionException with status 404."""
-        super().__init__(
-            status_code=404,
-            detail="This user doesn't have permission to do this action",
-        )

@@ -12,7 +12,7 @@ from pydantic import (
 )
 
 from src.base.schemas import BaseSchema
-from src.users.enums import UserRoles
+from src.users.enums import UserRole
 from src.users.exceptions import (
     BadEmailSchemaException,
     BadPasswordSchemaException,
@@ -25,7 +25,7 @@ PASSWORD_PATTERN = re.compile(
 EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 
-class CreateUserResponseShema(BaseSchema):
+class UserResponseShema(BaseSchema):
     """Pydantic model for showing user information."""
 
     id: uuid.UUID
@@ -44,7 +44,7 @@ class CreateUserRequestSchema(BaseModel):
     surname: Annotated[
         str, Field(min_length=3, max_length=15, pattern='^[a-zA-Z]+$')
     ]
-    email: Annotated[EmailStr, Field(pattern='')]
+    email: EmailStr
     password: Annotated[
         SecretStr,
         Field(
@@ -52,7 +52,7 @@ class CreateUserRequestSchema(BaseModel):
             max_length=50,
         ),
     ]
-    roles: Sequence[UserRoles] | None = None
+    role: Sequence[UserRole] | None = None
 
     @field_validator('email')
     def validate_email(cls, value: str) -> str:

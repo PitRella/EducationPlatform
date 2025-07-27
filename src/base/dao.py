@@ -1,7 +1,19 @@
+import datetime as dt
+import uuid
 from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
-from sqlalchemy import Delete, Result, Select, Update, select, update
+from sqlalchemy import (
+    Delete,
+    Result,
+    Select,
+    Update,
+    and_,
+    desc,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import Base
@@ -102,11 +114,21 @@ class BaseDAO[
         return result.scalar_one_or_none()
 
     async def get_all(
-        self, *filters: Any, **filters_by: Any
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
+        order_by: list[str] | None = None,
+        *filters: Any,
+        **filters_by: Any,
     ) -> list[Model] | None:
         """Retrieve all records matching the specified filters.
 
         Args:
+            last_id: Optional UUID for filtering by last_id, for pagination
+            created_at: Optional datetime object for filtering by created_at
+            limit: Optional num for limiting the number of results returned.
+            order_by: Optional list of columns to order by.
             *filters: Variable length argument list of filter conditions
             **filters_by: Arbitrary kwargs for filtering by column values
 
@@ -114,7 +136,30 @@ class BaseDAO[
             list[Model] | None: List of model instances matching the filters
 
         """
-        result: Result[Any] = await self._get(*filters, **filters_by)
+        pagination = []
+        if created_at and last_id:
+            pagination = [
+                or_(
+                    self.model.created_at < created_at,  # type: ignore
+                    and_(
+                        self.model.created_at == created_at,  # type: ignore
+                        self.model.id < last_id,  # type: ignore
+                    ),
+                )
+            ]
+        query: Select[Any] = (
+            select(self.model)
+            .where(*filters, *pagination)
+            .filter_by(**filters_by)
+            .order_by(
+                desc(*order_by),  # type: ignore
+                desc(self.model.created_at),  # type: ignore
+                desc(self.model.id),  # type: ignore
+            )
+        )
+        if limit:
+            query = query.limit(limit)
+        result = await self.session.execute(query)
         return cast(list[Model], result.scalars().all())
 
     async def update(

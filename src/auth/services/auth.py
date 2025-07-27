@@ -88,7 +88,9 @@ class AuthService(BaseService):
 
         """
         async with self.session.begin():
-            user: User | None = await self.user_dao.get_one(email=email)
+            user: User | None = await self.user_dao.get_one(
+                email=email, is_active=True
+            )
         self._verify_user_password(user, password)
         return cast(User, user)
 
@@ -107,7 +109,9 @@ class AuthService(BaseService):
             raise WrongCredentialsException
         return user_id
 
-    async def validate_token(self, user_jwt_token: str) -> User:
+    async def validate_token_for_user(
+        self, user_jwt_token: str
+    ) -> uuid.UUID | str:
         """Validate a JWT token and retrieve the associated user.
 
         This method decodes the provided JWT token, validates its expiration,
@@ -117,7 +121,7 @@ class AuthService(BaseService):
             user_jwt_token (str): The JWT token to validate.
 
         Returns:
-            User: The user associated with the token.
+            user_id: The ID of user associated with the token.
 
         Raises:
             WrongCredentialsException: If the token is invalid, expired,
@@ -129,11 +133,9 @@ class AuthService(BaseService):
         )
         TokenManager.validate_access_token_expired(decoded_jwt)
         user_id: uuid.UUID | str = self._get_user_id_from_jwt(decoded_jwt)
-        async with self.session.begin():
-            user: User | None = await self.user_dao.get_one(id=user_id)
-        if not user:
+        if not user_id:
             raise WrongCredentialsException
-        return user
+        return user_id
 
     async def create_token(self, user_id: uuid.UUID) -> Token:
         """Generate new access and refresh tokens for a user.
