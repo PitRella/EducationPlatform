@@ -107,8 +107,9 @@ CreateSchema,
             created_at: Optional[dt.datetime] = None,
             last_id: Optional[uuid.UUID] = None,
             limit: Optional[int] = None,
+            order_by: Optional[list] = None,
             *filters: Any,
-            **filters_by: Any
+            **filters_by: Any,
     ) -> list[Model] | None:
         """Retrieve all records matching the specified filters.
 
@@ -116,6 +117,7 @@ CreateSchema,
             last_id: Optional UUID for filtering by last_id, for pagination
             created_at: Optional datetime object for filtering by created_at
             limit: Optional num for limiting the number of results returned.
+            order_by: Optional list of columns to order by.
             *filters: Variable length argument list of filter conditions
             **filters_by: Arbitrary kwargs for filtering by column values
 
@@ -138,10 +140,10 @@ CreateSchema,
             select(self.model).where(*filters, *pagination).
             filter_by(**filters_by).
             order_by(desc(self.model.created_at),
-                     desc(self.model.id))
+                     desc(self.model.id), *order_by)
         )
         if limit:
-            query.limit(limit)
+            query = query.limit(limit)
         result =  await self.session.execute(query)
         return cast(list[Model], result.scalars().all())
 

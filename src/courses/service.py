@@ -116,6 +116,7 @@ class CourseService(BaseService):
                 created_at=created_at,
                 last_id=last_id,
                 limit=limit,
+                order_by=['rating',],
                 is_active=True,
             )
         return courses
