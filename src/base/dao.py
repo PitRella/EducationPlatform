@@ -139,12 +139,15 @@ CreateSchema,
         query: Select[Any] = (
             select(self.model).where(*filters, *pagination).
             filter_by(**filters_by).
-            order_by(desc(self.model.created_at),
-                     desc(self.model.id), *order_by)
+            order_by(
+                desc(*order_by),
+                desc(self.model.created_at),
+                desc(self.model.id)
+            )
         )
         if limit:
             query = query.limit(limit)
-        result =  await self.session.execute(query)
+        result = await self.session.execute(query)
         return cast(list[Model], result.scalars().all())
 
     async def update(
