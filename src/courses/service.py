@@ -1,5 +1,6 @@
 import uuid
-
+from typing import Optional
+import datetime as dt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
@@ -102,3 +103,20 @@ class CourseService(BaseService):
         if not updated_course:
             raise CourseNotFoundByIdException
         return updated_course
+
+    async def get_all_courses(
+        self,
+            created_at: Optional[dt.datetime] = None,
+            last_id: Optional[uuid.UUID] = None,
+            limit: Optional[int] = None,
+    ) -> Optional[list[Course]]:
+        """Get all courses."""
+        async with self.session.begin():
+            courses: Optional[list[Course]] = await self.dao.get_all(
+                created_at=created_at,
+                last_id=last_id,
+                limit=limit,
+                order_by=['rating',],
+                is_active=True,
+            )
+        return courses
