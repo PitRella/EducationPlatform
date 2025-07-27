@@ -31,6 +31,7 @@ async def get_all_courses(
     )
     return [BaseCourseResponseSchema.model_validate(c) for c in courses]
 
+
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
         course_schema: BaseCreateCourseRequestSchema,
@@ -79,3 +80,10 @@ async def update_course(
     return BaseCourseResponseSchema.model_validate(updated_course)
 
 
+@course_router.delete('/{course_id}', status_code=204)
+async def deactivate_course_by_id(
+        course_id: uuid.UUID,
+        author: Annotated[Author, Depends(get_author_from_jwt)],
+        service: Annotated[CourseService, Depends(get_service(CourseService))],
+) -> None:
+    await service.deactivate_course(course_id=course_id, author=author)

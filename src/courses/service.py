@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, ClassVar
 import datetime as dt
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +19,7 @@ type CourseDAO = BaseDAO[Course, BaseCreateCourseRequestSchema]
 
 class CourseService(BaseService):
     """Service class for handling course-related business logic."""
+    _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
         self,
@@ -120,3 +121,15 @@ class CourseService(BaseService):
                 is_active=True,
             )
         return courses
+
+    async def deactivate_course(
+            self,
+            course_id: uuid.UUID,
+            author: Author,
+    ) -> None:
+        async with self.session.begin():
+            deleted_course: Course | None = await self.dao.update(
+                self._DEACTIVATE_COURSE_UPDATE, id=course_id, author_id=author.id
+            )
+        if not deleted_course:
+            raise CourseNotFoundByIdException
