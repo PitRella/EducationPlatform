@@ -2,7 +2,6 @@ from fastapi.requests import Request
 
 from src.base.permission import BasePermissionService
 from src.users import User
-from src.users.enums import UserRole
 from src.users.exceptions import (
     UserPermissionException,
 )
@@ -23,10 +22,10 @@ class BaseUserPermission(BasePermissionService):
     """
 
     def __init__(
-            self,
-            user: User,
-            request: Request,
-            target_user: User,
+        self,
+        user: User,
+        request: Request,
+        target_user: User,
     ):
         """Initialize BaseUserPermission with an authenticated users.
 
@@ -43,7 +42,7 @@ class BaseUserPermission(BasePermissionService):
         self.target_user = target_user
 
     async def validate_permission(
-            self,
+        self,
     ) -> None:
         """Validate permissions between the authenticated users.
 
@@ -60,28 +59,53 @@ class BaseUserPermission(BasePermissionService):
             UserPermissionException: If permission validation fails
 
         """
-        if (  # Superadmin cannot interact with another superadmin
+        if (
+            (  # Superadmin cannot interact with another superadmin
                 self.user.is_user_superadmin
                 and self.target_user.is_user_superadmin
-        ) or (  # Admin cannot interact with another superadmin
-                self.user.is_user_admin
-                and self.target_user.is_user_admin
-        ) or (  # Admin cannot interact with superadmin
-                self.user.is_user_admin
-                and self.target_user.is_user_superadmin
+            )
+            or (  # Admin cannot interact with another superadmin
+                self.user.is_user_admin and self.target_user.is_user_admin
+            )
+            or (  # Admin cannot interact with superadmin
+                self.user.is_user_admin and self.target_user.is_user_superadmin
+            )
         ):
             raise UserPermissionException
-        return None
 
 
 class SuperadminPermission(BaseUserPermission):
+    """Permission class that enforces superadmin-level access control.
+
+    Validates that only users with superadmin privileges can perform
+    certain operations. Prevents superadmins from modifying other
+    superadmin users to maintain security separation.
+
+    Attributes:
+        Inherits all attributes from BaseUserPermission:
+            user (User): The authenticated user making the request
+            request (Request): The current HTTP request
+            target_user (User): The user being targeted by the operation
+
+    """
+
     async def validate_permission(
-            self,
+        self,
     ) -> None:
-        if not (
-                self.user.is_user_superadmin
-        ) or (
-                self.target_user.is_user_superadmin
+        """Validate superadmin-level permissions.
+
+        Checks if the authenticated user has superadmin privileges and
+        ensures they are not trying to modify another superadmin.
+
+        Returns:
+            None
+
+        Raises:
+            UserPermissionException: If the user is not a superadmin or
+                attempts to modify another superadmin
+
+        """
+        if not self.user.is_user_superadmin or (
+            self.target_user.is_user_superadmin
         ):
             raise UserPermissionException
-        return None

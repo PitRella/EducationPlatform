@@ -1,10 +1,21 @@
-import uuid
-from typing import Any, TypeVar, cast, Optional
 import datetime as dt
+import uuid
+from typing import Any, TypeVar, cast
+
 from pydantic import BaseModel
-from sqlalchemy import Delete, Result, Select, Update, select, update
+from sqlalchemy import (
+    Delete,
+    Result,
+    Select,
+    Update,
+    and_,
+    desc,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Result, and_, desc, or_, select, Select
+
 from src.database import Base
 
 Model = TypeVar('Model', bound=Base)
@@ -12,8 +23,8 @@ CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
 
 
 class BaseDAO[
-Model,
-CreateSchema,
+    Model,
+    CreateSchema,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -103,13 +114,13 @@ CreateSchema,
         return result.scalar_one_or_none()
 
     async def get_all(
-            self,
-            created_at: Optional[dt.datetime] = None,
-            last_id: Optional[uuid.UUID] = None,
-            limit: Optional[int] = None,
-            order_by: Optional[list] = None,
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
+        order_by: list[str] | None = None,
+        *filters: Any,
+        **filters_by: Any,
     ) -> list[Model] | None:
         """Retrieve all records matching the specified filters.
 
@@ -129,20 +140,21 @@ CreateSchema,
         if created_at and last_id:
             pagination = [
                 or_(
-                    self.model.created_at < created_at,
+                    self.model.created_at < created_at,  # type: ignore
                     and_(
-                        self.model.created_at == created_at,
-                        self.model.id < last_id
-                    )
+                        self.model.created_at == created_at,  # type: ignore
+                        self.model.id < last_id,  # type: ignore
+                    ),
                 )
             ]
         query: Select[Any] = (
-            select(self.model).where(*filters, *pagination).
-            filter_by(**filters_by).
-            order_by(
-                desc(*order_by),
-                desc(self.model.created_at),
-                desc(self.model.id)
+            select(self.model)
+            .where(*filters, *pagination)
+            .filter_by(**filters_by)
+            .order_by(
+                desc(*order_by),  # type: ignore
+                desc(self.model.created_at),  # type: ignore
+                desc(self.model.id),  # type: ignore
             )
         )
         if limit:
@@ -151,10 +163,10 @@ CreateSchema,
         return cast(list[Model], result.scalars().all())
 
     async def update(
-            self,
-            update_data: dict[str, Any],
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        update_data: dict[str, Any],
+        *filters: Any,
+        **filters_by: Any,
     ) -> Model | None:
         """Update records matching the specified filters with provided data.
 
@@ -178,9 +190,9 @@ CreateSchema,
         return result.scalar_one_or_none()
 
     async def delete(
-            self,
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        *filters: Any,
+        **filters_by: Any,
     ) -> None:
         """Delete records matching the specified filters.
 

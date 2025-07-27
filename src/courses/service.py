@@ -1,6 +1,7 @@
-import uuid
-from typing import Optional, ClassVar
 import datetime as dt
+import uuid
+from typing import ClassVar
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
@@ -19,12 +20,13 @@ type CourseDAO = BaseDAO[Course, BaseCreateCourseRequestSchema]
 
 class CourseService(BaseService):
     """Service class for handling course-related business logic."""
+
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: CourseDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -50,7 +52,7 @@ class CourseService(BaseService):
         return self._dao
 
     async def create_course(
-            self, author: Author, course_schema: BaseCreateCourseRequestSchema
+        self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
@@ -61,10 +63,22 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-            self,
-            course_id: uuid.UUID,
+        self,
+        course_id: uuid.UUID,
     ) -> Course:
-        """Get a course by its ID."""
+        """Retrieve a course by its ID from the database.
+
+        Args:
+            course_id (uuid.UUID): The unique ID of the course to retrieve.
+
+        Returns:
+            Course: The course object if found and active.
+
+        Raises:
+            CourseNotFoundByIdException: If no active course is found
+                with the given ID.
+
+        """
         async with self.session.begin():
             course: Course | None = await self.dao.get_one(
                 id=course_id,
@@ -75,10 +89,10 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author,
-            course_fields: UpdateCourseRequestSchema,
+        self,
+        course_id: uuid.UUID,
+        author: Author,
+        course_fields: UpdateCourseRequestSchema,
     ) -> Course:
         """Update an existing course by ID and author with the provided fields.
 
@@ -110,31 +124,60 @@ class CourseService(BaseService):
         return updated_course
 
     async def get_all_courses(
-            self,
-            created_at: Optional[dt.datetime] = None,
-            last_id: Optional[uuid.UUID] = None,
-            limit: Optional[int] = None,
-    ) -> Optional[list[Course]]:
-        """Get all courses."""
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
+    ) -> list[Course]:
+        """Retrieve a list of all active courses from the database.
+
+        Args:
+            created_at (dt.datetime | None, optional): Filter courses created
+                after this timestamp. Defaults to None.
+            last_id (uuid.UUID | None, optional): Last course ID for paginating.
+                Defaults to None.
+            limit (int | None, optional): Maximum number of courses to return.
+                Defaults to None.
+
+        Returns:
+            list[Course]: List of active courses, ordered by rating.
+            Returns an empty list if no courses found.
+
+        """
         async with self.session.begin():
-            courses: Optional[list[Course]] = await self.dao.get_all(
+            courses: list[Course] | None = await self.dao.get_all(
                 created_at=created_at,
                 last_id=last_id,
                 limit=limit,
-                order_by=['rating', ],
+                order_by=['rating'],
                 is_active=True,
             )
-        return courses
+        return courses if courses else []
 
     async def deactivate_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author,
+        self,
+        course_id: uuid.UUID,
+        author: Author,
     ) -> None:
+        """Deactivate a course in the database.
+
+        Args:
+            course_id (uuid.UUID): The ID of the course to deactivate.
+            author (Author): The author of the course.
+
+        Raises:
+            CourseNotFoundByIdException: If the course does not exist or
+                does not belong to the specified author.
+
+        Note:
+            This operation sets the course's is_active flag to False.
+
+        """
         async with self.session.begin():
             deleted_course: Course | None = await self.dao.update(
-                self._DEACTIVATE_COURSE_UPDATE, id=course_id,
-                author_id=author.id
+                self._DEACTIVATE_COURSE_UPDATE,
+                id=course_id,
+                author_id=author.id,
             )
         if not deleted_course:
             raise CourseNotFoundByIdException

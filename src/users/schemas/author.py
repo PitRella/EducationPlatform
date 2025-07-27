@@ -1,6 +1,7 @@
 import uuid
-from typing import Annotated, Optional
 from decimal import Decimal
+from typing import Annotated
+
 from pydantic import Field, HttpUrl
 
 from src.base.schemas import BaseSchema
@@ -18,8 +19,10 @@ class CreateAuthorRequestSchema(BaseSchema):
         str, Field(min_length=10, max_length=50, pattern=r'^[a-zA-Z ]+$')
     ]
 
+
 class AuthorResponseSchema(BaseSchema):
     """Schema for author response."""
+
     id: uuid.UUID
     user_id: uuid.UUID
     slug: str
@@ -28,7 +31,7 @@ class AuthorResponseSchema(BaseSchema):
     facebook_url: str
     linkedin_url: str
     education: str
-    country: Optional[str]
-    city: Optional[str]
-    phone: Optional[str]
-    website: Optional[str]
+    country: str | None
+    city: str | None
+    phone: str | None
+    website: str | None

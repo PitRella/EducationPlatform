@@ -68,7 +68,18 @@ class AuthorService(BaseService):
         return author
 
     async def get_author_by_id(self, author_id: uuid.UUID | str) -> Author:
+        """Retrieve a verified author by their ID.
 
+        Args:
+            author_id (uuid.UUID | str): The ID of the author to retrieve.
+
+        Returns:
+            Author: The verified Author instance.
+
+        Raises:
+            UserIsNotAuthorException: If no verified author is found with ID.
+
+        """
         async with self.session.begin():
             author: Author | None = await self._dao.get_one(
                 id=author_id, is_verified=True
