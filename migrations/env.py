@@ -23,7 +23,7 @@ from src.database import Base
 from src.users.models import User, Author, UserCourses
 from src.auth.models import RefreshToken
 from src.courses.models import Course
-
+from src.lessons.models import Lesson
 target_metadata = Base.metadata
 
 
