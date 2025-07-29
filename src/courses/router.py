@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from src.base.dependencies import get_service
+from src.courses.dependencies import get_course_by_id
 from src.courses.models import Course
 from src.courses.schemas import (
     BaseCourseResponseSchema,
@@ -50,7 +51,17 @@ async def create_course(
     author: Annotated[Author, Depends(get_author_from_jwt)],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
-    """Endpoint to create a new course."""
+    """Create a new course.
+
+    Args:
+        course_schema (BaseCreateCourseRequestSchema): Schema containing course details.
+        author (Author): The authenticated author creating the course.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        BaseCourseResponseSchema: The created course data.
+
+    """
     course = await service.create_course(
         author=author, course_schema=course_schema
     )
@@ -59,11 +70,17 @@ async def create_course(
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
-    course_id: uuid.UUID,
-    service: Annotated[CourseService, Depends(get_service(CourseService))],
+        course: Annotated[Course, Depends(get_course_by_id)],
 ) -> BaseCourseResponseSchema:
-    """Endpoint to get a course by its ID."""
-    course = await service.get_course(course_id)
+    """Retrieve a specific course by its ID.
+
+    Args:
+        course (Course): The course object retrieved by ID dependency.
+
+    Returns:
+        BaseCourseResponseSchema: The course data.
+    """
+
     return BaseCourseResponseSchema.model_validate(course)
 
 
