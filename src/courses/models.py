@@ -21,6 +21,7 @@ from src.courses.enums import (
 
 if TYPE_CHECKING:
     from src.users.models import Author, User
+    from src.lessons.models import Lesson
 
 
 class Course(BaseUUIDMixin, BaseTimeStampMixin):
@@ -64,6 +65,7 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
         String(512), nullable=False, comment='Path or URL to logo image'
     )
     author: Mapped['Author'] = relationship(back_populates='courses')
+    lessons: Mapped[list['Lesson']] = relationship(back_populates='course')
     author_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey('authors.id', ondelete='CASCADE'),
         comment='Author ID',
