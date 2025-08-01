@@ -15,6 +15,7 @@ from src.settings import Settings
 from src.users.admin import AuthorAdmin, UserAdmin
 from src.users.routers import author_router, user_router
 from src.users.routers.admin import admin_router
+from stripe import StripeClient
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ sentry_sdk.init(
     dsn=settings.logging_settings.SENTRY_URL,
     send_default_pii=True,
 )
+client = StripeClient(api_key=settings.stripe_settings.SECRET_KEY)
 app = FastAPI(title='EducationPlatform')
 admin = Admin(app, engine)
 
