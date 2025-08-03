@@ -2,20 +2,20 @@ import uuid
 from typing import Annotated
 
 from fastapi import Depends
+from fastapi.requests import Request
 
 from src.auth.dependencies import get_user_from_jwt
 from src.base.dependencies import get_service
 from src.courses.models import Course
+from src.courses.permissions import CoursePermission
 from src.courses.service import CourseService
 from src.users import Author, User
 from src.users.dependencies import get_author_from_jwt
-from src.users.models import UserCourses
-from src.users.services.user_courses import UserCoursesService
 
 
 async def get_course_by_id(
-        course_id: uuid.UUID,
-        service: Annotated[CourseService, Depends(get_service(CourseService))]
+    course_id: uuid.UUID,
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> Course:
     """Dependency function to retrieve a course by its ID.
 
@@ -28,24 +28,31 @@ async def get_course_by_id(
 
     Raises:
         HTTPException: If the course is not found or other database errors.
-    """
 
+    """
     return await service.get_course(course_id)
 
 
 async def get_author_course_by_id(
-        course_id: uuid.UUID,
-        author: Annotated[Author, Depends(get_author_from_jwt)],
-        service: Annotated[CourseService, Depends(get_service(CourseService))]
+    course_id: uuid.UUID,
+    author: Annotated[Author, Depends(get_author_from_jwt)],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> Course:
-    return await service.get_author_course(
-        course_id=course_id,
-        author=author
-    )
+    return await service.get_author_course(course_id=course_id, author=author)
 
-async def is_user_bought_course(
-        course_id: uuid.UUID,
+
+class CoursePermissionDependency:
+    def __init__(self, permissions: list[type[CoursePermission]]):
+        self.permissions = permissions
+
+    async def __call__(
+        self,
+        request: Request,
         user: Annotated[User, Depends(get_user_from_jwt)],
-        service: Annotated[UserCoursesService, Depends(get_service(UserCoursesService))]
-) -> UserCourses:
-    return await service.user_bought_course(user=user, course_id=course_id)
+        course: Annotated[Course, Depends(get_course_by_id)],
+    ) -> Course:
+        for permission_cls in self.permissions:
+            p_class = permission_cls(request=request, user=user, course=course)
+            await p_class.validate_permission()
+
+        return course

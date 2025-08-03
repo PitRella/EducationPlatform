@@ -2,11 +2,14 @@ import datetime as dt
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
 from src.base.dependencies import get_service
-from src.courses.dependencies import get_course_by_id
+from src.courses.dependencies import (
+    CoursePermissionDependency,
+)
 from src.courses.models import Course
+from src.courses.permissions import CoursePermission
 from src.courses.schemas import (
     BaseCourseResponseSchema,
     BaseCreateCourseRequestSchema,
@@ -70,7 +73,9 @@ async def create_course(
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
-        course: Annotated[Course, Depends(get_course_by_id)],
+    course: Annotated[
+        Course, Security(CoursePermissionDependency([CoursePermission]))
+    ],
 ) -> BaseCourseResponseSchema:
     """Retrieve a specific course by its ID.
 
@@ -79,8 +84,8 @@ async def get_course(
 
     Returns:
         BaseCourseResponseSchema: The course data.
-    """
 
+    """
     return BaseCourseResponseSchema.model_validate(course)
 
 
