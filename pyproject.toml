@@ -7,25 +7,18 @@ dependencies = [
     "alembic>=1.16.1",
     "asyncpg>=0.30.0",
     "bcrypt==3.2.2",
-    "coverage>=7.9.1",
     "envparse>=0.2.0",
     "fastapi>=0.115.12",
     "httpx>=0.28.1",
-    "mypy>=1.16.0",
     "passlib>=1.7.4",
-    "pre-commit>=4.2.0",
     "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.5",
     "pydantic-settings>=2.10.1",
-    "pytest>=8.4.0",
-    "pytest-asyncio>=1.0.0",
     "python-jose>=3.5.0",
     "python-multipart>=0.0.20",
     "sentry-sdk[fastapi]>=2.31.0",
     "sqlalchemy[mypy]>=2.0.41",
     "starlette-exporter>=0.23.0",
-    "types-passlib>=1.7.7.20250602",
-    "types-python-jose>=3.5.0.20250531",
     "uvicorn>=0.34.3",
     "python-slugify>=8.0.4",
     "sqladmin>=0.21.0",
@@ -96,6 +89,18 @@ docstring-code-format = false # Do not format docstrings
     "RUF001", # Cyrylic letter
     "D104", # Missing docstring in a public package
 
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.10.1",
+    "mypy>=1.16.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.7",
+    "types-passlib>=1.7.7.20250602",
+    "types-python-jose>=3.5.0.20250531",
 ]
 
 [tool.ruff.lint]
