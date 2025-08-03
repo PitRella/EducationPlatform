@@ -10,3 +10,11 @@ class CourseNotFoundByIdException(HTTPException):
             status_code=404,
             detail='Active course cannot be not found.',
         )
+
+class ThisUserDoesntBoughtTheCourseException(HTTPException):
+    """This user doesn't buy the course."""
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=404,
+            detail="Current user does not bought the course"
+        )

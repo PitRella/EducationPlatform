@@ -3,11 +3,14 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from src.auth.dependencies import get_user_from_jwt
 from src.base.dependencies import get_service
 from src.courses.models import Course
 from src.courses.service import CourseService
-from src.users import Author
+from src.users import Author, User
 from src.users.dependencies import get_author_from_jwt
+from src.users.models import UserCourses
+from src.users.services.user_courses import UserCoursesService
 
 
 async def get_course_by_id(
@@ -39,3 +42,10 @@ async def get_author_course_by_id(
         course_id=course_id,
         author=author
     )
+
+async def is_user_bought_course(
+        course_id: uuid.UUID,
+        user: Annotated[User, Depends(get_user_from_jwt)],
+        service: Annotated[UserCoursesService, Depends(get_service(UserCoursesService))]
+) -> UserCourses:
+    return await service.user_bought_course(user=user, course_id=course_id)
