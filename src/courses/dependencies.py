@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.requests import Request
 
-from src.auth.dependencies import get_user_from_jwt
+from src.auth.dependencies import get_user_from_jwt, get_optional_user_from_jwt
 from src.base.dependencies import get_service
 from src.courses.models import Course
 from src.courses.permissions import CoursePermission
@@ -48,11 +48,10 @@ class CoursePermissionDependency:
     async def __call__(
         self,
         request: Request,
-        user: Annotated[User, Depends(get_user_from_jwt)],
+        user: Annotated[User | None, Depends(get_optional_user_from_jwt)],
         course: Annotated[Course, Depends(get_course_by_id)],
     ) -> Course:
         for permission_cls in self.permissions:
             p_class = permission_cls(request=request, user=user, course=course)
             await p_class.validate_permission()
-
         return course

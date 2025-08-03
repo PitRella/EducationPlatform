@@ -32,6 +32,16 @@ async def get_user_from_jwt(
     user_id = await auth_service.validate_token_for_user(token)
     return await user_service.get_user_by_id(user_id)
 
+async def get_optional_user_from_jwt(
+    token: Annotated[str, Security(oauth_scheme)],
+    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
+    user_service: Annotated[UserService, Depends(get_service(UserService))],
+) -> User | None:
+    if not token:
+        return None
+    user_id = await auth_service.validate_token_for_user(token)
+    return await user_service.get_user_by_id(user_id)
+
 
 class PermissionDependency:
     """Permission dependency for permission validation to FastAPI routes.

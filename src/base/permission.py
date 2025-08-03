@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-
+from typing import Protocol
 from starlette.requests import Request
 
 from src.users.models import User
@@ -8,9 +8,29 @@ from src.users.models import User
 logger = logging.getLogger(__name__)
 
 
+class PermissionProtocol(Protocol):
+    async def validate_permission(
+            self,
+    ) -> None:
+        """Abstract method that must be implemented by all permission classes.
+
+        Should raise an exception if the permission check fails.
+        """
+        ...
+
+
+class PermissionMixin:
+    def __init__(
+            self,
+            request: Request,
+    ):
+        # The current HTTP request
+        self.request: Request = request
+
+
 # Abstract base class for all permission services.
 # Enforces a contract for permission validation logic.
-class BasePermissionService(ABC):
+class BasePermissionService(PermissionMixin, ABC):
     """Abstract base class for implementing permission validation.
 
     Provides a standardized interface for permission checking.
@@ -20,13 +40,12 @@ class BasePermissionService(ABC):
     Attributes:
         user (User): The authenticated user making the request
         request (Request): The current HTTP request being processed
-
     """
 
     def __init__(
-        self,
-        user: User,
-        request: Request,
+            self,
+            user: User,
+            request: Request,
     ):
         """Initialize BasePermissionService with user and request.
 
@@ -42,18 +61,33 @@ class BasePermissionService(ABC):
         by storing the authenticated user and current request context.
 
         """
+        super().__init__(request)
         # The current authenticated user
         self.user: User = user
 
-        # The current HTTP request
-        self.request: Request = request
 
     @abstractmethod
     async def validate_permission(
-        self,
+            self,
     ) -> None:
         """Abstract method that must be implemented by all permission classes.
 
         Should raise an exception if the permission check fails.
         """
+        ...
+
+
+class BaseOptionalPermissionService(PermissionMixin, ABC):
+    def __init__(
+            self,
+            user: User | None,
+            request: Request,
+    ):
+        super().__init__(request)
+        self.user: User | None = user
+
+    @abstractmethod
+    async def validate_permission(
+            self,
+    ) -> None:
         ...
