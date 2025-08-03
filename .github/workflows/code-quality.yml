@@ -35,8 +35,8 @@ jobs:
 
       - name: Check YAML syntax
         run: |
-          find . -type f \( -name "*.yaml" -o -name "*.yml" \) \
-            -exec uv run python -c "import sys, yaml; yaml.safe_load(sys.stdin)" < {} \;
+          find . -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | \
+            xargs -0 -I {} uv run python -c "import sys, yaml; yaml.safe_load(open('{}', 'r'))"
 
       - name: Check for trailing whitespace
         run: |
