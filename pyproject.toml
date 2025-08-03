@@ -64,10 +64,12 @@ docstring-code-format = false # Do not format docstrings
     "Q003", # flake8-quotes
 ]
 
-"*schemas.py" = [
+"**/schemas.py" = [
     "N805" # Ignore first argument should be nammed self. Pydantic issue.
 ]
-
+"schemas/*.py" = [
+    "N805" # Ignore first argument should be nammed self. Pydantic issue.
+]
 "tests/*.py" = [
     "S101", # asserts
     "D100", # Docstring in a public module
