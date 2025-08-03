@@ -13,29 +13,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.13
 
       - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install ruff mypy pyyaml
+        run: uv sync
 
       - name: Run ruff (lint)
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Run ruff (format check)
-        run: ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Run mypy
-        run: mypy --config-file pyproject.toml .
+        run: uv run mypy --config-file pyproject.toml .
 
       - name: Check YAML syntax
         run: |
           find . -type f \( -name "*.yaml" -o -name "*.yml" \) \
-            -exec python -c "import sys, yaml; yaml.safe_load(sys.stdin)" < {} \;
+            -exec uv run python -c "import sys, yaml; yaml.safe_load(sys.stdin)" < {} \;
 
       - name: Check for trailing whitespace
         run: |
