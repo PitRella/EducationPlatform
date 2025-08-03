@@ -1,0 +1,59 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Run linters and checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff mypy pyyaml
+
+      - name: Run ruff (lint)
+        run: ruff check .
+
+      - name: Run ruff (format check)
+        run: ruff format --check .
+
+      - name: Run mypy
+        run: mypy --config-file pyproject.toml .
+
+      - name: Check YAML syntax
+        run: |
+          find . -type f \( -name "*.yaml" -o -name "*.yml" \) \
+            -exec python -c "import sys, yaml; yaml.safe_load(sys.stdin)" < {} \;
+
+      - name: Check for trailing whitespace
+        run: |
+          if grep -rIn --exclude-dir={.git,.venv,venv,__pycache__} '\s$' .; then
+            echo "Trailing whitespace found"
+            exit 1
+          fi
+
+      - name: Check for missing newline at end of file
+        run: |
+          if find . -type f -not -path "*/\.*" | xargs -I {} bash -c 'tail -c1 "{}" | od -An -t x1 | grep -qv "0a" && echo "{} missing newline"'; then
+            echo "Missing newline at end of file found"
+            exit 1
+          fi
+
+      - name: Check for debug statements
+        run: |
+          if grep -rInE '\b(print|pdb\.set_trace)\b' . --exclude-dir={.git,.venv,venv,__pycache__}; then
+            echo "Debug statements found"
+            exit 1
+          fi
