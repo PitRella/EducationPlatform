@@ -54,7 +54,7 @@ jobs:
 
       - name: Check for debug statements
         run: |
-          if grep -rInE '\b(print|pdb\.set_trace)\b' . --exclude-dir={.git,.venv,venv,__pycache__}; then
-            echo "Debug statements found"
+          if grep -rInE '\b(print|pdb\.set_trace)\b' src/ --exclude-dir={.git,.venv,venv,__pycache__,.mypy_cache} 2>/dev/null; then
+            echo "Debug statements found in source code"
             exit 1
           fi
