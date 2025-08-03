@@ -61,7 +61,7 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     is_active: Mapped[bool] = mapped_column(
         default=True,
     )
-    purchased_courses: Mapped['Course'] = relationship(
+    purchased_courses: Mapped[list['Course']] = relationship(
         'Course', secondary='user_courses', back_populates='users'
     )
 
