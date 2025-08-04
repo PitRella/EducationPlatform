@@ -6,8 +6,9 @@ from starlette.requests import Request
 from src.base.permission import BasePermission
 from src.users import User
 from src.users.exceptions import (
-    UserPermissionException,
+    UserPermissionException, UserNotAuthorizedException,
 )
+
 
 # Enforces a contract for permission validation logic.
 class BaseUserPermission(BasePermission, ABC):
@@ -28,8 +29,15 @@ class BaseUserPermission(BasePermission, ABC):
             request: Request,
     ):
         super().__init__(request)
-        # The current authenticated user
         self.user: User | None = user
+
+    def _is_user_authenticated(self) -> bool:
+        return self.user is not None
+
+    def _is_user_authorized(self) -> User:
+        if not self.user:
+            raise UserNotAuthorizedException
+        return self.user
 
 
 class AdminPermission(BaseUserPermission):
@@ -47,10 +55,10 @@ class AdminPermission(BaseUserPermission):
     """
 
     def __init__(
-        self,
-        user: User | None,
-        request: Request,
-        target_user: User,
+            self,
+            user: User | None,
+            request: Request,
+            target_user: User,
     ):
         """Initialize BaseUserPermission with an authenticated users.
 
@@ -67,7 +75,7 @@ class AdminPermission(BaseUserPermission):
         self.target_user = target_user
 
     async def validate_permission(
-        self,
+            self,
     ) -> None:
         """Validate permissions between the authenticated users.
 
@@ -84,17 +92,18 @@ class AdminPermission(BaseUserPermission):
             UserPermissionException: If permission validation fails
 
         """
+        auth_user: User = self._is_user_authorized()
         if (
-            (  # Superadmin cannot interact with another superadmin
-                self.user.is_user_superadmin
-                and self.target_user.is_user_superadmin
-            )
-            or (  # Admin cannot interact with another superadmin
-                self.user.is_user_admin and self.target_user.is_user_admin
-            )
-            or (  # Admin cannot interact with superadmin
-                self.user.is_user_admin and self.target_user.is_user_superadmin
-            )
+                (  # Superadmin cannot interact with another superadmin
+                        auth_user.is_user_superadmin
+                        and self.target_user.is_user_superadmin
+                )
+                or (  # Admin cannot interact with another admin
+                auth_user.is_user_admin and self.target_user.is_user_admin
+        )
+                or (  # Admin cannot interact with superadmin
+                auth_user.is_user_admin and self.target_user.is_user_superadmin
+        )
         ):
             raise UserPermissionException
 
@@ -115,7 +124,7 @@ class SuperadminPermission(AdminPermission):
     """
 
     async def validate_permission(
-        self,
+            self,
     ) -> None:
         """Validate superadmin-level permissions.
 
@@ -130,7 +139,8 @@ class SuperadminPermission(AdminPermission):
                 attempts to modify another superadmin
 
         """
-        if not self.user.is_user_superadmin or (
-            self.target_user.is_user_superadmin
+        auth_user: User = self._is_user_authorized()
+        if not auth_user.is_user_superadmin or (
+                self.target_user.is_user_superadmin
         ):
             raise UserPermissionException
