@@ -22,7 +22,3 @@ class BasePermission:
         Should raise an exception if the permission check fails.
         """
         ...
-
-
-# Enforces a contract for permission validation logic.
-
