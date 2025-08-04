@@ -1,4 +1,4 @@
-from src.base.permission import BaseUserPermissionService
+from src.users.permissions.user import BaseUserPermissionService
 
 
 class IsAuthenticated(BaseUserPermissionService):

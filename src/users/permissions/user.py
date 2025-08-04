@@ -1,10 +1,49 @@
-from fastapi.requests import Request
+from abc import ABC
 
-from src.base.permission import BaseUserPermissionService
+from fastapi.requests import Request
+from starlette.requests import Request
+
+from src.base.permission import BasePermission
 from src.users import User
 from src.users.exceptions import (
     UserPermissionException,
 )
+
+# Enforces a contract for permission validation logic.
+class BaseUserPermissionService(BasePermission, ABC):
+    """Abstract base class for implementing permission validation.
+
+    Provides a standardized interface for permission checking.
+    All permission services must inherit from this class and implement the
+    validate_permission() method to enforce their specific access control rules.
+
+    Attributes:
+        user (User): The authenticated user making the request
+        request (Request): The current HTTP request being processed
+    """
+
+    def __init__(
+            self,
+            user: User,
+            request: Request,
+    ):
+        """Initialize BasePermissionService with user and request.
+
+        Base class for implementing permission validation logic.
+        All permission services should inherit from this class
+        and implement validate_permission().
+
+        Args:
+            user (User): The authenticated user making the request
+            request (Request): The current HTTP request being processed
+
+        The class provides core functionality for permission checking
+        by storing the authenticated user and current request context.
+
+        """
+        super().__init__(request)
+        # The current authenticated user
+        self.user: User = user
 
 
 class BaseUserPermission(BaseUserPermissionService):
