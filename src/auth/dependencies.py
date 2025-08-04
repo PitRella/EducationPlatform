@@ -7,7 +7,7 @@ from starlette.requests import Request
 
 from src.auth.services import AuthService
 from src.base.dependencies import get_service
-from src.base.permission import BasePermissionService
+from src.base.permission import BaseUserPermissionService
 from src.users.models import User
 from src.users.services import UserService
 
@@ -68,11 +68,11 @@ class PermissionDependency:
             return {"message": "Access granted"}
     """
 
-    def __init__(self, permissions: list[type[BasePermissionService]]):
+    def __init__(self, permissions: list[type[BaseUserPermissionService]]):
         """Initialize PermissionDependency with a list of permission classes.
 
         Args:
-            permissions (list[type[BasePermissionService]]): List of permission
+            permissions (list[type[BaseUserPermissionService]]): List of permission
                 class types that will be validated when the dependency is used.
                 Each permission class must inherit from BasePermissionService.
 

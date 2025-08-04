@@ -8,7 +8,15 @@ from src.users.models import User
 logger = logging.getLogger(__name__)
 
 
-class PermissionProtocol(Protocol):
+class BasePermission:
+    def __init__(
+            self,
+            request: Request,
+    ):
+        # The current HTTP request
+        self.request: Request = request
+
+    @abstractmethod
     async def validate_permission(
             self,
     ) -> None:
@@ -19,18 +27,8 @@ class PermissionProtocol(Protocol):
         ...
 
 
-class PermissionMixin:
-    def __init__(
-            self,
-            request: Request,
-    ):
-        # The current HTTP request
-        self.request: Request = request
-
-
-# Abstract base class for all permission services.
 # Enforces a contract for permission validation logic.
-class BasePermissionService(PermissionMixin, ABC):
+class BaseUserPermissionService(BasePermission, ABC):
     """Abstract base class for implementing permission validation.
 
     Provides a standardized interface for permission checking.
@@ -65,29 +63,3 @@ class BasePermissionService(PermissionMixin, ABC):
         # The current authenticated user
         self.user: User = user
 
-
-    @abstractmethod
-    async def validate_permission(
-            self,
-    ) -> None:
-        """Abstract method that must be implemented by all permission classes.
-
-        Should raise an exception if the permission check fails.
-        """
-        ...
-
-
-class BaseOptionalPermissionService(PermissionMixin, ABC):
-    def __init__(
-            self,
-            user: User | None,
-            request: Request,
-    ):
-        super().__init__(request)
-        self.user: User | None = user
-
-    @abstractmethod
-    async def validate_permission(
-            self,
-    ) -> None:
-        ...

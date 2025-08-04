@@ -1,13 +1,13 @@
 from fastapi.requests import Request
 
-from src.base.permission import BasePermissionService
+from src.base.permission import BaseUserPermissionService
 from src.users import User
 from src.users.exceptions import (
     UserPermissionException,
 )
 
 
-class BaseUserPermission(BasePermissionService):
+class BaseUserPermission(BaseUserPermissionService):
     """Base permission class for managing user access control.
 
     Validates permissions between authenticated users and target users for
