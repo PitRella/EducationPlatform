@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from starlette.requests import Request
+from fastapi.requests import Request
 
 logger = logging.getLogger(__name__)
 
