@@ -10,7 +10,7 @@ from src.users.exceptions import (
 )
 
 # Enforces a contract for permission validation logic.
-class BaseUserPermissionService(BasePermission, ABC):
+class BaseUserPermission(BasePermission, ABC):
     """Abstract base class for implementing permission validation.
 
     Provides a standardized interface for permission checking.
@@ -46,7 +46,7 @@ class BaseUserPermissionService(BasePermission, ABC):
         self.user: User = user
 
 
-class BaseUserPermission(BaseUserPermissionService):
+class AdminPermission(BaseUserPermission):
     """Base permission class for managing user access control.
 
     Validates permissions between authenticated users and target users for
@@ -113,7 +113,7 @@ class BaseUserPermission(BaseUserPermissionService):
             raise UserPermissionException
 
 
-class SuperadminPermission(BaseUserPermission):
+class SuperadminPermission(AdminPermission):
     """Permission class that enforces superadmin-level access control.
 
     Validates that only users with superadmin privileges can perform

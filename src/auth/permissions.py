@@ -1,7 +1,7 @@
-from src.users.permissions.user import BaseUserPermissionService
+from src.users.permissions.user import BaseUserPermission
 
 
-class IsAuthenticated(BaseUserPermissionService):
+class IsAuthenticated(BaseUserPermission):
     """Permission class that ensures a user is authenticated.
 
     This permission class validates that a request has a properly authenticated

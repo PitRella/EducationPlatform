@@ -7,7 +7,7 @@ from fastapi.requests import Request
 from src.auth.dependencies import get_user_from_jwt
 from src.base.dependencies import get_service
 from src.users.models import User
-from src.users.permissions.user import BaseUserPermission
+from src.users.permissions.user import AdminPermission
 from src.users.services import UserService
 
 
@@ -59,13 +59,13 @@ class UserPermissionDependency:
             return user
     """
 
-    def __init__(self, permissions: list[type[BaseUserPermission]]):
+    def __init__(self, permissions: list[type[AdminPermission]]):
         """Initialize UserPermissionDependency.
 
         As a parameter takes a list of permission classes.
 
         Args:
-            permissions (list[type[BaseUserPermission]]): List of permission
+            permissions (list[type[AdminPermission]]): List of permission
                 class types that will be validated when the dependency is used.
                 Each permission class must inherit from BaseUserPermission.
 
