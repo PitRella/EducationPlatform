@@ -1,7 +1,6 @@
 from abc import ABC
 
 from fastapi.requests import Request
-from starlette.requests import Request
 
 from src.base.permission import BasePermission
 from src.users import User
@@ -30,9 +29,6 @@ class BaseUserPermission(BasePermission, ABC):
     ):
         super().__init__(request)
         self.user: User | None = user
-
-    def _is_user_authenticated(self) -> bool:
-        return self.user is not None
 
     def _is_user_authorized(self) -> User:
         if not self.user:
