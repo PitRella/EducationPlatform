@@ -24,26 +24,12 @@ class BaseUserPermission(BasePermission, ABC):
 
     def __init__(
             self,
-            user: User,
+            user: User | None,
             request: Request,
     ):
-        """Initialize BasePermissionService with user and request.
-
-        Base class for implementing permission validation logic.
-        All permission services should inherit from this class
-        and implement validate_permission().
-
-        Args:
-            user (User): The authenticated user making the request
-            request (Request): The current HTTP request being processed
-
-        The class provides core functionality for permission checking
-        by storing the authenticated user and current request context.
-
-        """
         super().__init__(request)
         # The current authenticated user
-        self.user: User = user
+        self.user: User | None = user
 
 
 class AdminPermission(BaseUserPermission):
@@ -62,7 +48,7 @@ class AdminPermission(BaseUserPermission):
 
     def __init__(
         self,
-        user: User,
+        user: User | None,
         request: Request,
         target_user: User,
     ):
