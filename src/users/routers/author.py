@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Security
 from src.auth.dependencies import PermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
-from src.users.dependencies import get_author_from_jwt
+from src.users.dependencies import get_optional_author_from_jwt
 from src.users.models import Author, User
 from src.users.schemas import AuthorResponseSchema, CreateAuthorRequestSchema
 from src.users.services import AuthorService
@@ -47,7 +47,7 @@ async def become_author(
     response_model=AuthorResponseSchema,
 )
 async def get_current_author(
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    author: Annotated[Author, Depends(get_optional_author_from_jwt)],
 ) -> AuthorResponseSchema:
     """Endpoint to retrieve the current authenticated author's information.
 

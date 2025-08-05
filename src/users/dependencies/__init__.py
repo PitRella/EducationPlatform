@@ -1,7 +1,7 @@
-from .author import get_author_from_jwt
+from .author import get_optional_author_from_jwt
 from .user import UserPermissionDependency
 
 __all__ = [
     'UserPermissionDependency',
-    'get_author_from_jwt',
+    'get_optional_author_from_jwt',
 ]

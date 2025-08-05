@@ -14,13 +14,16 @@ from src.users.services import UserService
 
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl='/auth/login',
+    auto_error=False,
 )
 
 
 async def get_optional_user_from_jwt(
-    token: Annotated[str, Security(oauth_scheme)],
-    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
-    user_service: Annotated[UserService, Depends(get_service(UserService))],
+        token: Annotated[str, Security(oauth_scheme)],
+        auth_service: Annotated[
+            AuthService, Depends(get_service(AuthService))],
+        user_service: Annotated[
+            UserService, Depends(get_service(UserService))],
 ) -> User | None:
     if not token:
         return None
@@ -58,9 +61,9 @@ class PermissionDependency:
         self.permissions = permissions
 
     async def __call__(
-        self,
-        request: Request,
-        user: Annotated[User | None, Depends(get_optional_user_from_jwt)],
+            self,
+            request: Request,
+            user: Annotated[User | None, Depends(get_optional_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency.
 

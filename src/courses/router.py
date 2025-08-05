@@ -9,14 +9,14 @@ from src.courses.dependencies import (
     CoursePermissionDependency,
 )
 from src.courses.models import Course
-from src.courses.permissions import CoursePermission
+from src.courses.permissions import IsCourseAuthorOrActiveCourse
 from src.courses.schemas import (
     BaseCourseResponseSchema,
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
 from src.courses.service import CourseService
-from src.users.dependencies.author import get_author_from_jwt
+from src.users.dependencies.author import get_optional_author_from_jwt
 from src.users.models import Author
 
 course_router = APIRouter()
@@ -51,7 +51,7 @@ async def get_all_courses(
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
     course_schema: BaseCreateCourseRequestSchema,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    author: Annotated[Author, Depends(get_optional_author_from_jwt)],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Create a new course.
@@ -74,7 +74,7 @@ async def create_course(
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
     course: Annotated[
-        Course, Security(CoursePermissionDependency([CoursePermission]))
+        Course, Security(CoursePermissionDependency([IsCourseAuthorOrActiveCourse]))
     ],
 ) -> BaseCourseResponseSchema:
     """Retrieve a specific course by its ID.
@@ -93,7 +93,7 @@ async def get_course(
 async def update_course(
     course_id: uuid.UUID,
     course_fields: UpdateCourseRequestSchema,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    author: Annotated[Author, Depends(get_optional_author_from_jwt)],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Update an existing course by its ID.
@@ -117,7 +117,7 @@ async def update_course(
 @course_router.delete('/{course_id}', status_code=204)
 async def deactivate_course_by_id(
     course_id: uuid.UUID,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    author: Annotated[Author, Depends(get_optional_author_from_jwt)],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
     """Deactivate a course by its ID.
