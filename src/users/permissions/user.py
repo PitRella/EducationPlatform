@@ -5,17 +5,17 @@ from fastapi.requests import Request
 from src.base.permission import BasePermission
 from src.users import User
 from src.users.exceptions import (
-    UserPermissionException, UserNotAuthorizedException,
+    UserNotAuthorizedException,
+    UserPermissionException,
 )
 
 
 # Enforces a contract for permission validation logic.
 class BaseUserPermission(BasePermission, ABC):
-
     def __init__(
-            self,
-            user: User | None,
-            request: Request,
+        self,
+        user: User | None,
+        request: Request,
     ):
         super().__init__(request)
         self.user: User | None = user
@@ -27,43 +27,40 @@ class BaseUserPermission(BasePermission, ABC):
 
 
 class AdminPermission(BaseUserPermission):
-
     def __init__(
-            self,
-            user: User | None,
-            request: Request,
-            target_user: User,
+        self,
+        user: User | None,
+        request: Request,
+        target_user: User,
     ):
-
         super().__init__(user=user, request=request)
         self.target_user = target_user
 
     async def validate_permission(
-            self,
+        self,
     ) -> None:
         auth_user: User = self._is_user_authorized()
         if (
-                (  # Superadmin cannot interact with another superadmin
-                        auth_user.is_user_superadmin
-                        and self.target_user.is_user_superadmin
-                )
-                or (  # Admin cannot interact with another admin
+            (  # Superadmin cannot interact with another superadmin
+                auth_user.is_user_superadmin
+                and self.target_user.is_user_superadmin
+            )
+            or (  # Admin cannot interact with another admin
                 auth_user.is_user_admin and self.target_user.is_user_admin
-        )
-                or (  # Admin cannot interact with superadmin
+            )
+            or (  # Admin cannot interact with superadmin
                 auth_user.is_user_admin and self.target_user.is_user_superadmin
-        )
+            )
         ):
             raise UserPermissionException
 
 
 class SuperadminPermission(AdminPermission):
-
     async def validate_permission(
-            self,
+        self,
     ) -> None:
         auth_user: User = self._is_user_authorized()
         if not auth_user.is_user_superadmin or (
-                self.target_user.is_user_superadmin
+            self.target_user.is_user_superadmin
         ):
             raise UserPermissionException

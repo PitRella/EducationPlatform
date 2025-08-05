@@ -24,9 +24,9 @@ class CourseService(BaseService):
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: CourseDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -52,7 +52,7 @@ class CourseService(BaseService):
         return self._dao
 
     async def create_course(
-            self, author: Author, course_schema: BaseCreateCourseRequestSchema
+        self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
@@ -63,9 +63,9 @@ class CourseService(BaseService):
         return course
 
     async def get_author_course(
-            self,
-            author: Author,
-            course_id: uuid.UUID,
+        self,
+        author: Author,
+        course_id: uuid.UUID,
     ) -> Course:
         async with self.session.begin():
             course: Course | None = await self.dao.get_one(
@@ -77,8 +77,8 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-            self,
-            course_id: uuid.UUID,
+        self,
+        course_id: uuid.UUID,
     ) -> Course:
         """Retrieve a course by its ID from the database.
 
@@ -102,10 +102,10 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author,
-            course_fields: UpdateCourseRequestSchema,
+        self,
+        course_id: uuid.UUID,
+        author: Author,
+        course_fields: UpdateCourseRequestSchema,
     ) -> Course:
         """Update an existing course by ID and author with the provided fields.
 
@@ -137,10 +137,10 @@ class CourseService(BaseService):
         return updated_course
 
     async def get_all_courses(
-            self,
-            created_at: dt.datetime | None = None,
-            last_id: uuid.UUID | None = None,
-            limit: int | None = None,
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
     ) -> list[Course]:
         """Retrieve a list of all active courses from the database.
 
@@ -168,9 +168,9 @@ class CourseService(BaseService):
         return courses if courses else []
 
     async def deactivate_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author,
+        self,
+        course_id: uuid.UUID,
+        author: Author,
     ) -> None:
         """Deactivate a course in the database.
 

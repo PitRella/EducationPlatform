@@ -1,9 +1,10 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import get_user_from_jwt
+from src.auth.dependencies import PermissionDependency
+from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
 from src.users.dependencies import get_author_from_jwt
 from src.users.models import Author, User
@@ -20,7 +21,7 @@ author_router = APIRouter()
 )
 async def become_author(
     author_schema: CreateAuthorRequestSchema,
-    user: Annotated[User, Depends(get_user_from_jwt)],
+    user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
     service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to create a new author profile for a user.

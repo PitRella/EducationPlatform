@@ -15,9 +15,9 @@ type LessonDAO = BaseDAO[Lesson, BaseCreateCourseRequestSchema]
 
 class LessonService(BaseService):
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: LessonDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: LessonDAO | None = None,
     ) -> None:
         super().__init__(db_session)
         self._dao: LessonDAO = dao or BaseDAO[
@@ -28,9 +28,9 @@ class LessonService(BaseService):
         )
 
     async def create_lesson(
-            self,
-            course: Course,
-            lesson_schema: CreateLessonRequestSchema,
+        self,
+        course: Course,
+        lesson_schema: CreateLessonRequestSchema,
     ) -> Lesson:
         lesson_data = lesson_schema.model_dump()
         lesson_data['course_id'] = course.id

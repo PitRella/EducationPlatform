@@ -2,11 +2,13 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Enum,
     ForeignKey,
     SmallInteger,
-    String, JSON, UniqueConstraint,
+    String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +17,7 @@ from src.lessons.enums import LessonTypeEnum
 
 if TYPE_CHECKING:
     from src.courses.models import Course
+
 
 class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
     """Class representing a lesson model in a learning platform.
@@ -37,27 +40,23 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
         is_published: Whether a lesson is visible to users.
         created_at: Creation timestamp.
         updated_at: Last update timestamp.
+
     """
 
     __tablename__ = 'lessons'
     # Main fields
     title: Mapped[str] = mapped_column(
-        String(200),
-        nullable=False,
-        index=True,
-        comment='A lesson title'
+        String(200), nullable=False, index=True, comment='A lesson title'
     )
     slug: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         nullable=False,
         index=True,
-        comment='Lesson slug'
+        comment='Lesson slug',
     )
     description: Mapped[str] = mapped_column(
-        String(512),
-        nullable=False,
-        comment='Course description'
+        String(512), nullable=False, comment='Course description'
     )
     # Attached fields
     course: Mapped['Course'] = relationship(
@@ -66,10 +65,7 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
         uselist=False,
     )
     course_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey(
-            'courses.id',
-            ondelete='CASCADE'
-        ),
+        ForeignKey('courses.id', ondelete='CASCADE'),
         comment='Course ID',
     )
     # Meta info fields
@@ -85,9 +81,7 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
         comment='Lesson type',
     )
     video_url: Mapped[str] = mapped_column(
-        String(512),
-        nullable=True,
-        comment='Path or URL to video'
+        String(512), nullable=True, comment='Path or URL to video'
     )
     video_duration: Mapped[int] = mapped_column(
         SmallInteger,
@@ -120,6 +114,4 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
         default=False,
     )
 
-    __table_args__ = (
-        UniqueConstraint('course_id', 'order_number'),
-    )
+    __table_args__ = (UniqueConstraint('course_id', 'order_number'),)

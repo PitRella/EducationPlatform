@@ -1,12 +1,14 @@
 from fastapi import HTTPException
 
-class UserNotAuthorizedException(HTTPException):
 
+class UserNotAuthorizedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=401,
             detail='User not authorized',
         )
+
+
 class UserNotFoundByIdException(HTTPException):
     """User cannot be found by id."""
 

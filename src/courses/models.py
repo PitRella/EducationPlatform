@@ -20,8 +20,8 @@ from src.courses.enums import (
 )
 
 if TYPE_CHECKING:
-    from src.users.models import Author, User
     from src.lessons.models import Lesson
+    from src.users.models import Author, User
 
 
 class Course(BaseUUIDMixin, BaseTimeStampMixin):

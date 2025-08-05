@@ -2,14 +2,11 @@ import uuid
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.requests import Request
 
-from src.auth.dependencies import get_user_from_jwt, get_optional_user_from_jwt
 from src.base.dependencies import get_service
 from src.courses.models import Course
-from src.courses.permissions import CoursePermission
 from src.courses.service import CourseService
-from src.users import Author, User
+from src.users import Author
 from src.users.dependencies import get_author_from_jwt
 
 

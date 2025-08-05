@@ -7,30 +7,15 @@ from starlette.requests import Request
 
 from src.auth.services import AuthService
 from src.base.dependencies import get_service
-from src.users.permissions.user import BaseUserPermission
+from src.users.exceptions import UserNotAuthorizedException
 from src.users.models import User
+from src.users.permissions.user import BaseUserPermission
 from src.users.services import UserService
 
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl='/auth/login',
 )
 
-
-async def get_user_from_jwt(
-    token: Annotated[str, Security(oauth_scheme)],
-    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
-    user_service: Annotated[UserService, Depends(get_service(UserService))],
-) -> User:
-    """Return FastAPI dependencies for authentication and validation.
-
-    Includes:
-    - OAuth2 password bearer scheme for JWT authentication.
-    - Dependency to retrieve an AuthService instance.
-    - Async dependency to extract a User from a JWT token.
-    - Factory for a permission validation dependency
-    """
-    user_id = await auth_service.validate_token_for_user(token)
-    return await user_service.get_user_by_id(user_id)
 
 async def get_optional_user_from_jwt(
     token: Annotated[str, Security(oauth_scheme)],
@@ -69,21 +54,13 @@ class PermissionDependency:
     """
 
     def __init__(self, permissions: list[type[BaseUserPermission]]):
-        """Initialize PermissionDependency with a list of permission classes.
-
-        Args:
-            permissions (list[type[src.users.permissions.user.BaseUserPermission]]): List of permission
-                class types that will be validated when the dependency is used.
-                Each permission class must inherit from BasePermissionService.
-
-        """
         # Store a list of permission class types to be validated later
         self.permissions = permissions
 
     async def __call__(
         self,
         request: Request,
-        user: Annotated[User, Depends(get_user_from_jwt)],
+        user: Annotated[User | None, Depends(get_optional_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency.
 
@@ -97,5 +74,7 @@ class PermissionDependency:
             #  the actual permission check
             await p_class.validate_permission()
 
-        # If all checks pass, return the user
+        # Just to be sure that the user is authenticated after the permission check.
+        if not user:
+            raise UserNotAuthorizedException
         return user

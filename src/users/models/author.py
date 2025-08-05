@@ -26,10 +26,7 @@ class Author(BaseUUIDMixin, BaseTimeStampMixin):
 
     # Main fields
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey(
-            'users.id',
-                   ondelete='CASCADE'
-        ),
+        ForeignKey('users.id', ondelete='CASCADE'),
         comment='User ID',
     )
     user: Mapped['User'] = relationship(
