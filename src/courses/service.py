@@ -12,6 +12,7 @@ from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
+from src.users import User
 from src.users.models import Author
 from src.utils import make_slug
 
@@ -24,9 +25,9 @@ class CourseService(BaseService):
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
-        self,
-        db_session: AsyncSession,
-        dao: CourseDAO | None = None,
+            self,
+            db_session: AsyncSession,
+            dao: CourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -39,36 +40,31 @@ class CourseService(BaseService):
 
         """
         super().__init__(db_session)
-        self._dao: CourseDAO = dao or BaseDAO[
+        self._course_dao: CourseDAO = dao or BaseDAO[
             Course, BaseCreateCourseRequestSchema
         ](
             db_session,
             Course,
         )
 
-    @property
-    def dao(self) -> CourseDAO:
-        """Return current course DAO."""
-        return self._dao
-
     async def create_course(
-        self, author: Author, course_schema: BaseCreateCourseRequestSchema
+            self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course in the database."""
         course_data = course_schema.model_dump()
         course_data['author_id'] = author.id
         course_data['slug'] = make_slug(course_data.get('title'))
         async with self.session.begin():
-            course: Course = await self.dao.create(course_data)
+            course: Course = await self._course_dao.create(course_data)
         return course
 
     async def get_author_course(
-        self,
-        author: Author,
-        course_id: uuid.UUID,
+            self,
+            author: Author,
+            course_id: uuid.UUID,
     ) -> Course:
         async with self.session.begin():
-            course: Course | None = await self.dao.get_one(
+            course: Course | None = await self._course_dao.get_one(
                 id=course_id,
                 author_id=author.id,
             )
@@ -77,8 +73,8 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-        self,
-        course_id: uuid.UUID,
+            self,
+            course_id: uuid.UUID,
     ) -> Course:
         """Retrieve a course by its ID from the database.
 
@@ -94,7 +90,7 @@ class CourseService(BaseService):
 
         """
         async with self.session.begin():
-            course: Course | None = await self.dao.get_one(
+            course: Course | None = await self._course_dao.get_one(
                 id=course_id,
             )
         if not course:
@@ -102,10 +98,10 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-        self,
-        course_id: uuid.UUID,
-        author: Author,
-        course_fields: UpdateCourseRequestSchema,
+            self,
+            course_id: uuid.UUID,
+            author: Author,
+            course_fields: UpdateCourseRequestSchema,
     ) -> Course:
         """Update an existing course by ID and author with the provided fields.
 
@@ -129,7 +125,7 @@ class CourseService(BaseService):
                 filtered_course_fields.get('title')
             )
         async with self.session.begin():
-            updated_course: Course | None = await self.dao.update(
+            updated_course: Course | None = await self._course_dao.update(
                 filtered_course_fields, id=course_id, author_id=author.id
             )
         if not updated_course:
@@ -137,10 +133,10 @@ class CourseService(BaseService):
         return updated_course
 
     async def get_all_courses(
-        self,
-        created_at: dt.datetime | None = None,
-        last_id: uuid.UUID | None = None,
-        limit: int | None = None,
+            self,
+            created_at: dt.datetime | None = None,
+            last_id: uuid.UUID | None = None,
+            limit: int | None = None,
     ) -> list[Course]:
         """Retrieve a list of all active courses from the database.
 
@@ -158,7 +154,7 @@ class CourseService(BaseService):
 
         """
         async with self.session.begin():
-            courses: list[Course] | None = await self.dao.get_all(
+            courses: list[Course] | None = await self._course_dao.get_all(
                 created_at=created_at,
                 last_id=last_id,
                 limit=limit,
@@ -168,9 +164,9 @@ class CourseService(BaseService):
         return courses if courses else []
 
     async def deactivate_course(
-        self,
-        course_id: uuid.UUID,
-        author: Author,
+            self,
+            course_id: uuid.UUID,
+            author: Author,
     ) -> None:
         """Deactivate a course in the database.
 
@@ -187,10 +183,17 @@ class CourseService(BaseService):
 
         """
         async with self.session.begin():
-            deleted_course: Course | None = await self.dao.update(
+            deleted_course: Course | None = await self._course_dao.update(
                 self._DEACTIVATE_COURSE_UPDATE,
                 id=course_id,
                 author_id=author.id,
             )
         if not deleted_course:
             raise CourseNotFoundByIdException
+
+    async def buy_course(
+            self,
+            course: Course,
+            user: User,
+    ) -> None:
+        pass
