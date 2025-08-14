@@ -6,8 +6,7 @@ from fastapi.requests import Request
 
 from src.base.dependencies import get_service
 from src.courses.models import Course
-from src.courses.permissions import IsCourseAuthorOrActiveCourse, \
-    BaseCoursePermission
+from src.courses.permissions import BaseCoursePermission
 from src.courses.service import CourseService
 from src.users import Author
 from src.users.dependencies import get_optional_author_from_jwt

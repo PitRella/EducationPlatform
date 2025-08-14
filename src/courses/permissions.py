@@ -33,3 +33,16 @@ class IsCourseAuthorOrActiveCourse(BaseCoursePermission):
         if author.id == self.course.author_id:
             return  # If user an author - can get even inactive course
         raise UserPermissionException
+
+
+class IsCourseActive(BaseCoursePermission):
+    async def validate_permission(self) -> None:
+        if not self.course.is_active:
+            return  # If the course is active - everyone can get it
+
+class IsAuthorCourse(BaseCoursePermission):
+    async def validate_permission(self) -> None:
+        author = self._is_author_authorized()
+        if author.id == self.course.author_id:
+            return  # If user an author - can get even inactive course
+        raise UserPermissionException

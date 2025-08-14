@@ -11,7 +11,10 @@ from src.courses.dependencies import (
     CoursePermissionDependency,
 )
 from src.courses.models import Course
-from src.courses.permissions import IsCourseAuthorOrActiveCourse
+from src.courses.permissions import (
+    IsCourseActive,
+    IsAuthorCourse
+)
 from src.courses.schemas import (
     BaseCourseResponseSchema,
     BaseCreateCourseRequestSchema,
@@ -77,8 +80,15 @@ async def create_course(
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
         course: Annotated[
-            Course, Security(
-                CoursePermissionDependency([IsCourseAuthorOrActiveCourse]))
+            Course,
+            Security(
+                CoursePermissionDependency(
+                    [
+                        IsCourseActive,
+                        IsAuthorCourse
+                    ]
+                )
+            )
         ],
 ) -> BaseCourseResponseSchema:
     """Retrieve a specific course by its ID.
@@ -146,8 +156,15 @@ async def purchase_course_by_id(
         user: Annotated[
             User, Security(PermissionDependency([IsAuthenticated]))],
         course: Annotated[
-            Course, Security(
-                CoursePermissionDependency([IsCourseAuthorOrActiveCourse]))
+            Course,
+            Security(
+                CoursePermissionDependency(
+                    [
+                        IsCourseActive,
+                        IsAuthorCourse
+                    ]
+                )
+            )
         ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
