@@ -6,7 +6,8 @@ from fastapi.requests import Request
 
 from src.base.dependencies import get_service
 from src.courses.models import Course
-from src.courses.permissions import IsCourseAuthorOrActiveCourse
+from src.courses.permissions import IsCourseAuthorOrActiveCourse, \
+    BaseCoursePermission
 from src.courses.service import CourseService
 from src.users import Author
 from src.users.dependencies import get_optional_author_from_jwt
@@ -41,7 +42,7 @@ async def get_author_course_by_id(
 
 
 class CoursePermissionDependency:
-    def __init__(self, permissions: list[type[IsCourseAuthorOrActiveCourse]]):
+    def __init__(self, permissions: list[type[BaseCoursePermission]]):
         self.permissions = permissions
 
     async def __call__(
