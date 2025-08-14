@@ -25,7 +25,6 @@ user_router = APIRouter()
 async def get_me(
     user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
 ) -> UserResponseShema:
-    """Endpoint to update get a user from token."""
     return UserResponseShema.model_validate(user)
 
 
@@ -36,7 +35,6 @@ async def create_user(
     user_schema: CreateUserRequestSchema,
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> UserResponseShema:
-    """Endpoint to create a new user."""
     new_user = await service.create_new_user(user=user_schema)
     return UserResponseShema.model_validate(new_user)
 
@@ -51,7 +49,6 @@ async def update_user(
     user_fields: UpdateUserRequestSchema,
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> UpdateUserResponseSchema:
-    """Endpoint to update info about a user."""
     updated_user = await service.update_user(
         target_user=user, user_fields=user_fields
     )
@@ -63,5 +60,4 @@ async def deactivate_user(
     user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> None:
-    """Endpoint to deactivate the user."""
     return await service.deactivate_user(target_user=user)
