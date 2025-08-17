@@ -1,10 +1,9 @@
 from abc import ABC
+from typing import Unpack
 
 from fastapi.requests import Request
 
-from src.base.permission import BasePermission
-from src.courses.models import Course
-from src.users import Author
+from src.base.permission import BasePermission, PermissionKwargs
 from src.users.exceptions import UserPermissionException
 
 
@@ -12,17 +11,11 @@ class BaseCoursePermission(BasePermission, ABC):
     def __init__(
             self,
             request: Request,
-            author: Author | None,
-            course: Course
-    ) -> None:
-        super().__init__(request=request)
-        self.course = course
-        self.author: Author | None = author
+            **kwargs: Unpack[PermissionKwargs],
+    ):
+        super().__init__(request, **kwargs)
+        self.course = kwargs['course']
 
-    def _is_author_authorized(self) -> Author:
-        if not self.author:
-            raise UserPermissionException
-        return self.author
 
 
 
