@@ -1,10 +1,19 @@
 import logging
 from abc import abstractmethod
+from typing import TypedDict, Unpack
 
 from fastapi.requests import Request
 
+from src.courses.models import Course
+from src.users import Author, User
+
 logger = logging.getLogger(__name__)
 
+class PermissionKwargs(TypedDict, total=False):
+    user: User | None
+    target_user: User
+    author: Author | None
+    course: Course
 
 class BasePermission:
     def __init__(
