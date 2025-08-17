@@ -41,6 +41,8 @@ class AdminPermission(BaseUserPermission):
     ) -> None:
         auth_user: User = self._is_user_authorized()
         if (
+                not auth_user.is_user_admin
+                or
                 (  # Superadmin cannot interact with another superadmin
                         auth_user.is_user_superadmin
                         and self.target_user.is_user_superadmin
