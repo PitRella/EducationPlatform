@@ -23,3 +23,7 @@ class BaseAuthorPermission(BasePermission, ABC):
         if not self.author:
             raise UserPermissionException
         return self.author
+
+class IsAuthorPermission(BaseAuthorPermission):
+    async def validate_permission(self) -> None:
+        self._is_author_authorized()
