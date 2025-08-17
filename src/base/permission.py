@@ -19,6 +19,7 @@ class BasePermission:
     def __init__(
         self,
         request: Request,
+        **kwargs: Unpack[PermissionKwargs],
     ):
         # The current HTTP request
         self.request: Request = request
@@ -32,3 +33,4 @@ class BasePermission:
         Should raise an exception if the permission check fails.
         """
         ...
+
