@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from src.base.dependencies import get_service
-from src.courses.dependencies import get_author_course_by_id
 from src.courses.models import Course
 from src.lessons.schemas import CreateLessonRequestSchema, LessonResponseSchema
 from src.lessons.service import LessonService

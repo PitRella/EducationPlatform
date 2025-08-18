@@ -33,14 +33,6 @@ async def _get_course_by_id(
     return await service.get_course(course_id)
 
 
-async def get_author_course_by_id(
-        course_id: uuid.UUID,
-        author: Annotated[Author, Depends(get_optional_author_from_jwt)],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
-) -> Course:
-    return await service.get_author_course(course_id=course_id, author=author)
-
-
 class CoursePermissionDependency:
     def __init__(self, permissions: list[type[BaseCoursePermission]]):
         self.permissions = permissions
