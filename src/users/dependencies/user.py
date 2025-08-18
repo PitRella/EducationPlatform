@@ -11,7 +11,7 @@ from src.users.permissions.user import AdminPermission
 from src.users.services import UserService
 
 
-async def get_user_from_uuid(
+async def _get_user_by_uuid(
     user_id: uuid.UUID,
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User:
@@ -76,7 +76,7 @@ class UserPermissionDependency:
     async def __call__(
         self,
         request: Request,
-        target_user: Annotated[User, Depends(get_user_from_uuid)],
+        target_user: Annotated[User, Depends(_get_user_by_uuid)],
         source_user: Annotated[
             User | None, Depends(get_optional_user_from_jwt)
         ],
