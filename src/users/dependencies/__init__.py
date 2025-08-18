@@ -1,7 +1,7 @@
 from .author import AuthorPermissionDependency
-from .user import UserPermissionDependency
+from .user import AdminPermissionDependency
 
 __all__ = [
-    'UserPermissionDependency',
+    'AdminPermissionDependency',
     'AuthorPermissionDependency',
 ]

@@ -32,7 +32,7 @@ async def _get_user_by_uuid(
     return await service.get_user_by_id(user_id=user_id)
 
 
-class UserPermissionDependency:
+class AdminPermissionDependency:
     """Permission dependency for managing user access control between users.
 
     This class provides a FastAPI dependency that validates permissions between
