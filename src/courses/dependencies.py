@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Security
 from fastapi.requests import Request
 
 from src.base.dependencies import get_service
@@ -9,7 +9,8 @@ from src.courses.models import Course
 from src.courses.permissions import BaseCoursePermission
 from src.courses.service import CourseService
 from src.users import Author
-from src.users.dependencies import get_optional_author_from_jwt
+from src.users.dependencies import AuthorPermissionDependency
+from src.users.dependencies.author import get_optional_author_from_jwt
 
 
 async def get_course_by_id(
