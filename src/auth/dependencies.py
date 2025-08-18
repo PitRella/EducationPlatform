@@ -18,7 +18,7 @@ oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 )
 
 
-async def get_optional_user_from_jwt(
+async def _get_optional_user_from_jwt(
         token: Annotated[str, Security(oauth_scheme)],
         auth_service: Annotated[
             AuthService, Depends(get_service(AuthService))],
@@ -63,7 +63,7 @@ class UserPermissionDependency:
     async def __call__(
             self,
             request: Request,
-            user: Annotated[User | None, Depends(get_optional_user_from_jwt)],
+            user: Annotated[User | None, Depends(_get_optional_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency.
 

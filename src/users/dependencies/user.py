@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.requests import Request
 
-from src.auth.dependencies import get_optional_user_from_jwt
+from src.auth.dependencies import _get_optional_user_from_jwt
 from src.base.dependencies import get_service
 from src.users.models import User
 from src.users.permissions.user import AdminPermission
@@ -78,7 +78,7 @@ class AdminPermissionDependency:
         request: Request,
         target_user: Annotated[User, Depends(_get_user_by_uuid)],
         source_user: Annotated[
-            User | None, Depends(get_optional_user_from_jwt)
+            User | None, Depends(_get_optional_user_from_jwt)
         ],
     ) -> User:
         """Callable used as a FastAPI dependency.
