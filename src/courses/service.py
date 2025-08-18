@@ -58,40 +58,17 @@ class CourseService(BaseService):
             course: Course = await self._course_dao.create(course_data)
         return course
 
-    async def get_author_course(
-            self,
-            author: Author,
-            course_id: uuid.UUID,
-    ) -> Course:
-        async with self.session.begin():
-            course: Course | None = await self._course_dao.get_one(
-                id=course_id,
-                author_id=author.id,
-            )
-        if not course:
-            raise CourseNotFoundByIdException
-        return course
-
     async def get_course(
             self,
             course_id: uuid.UUID,
+            author: Author | None = None,
     ) -> Course:
-        """Retrieve a course by its ID from the database.
-
-        Args:
-            course_id (uuid.UUID): The unique ID of the course to retrieve.
-
-        Returns:
-            Course: The course object if found and active.
-
-        Raises:
-            CourseNotFoundByIdException: If no active course is found
-                with the given ID.
-
-        """
+        filters = {'id': course_id}
+        if author:
+            filters['author_id'] = author.id
         async with self.session.begin():
             course: Course | None = await self._course_dao.get_one(
-                id=course_id,
+                **filters,
             )
         if not course:
             raise CourseNotFoundByIdException
