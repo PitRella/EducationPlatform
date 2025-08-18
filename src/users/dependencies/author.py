@@ -33,18 +33,9 @@ class AuthorPermissionDependency:
             request: Request,
             author: Annotated[Author | None, Depends(get_optional_author_from_jwt)],
     ) -> Author:
-        """Callable used as a FastAPI dependency.
-
-        It receives the request and
-        authenticated user, applies all permission classes, and raises
-        if any permission fails.
-        """
         for permission_cls in self.permissions:
-            # Instantiate permission with request and user
             p_class = permission_cls(request=request, author=author)
-            #  the actual permission check
             await p_class.validate_permission()
-        # Just to be sure that the user is authenticated after the permission check.
         if not author:
             raise UserIsNotAuthorException
         return author

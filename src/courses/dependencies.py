@@ -13,7 +13,7 @@ from src.users.dependencies import AuthorPermissionDependency
 from src.users.dependencies.author import get_optional_author_from_jwt
 
 
-async def get_course_by_id(
+async def _get_course_by_id(
         course_id: uuid.UUID,
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> Course:
@@ -52,7 +52,7 @@ class CoursePermissionDependency:
                 Author | None,
                 Depends(get_optional_author_from_jwt)
             ],
-            course: Annotated[Course, Depends(get_course_by_id)],
+            course: Annotated[Course, Depends(_get_course_by_id)],
     ) -> Course:
         for permission_cls in self.permissions:
             p_class = permission_cls(
