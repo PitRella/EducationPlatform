@@ -31,7 +31,7 @@ async def get_optional_user_from_jwt(
     return await user_service.get_user_by_id(user_id)
 
 
-class PermissionDependency:
+class UserPermissionDependency:
     """Permission dependency for permission validation to FastAPI routes.
 
     This class provides a FastAPI dependency that enforces permission checks

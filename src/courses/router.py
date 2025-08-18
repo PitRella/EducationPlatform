@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import PermissionDependency
+from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
 from src.courses.dependencies import (
@@ -161,7 +161,7 @@ async def deactivate_course_by_id(
 @course_router.post('/purchase/{course_id}', status_code=201)
 async def purchase_course_by_id(
         user: Annotated[
-            User, Security(PermissionDependency([IsAuthenticated]))],
+            User, Security(UserPermissionDependency([IsAuthenticated]))],
         course: Annotated[
             Course,
             Security(

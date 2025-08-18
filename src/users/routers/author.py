@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import PermissionDependency
+from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
 from src.users.dependencies import AuthorPermissionDependency
@@ -23,7 +23,7 @@ author_router = APIRouter()
 async def become_author(
         author_schema: CreateAuthorRequestSchema,
         user: Annotated[
-            User, Security(PermissionDependency([IsAuthenticated]))],
+            User, Security(UserPermissionDependency([IsAuthenticated]))],
         service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to create a new author profile for a user.
