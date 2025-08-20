@@ -1,15 +1,14 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Sequence
 
-from fastapi import Depends, Security
+from fastapi import Depends
 from fastapi.requests import Request
 
-from src.base.dependencies import get_service
+from src.base.dependencies import get_service, BasePermissionDependency
 from src.courses.models import Course
 from src.courses.permissions import BaseCoursePermission
 from src.courses.service import CourseService
 from src.users import Author
-from src.users.dependencies import AuthorPermissionDependency
 from src.users.dependencies.author import get_optional_author_from_jwt
 
 
@@ -33,9 +32,9 @@ async def _get_course_by_id(
     return await service.get_course(course_id)
 
 
-class CoursePermissionDependency:
-    def __init__(self, permissions: list[type[BaseCoursePermission]]):
-        self.permissions = permissions
+class CoursePermissionDependency(BasePermissionDependency):
+    def __init__(self, permissions: Sequence[type[BaseCoursePermission]]):
+        super().__init__(permissions)
 
     async def __call__(
             self,
@@ -46,11 +45,9 @@ class CoursePermissionDependency:
             ],
             course: Annotated[Course, Depends(_get_course_by_id)],
     ) -> Course:
-        for permission_cls in self.permissions:
-            p_class = permission_cls(
-                request=request,
-                author=author,
-                course=course
-            )
-            await p_class.validate_permission()
+        await self._validate_permissions(
+            request=request,
+            author=author,
+            course=course
+        )
         return course
