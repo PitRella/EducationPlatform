@@ -11,7 +11,7 @@ from src.users.permissions import BaseAuthorPermission
 from src.users.services import AuthorService
 from fastapi.requests import Request
 
-async def get_optional_author_from_jwt(
+async def _get_optional_author_from_jwt(
     token: Annotated[str, Security(oauth_scheme)],
     auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
     author_service: Annotated[
@@ -31,7 +31,7 @@ class AuthorPermissionDependency(BasePermissionDependency):
     async def __call__(
             self,
             request: Request,
-            author: Annotated[Author | None, Depends(get_optional_author_from_jwt)],
+            author: Annotated[Author | None, Depends(_get_optional_author_from_jwt)],
     ) -> Author:
         await self._validate_permissions(
             request=request,

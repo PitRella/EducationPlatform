@@ -9,7 +9,7 @@ from src.courses.models import Course
 from src.courses.permissions import BaseCoursePermission
 from src.courses.service import CourseService
 from src.users import Author
-from src.users.dependencies.author import get_optional_author_from_jwt
+from src.users.dependencies.author import _get_optional_author_from_jwt
 
 
 async def _get_course_by_id(
@@ -41,7 +41,7 @@ class CoursePermissionDependency(BasePermissionDependency):
             request: Request,
             author: Annotated[
                 Author | None,
-                Depends(get_optional_author_from_jwt)
+                Depends(_get_optional_author_from_jwt)
             ],
             course: Annotated[Course, Depends(_get_course_by_id)],
     ) -> Course:
