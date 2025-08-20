@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated, TypeVar, Unpack
+from typing import Annotated, TypeVar, Unpack, Sequence
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ def get_service[Service](
 
 
 class BasePermissionDependency:
-    def __init__(self, permissions: list[type[BasePermission]]):
+    def __init__(self, permissions: Sequence[type[BasePermission]]):
         self.permissions = permissions
 
     async def _validate_permissions(
