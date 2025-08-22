@@ -89,7 +89,8 @@ async def get_course(
                     [
                         IsCourseActive,
                         IsAuthorCourse
-                    ]
+                    ],
+                    logic="OR"
                 )
             )
         ],
