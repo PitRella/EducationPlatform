@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated, Sequence
+from typing import Annotated, Sequence, Literal
 
 from fastapi import Depends
 from fastapi.requests import Request
@@ -33,8 +33,12 @@ async def _get_course_by_id(
 
 
 class CoursePermissionDependency(BasePermissionDependency):
-    def __init__(self, permissions: Sequence[type[BaseCoursePermission]]):
-        super().__init__(permissions)
+    def __init__(
+            self,
+            permissions: Sequence[type[BaseCoursePermission]],
+            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND
+    ):
+        super().__init__(permissions, logic)
 
     async def __call__(
             self,

@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated, Sequence
+from typing import Annotated, Sequence, Literal
 
 from fastapi import Depends
 from fastapi.requests import Request
@@ -59,7 +59,11 @@ class AdminPermissionDependency(BasePermissionDependency):
             return user
     """
 
-    def __init__(self, permissions: Sequence[type[AdminPermission]]):
+    def __init__(
+            self,
+            permissions: Sequence[type[AdminPermission]],
+            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND
+    ):
         """Initialize UserPermissionDependency.
 
         As a parameter takes a list of permission classes.
@@ -71,7 +75,7 @@ class AdminPermissionDependency(BasePermissionDependency):
 
         """
         # Store a list of permission class types to be validated later
-        super().__init__(permissions)
+        super().__init__(permissions, logic)
 
     async def __call__(
             self,

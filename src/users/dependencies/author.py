@@ -1,4 +1,4 @@
-from typing import Annotated, Sequence
+from typing import Annotated, Sequence, Literal
 
 from fastapi import Depends, Security
 
@@ -11,12 +11,14 @@ from src.users.permissions import BaseAuthorPermission
 from src.users.services import AuthorService
 from fastapi.requests import Request
 
+
 async def _get_optional_author_from_jwt(
-    token: Annotated[str, Security(oauth_scheme)],
-    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
-    author_service: Annotated[
-        AuthorService, Depends(get_service(AuthorService))
-    ],
+        token: Annotated[str, Security(oauth_scheme)],
+        auth_service: Annotated[
+            AuthService, Depends(get_service(AuthService))],
+        author_service: Annotated[
+            AuthorService, Depends(get_service(AuthorService))
+        ],
 ) -> Author | None:
     if not token:
         return None
@@ -25,13 +27,17 @@ async def _get_optional_author_from_jwt(
 
 
 class AuthorPermissionDependency(BasePermissionDependency):
-    def __init__(self, permissions: Sequence[type[BaseAuthorPermission]]):
-        super().__init__(permissions)
+    def __init__(
+            self,
+            permissions: Sequence[type[BaseAuthorPermission]],
+            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND):
+        super().__init__(permissions, logic)
 
     async def __call__(
             self,
             request: Request,
-            author: Annotated[Author | None, Depends(_get_optional_author_from_jwt)],
+            author: Annotated[
+                Author | None, Depends(_get_optional_author_from_jwt)],
     ) -> Author:
         await self._validate_permissions(
             request=request,
