@@ -33,9 +33,9 @@ class BaseAuthorCoursePermission(
 
 class IsCourseActive(BaseCoursePermission):
     async def validate_permission(self) -> None:
-        if not self.course.is_active:
+        if self.course.is_active:
             return  # If the course is active - everyone can get it
-
+        raise UserPermissionException
 
 class IsAuthorCourse(BaseAuthorCoursePermission):
     async def validate_permission(self) -> None:
