@@ -81,7 +81,7 @@ class BasePermissionDependency:
             request: Request,
             **context: Unpack[PermissionKwargs]
     ) -> None:
-        errors = []
+        errors: list[str] = []
         for permission_cls in self.permissions:
             try:
                 permission_instance = permission_cls(
@@ -92,4 +92,6 @@ class BasePermissionDependency:
                 return # If at least one permission is satisfied - return
             except Exception as e:
                 errors.append(f"{permission_cls.__name__}: {str(e)}")
-
+        raise Exception(
+            f"None of the permissions were satisfied: {'; '.join(errors)}"
+        )
