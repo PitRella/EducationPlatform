@@ -7,6 +7,7 @@ from src.base.dependencies import get_service
 from src.courses.dependencies import CoursePermissionDependency
 from src.courses.models import Course
 from src.courses.permissions import IsAuthorCourse
+from src.lessons.models import Lesson
 from src.lessons.schemas import CreateLessonRequestSchema, LessonResponseSchema
 from src.lessons.service import LessonService
 
@@ -28,7 +29,7 @@ async def create_lesson(
         ],
     service: Annotated[LessonService, Depends(get_service(LessonService))],
 ) -> LessonResponseSchema:
-    lesson = await service.create_lesson(
+    lesson: Lesson = await service.create_lesson(
         course=course, lesson_schema=lesson_schema
     )
     return LessonResponseSchema.model_validate(lesson)
