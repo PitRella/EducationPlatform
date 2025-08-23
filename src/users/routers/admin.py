@@ -14,7 +14,7 @@ admin_router = APIRouter()
 
 @admin_router.get('/{user_id}')
 def get_user_by_id(
-    user: Annotated[
+    target_user: Annotated[
         User, Security(AdminPermissionDependency([AdminPermission]))
     ],
 ) -> UserResponseShema:
@@ -22,7 +22,7 @@ def get_user_by_id(
 
     Args:
         user_id (uuid.UUID): Unique identifier of the user to retrieve
-        user (User): Currently authenticated user making the request.
+        target_user (User): Currently authenticated user making the request.
             Must have appropriate permissions via BaseUserPermission.
 
     Returns:
@@ -33,7 +33,7 @@ def get_user_by_id(
         UserNotFoundByIdException: If no user exists with the provided UUID
 
     """
-    return UserResponseShema.model_validate(user)
+    return UserResponseShema.model_validate(target_user)
 
 
 @admin_router.delete(
@@ -41,7 +41,7 @@ def get_user_by_id(
 )
 async def deactivate_user_by_id(
     service: Annotated[UserService, Depends(get_service(UserService))],
-    user: Annotated[
+    target_user: Annotated[
         User, Security(AdminPermissionDependency([AdminPermission]))
     ],
 ) -> None:
@@ -49,7 +49,7 @@ async def deactivate_user_by_id(
 
     Args:
         service (UserService): Service for user operations
-        user (User): Target user to deactivate.
+        target_user (User): Target user to deactivate.
             Must be authorized via BaseUserPermission.
 
     Returns:
@@ -63,7 +63,7 @@ async def deactivate_user_by_id(
         Sets user's is_active flag to False but does not delete the record
 
     """
-    return await service.deactivate_user(target_user=user)
+    return await service.deactivate_user(target_user=target_user)
 
 
 @admin_router.patch(
@@ -73,7 +73,7 @@ async def deactivate_user_by_id(
 )
 async def set_admin_privilege(
     service: Annotated[UserService, Depends(get_service(UserService))],
-    user: Annotated[
+    target_user: Annotated[
         User, Security(AdminPermissionDependency([SuperadminPermission]))
     ],
 ) -> UserResponseShema:
@@ -81,7 +81,7 @@ async def set_admin_privilege(
 
     Args:
         service (UserService): Service for user operations
-        user (User): The user to be granted admin privileges.
+        target_user (User): The user to be granted admin privileges.
             Must be authorized via SuperadminPermission.
 
     Returns:
@@ -92,7 +92,7 @@ async def set_admin_privilege(
         UserNotFoundByIdException: If target user not found
 
     """
-    updated_user = await service.set_admin_privilege(target_user=user)
+    updated_user = await service.set_admin_privilege(target_user=target_user)
     return UserResponseShema.model_validate(updated_user)
 
 
@@ -103,7 +103,7 @@ async def set_admin_privilege(
 )
 async def revoke_admin_privilege(
     service: Annotated[UserService, Depends(get_service(UserService))],
-    user: Annotated[
+    target_user: Annotated[
         User, Security(AdminPermissionDependency([SuperadminPermission]))
     ],
 ) -> UserResponseShema:
@@ -111,7 +111,7 @@ async def revoke_admin_privilege(
 
     Args:
         service (UserService): Service for user operations
-        user (User): The user to have admin privileges revoked.
+        target_user (User): The user to have admin privileges revoked.
             Must be authorized via SuperadminPermission.
 
     Returns:
@@ -122,5 +122,5 @@ async def revoke_admin_privilege(
         UserNotFoundByIdException: If target user not found
 
     """
-    updated_user = await service.revoke_admin_privilege(target_user=user)
+    updated_user = await service.revoke_admin_privilege(target_user=target_user)
     return UserResponseShema.model_validate(updated_user)
