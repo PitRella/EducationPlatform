@@ -1,19 +1,19 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Sequence, Literal
 
 from fastapi import Depends
 from fastapi.requests import Request
 
-from src.auth.dependencies import get_optional_user_from_jwt
-from src.base.dependencies import get_service
+from src.auth.dependencies import _get_optional_user_from_jwt
+from src.base.dependencies import get_service, BasePermissionDependency
 from src.users.models import User
-from src.users.permissions.user import AdminPermission
+from src.users.permissions.user import TargetUserAdminPermission
 from src.users.services import UserService
 
 
-async def get_user_from_uuid(
-    user_id: uuid.UUID,
-    service: Annotated[UserService, Depends(get_service(UserService))],
+async def _get_user_by_uuid(
+        user_id: uuid.UUID,
+        service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User:
     """Retrieve a User instance by UUID using the UserService dependency.
 
@@ -32,7 +32,7 @@ async def get_user_from_uuid(
     return await service.get_user_by_id(user_id=user_id)
 
 
-class UserPermissionDependency:
+class AdminPermissionDependency(BasePermissionDependency):
     """Permission dependency for managing user access control between users.
 
     This class provides a FastAPI dependency that validates permissions between
@@ -59,27 +59,31 @@ class UserPermissionDependency:
             return user
     """
 
-    def __init__(self, permissions: list[type[AdminPermission]]):
+    def __init__(
+            self,
+            permissions: Sequence[type[TargetUserAdminPermission]],
+            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND
+    ):
         """Initialize UserPermissionDependency.
 
         As a parameter takes a list of permission classes.
 
         Args:
-            permissions (list[type[AdminPermission]]): List of permission
+            permissions (list[type[TargetUserAdminPermission]]): List of permission
                 class types that will be validated when the dependency is used.
                 Each permission class must inherit from BaseUserPermission.
 
         """
         # Store a list of permission class types to be validated later
-        self.permissions = permissions
+        super().__init__(permissions, logic)
 
     async def __call__(
-        self,
-        request: Request,
-        target_user: Annotated[User, Depends(get_user_from_uuid)],
-        source_user: Annotated[
-            User | None, Depends(get_optional_user_from_jwt)
-        ],
+            self,
+            request: Request,
+            target_user: Annotated[User, Depends(_get_user_by_uuid)],
+            source_user: Annotated[
+                User | None, Depends(_get_optional_user_from_jwt)
+            ],
     ) -> User:
         """Callable used as a FastAPI dependency.
 
@@ -87,13 +91,9 @@ class UserPermissionDependency:
         applies all permission classes, and raises
         if any permission fails.
         """
-        for permission_cls in self.permissions:
-            # Instantiate permission with request and user
-            p_class = permission_cls(
-                request=request, user=source_user, target_user=target_user
-            )
-            #  the actual permission check
-            await p_class.validate_permission()
-
-        # If all checks pass, return the user
+        await self._validate_permissions(
+            request=request,
+            user=source_user,
+            target_user=target_user
+        )
         return target_user

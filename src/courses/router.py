@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import PermissionDependency
+from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
 from src.courses.dependencies import (
@@ -22,8 +22,9 @@ from src.courses.schemas import (
 )
 from src.courses.service import CourseService
 from src.users import User
-from src.users.dependencies.author import get_optional_author_from_jwt
+from src.users.dependencies.author import AuthorPermissionDependency
 from src.users.models import Author
+from src.users.permissions import IsAuthorPermission
 
 course_router = APIRouter()
 
@@ -57,7 +58,9 @@ async def get_all_courses(
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
         course_schema: BaseCreateCourseRequestSchema,
-        author: Annotated[Author, Depends(get_optional_author_from_jwt)],
+        author: Annotated[
+            Author, Security(
+                AuthorPermissionDependency([IsAuthorPermission]))],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Create a new course.
@@ -86,7 +89,8 @@ async def get_course(
                     [
                         IsCourseActive,
                         IsAuthorCourse
-                    ]
+                    ],
+                    logic="OR"
                 )
             )
         ],
@@ -107,7 +111,9 @@ async def get_course(
 async def update_course(
         course_id: uuid.UUID,
         course_fields: UpdateCourseRequestSchema,
-        author: Annotated[Author, Depends(get_optional_author_from_jwt)],
+        author: Annotated[
+            Author, Security(
+                AuthorPermissionDependency([IsAuthorPermission]))],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Update an existing course by its ID.
@@ -131,7 +137,9 @@ async def update_course(
 @course_router.delete('/{course_id}', status_code=204)
 async def deactivate_course_by_id(
         course_id: uuid.UUID,
-        author: Annotated[Author, Depends(get_optional_author_from_jwt)],
+        author: Annotated[
+            Author, Security(
+                AuthorPermissionDependency([IsAuthorPermission]))],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
     """Deactivate a course by its ID.
@@ -154,7 +162,7 @@ async def deactivate_course_by_id(
 @course_router.post('/purchase/{course_id}', status_code=201)
 async def purchase_course_by_id(
         user: Annotated[
-            User, Security(PermissionDependency([IsAuthenticated]))],
+            User, Security(UserPermissionDependency([IsAuthenticated]))],
         course: Annotated[
             Course,
             Security(

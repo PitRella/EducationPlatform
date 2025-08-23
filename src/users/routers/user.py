@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import PermissionDependency
+from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
 from src.users.models import User
@@ -23,7 +23,7 @@ user_router = APIRouter()
     response_model=UserResponseShema,
 )
 async def get_me(
-    user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
+    user: Annotated[User, Security(UserPermissionDependency([IsAuthenticated]))],
 ) -> UserResponseShema:
     return UserResponseShema.model_validate(user)
 
@@ -45,7 +45,7 @@ async def create_user(
     response_model=UpdateUserResponseSchema,
 )
 async def update_user(
-    user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
+    user: Annotated[User, Security(UserPermissionDependency([IsAuthenticated]))],
     user_fields: UpdateUserRequestSchema,
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> UpdateUserResponseSchema:
@@ -57,7 +57,7 @@ async def update_user(
 
 @user_router.delete('/me', status_code=204)
 async def deactivate_user(
-    user: Annotated[User, Security(PermissionDependency([IsAuthenticated]))],
+    user: Annotated[User, Security(UserPermissionDependency([IsAuthenticated]))],
     service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> None:
     return await service.deactivate_user(target_user=user)
