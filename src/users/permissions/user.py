@@ -11,7 +11,6 @@ from src.users.exceptions import (
 )
 
 
-# Enforces a contract for permission validation logic.
 class BaseUserPermission(BasePermission, ABC):
     def __init__(
             self,
@@ -27,7 +26,7 @@ class BaseUserPermission(BasePermission, ABC):
         return self.user
 
 
-class AdminPermission(BaseUserPermission):
+class TargetUserAdminPermission(BaseUserPermission):
     def __init__(
             self,
             request: Request,
@@ -57,7 +56,7 @@ class AdminPermission(BaseUserPermission):
             raise UserPermissionException
 
 
-class SuperadminPermission(AdminPermission):
+class TargetUserSuperadminPermission(TargetUserAdminPermission):
     async def validate_permission(
             self,
     ) -> None:

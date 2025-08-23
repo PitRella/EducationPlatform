@@ -1,9 +1,9 @@
-from .user import AdminPermission, SuperadminPermission
+from .user import TargetUserAdminPermission, TargetUserSuperadminPermission
 from .author import BaseAuthorPermission, IsAuthorPermission
 
 __all__ = [
-    'AdminPermission',
-    'SuperadminPermission',
+    'TargetUserAdminPermission',
+    'TargetUserSuperadminPermission',
     'BaseAuthorPermission',
     'IsAuthorPermission',
 ]
