@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
@@ -6,6 +8,7 @@ from src.courses.models import Course
 from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
 )
+from src.lessons.exceptions import LessonIsNotPublishedException
 from src.lessons.models import Lesson
 from src.lessons.schemas import CreateLessonRequestSchema
 from src.utils import make_slug
@@ -37,4 +40,14 @@ class LessonService(BaseService):
         lesson_data['slug'] = make_slug(lesson_data.get('title'))
         async with self.session.begin():
             lesson: Lesson = await self._dao.create(lesson_data)
+        return lesson
+
+    async def get_lesson(
+        self,
+        lesson_id: uuid.UUID,
+    ) -> Lesson:
+        async with self.session.begin():
+            lesson: Lesson | None = await self._dao.get_one(id=lesson_id)
+        if not lesson:
+            raise LessonIsNotPublishedException
         return lesson
