@@ -2,38 +2,32 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.courses.models import Course
-from src.courses.schemas import (
-    BaseCreateCourseRequestSchema,
-)
+
+from src.lessons.dao import LessonDAO
 from src.lessons.exceptions import LessonIsNotPublishedException
 from src.lessons.models import Lesson
 from src.lessons.schemas import CreateLessonRequestSchema
 from src.utils import make_slug
 
-type LessonDAO = BaseDAO[Lesson, BaseCreateCourseRequestSchema]
-
 
 class LessonService(BaseService):
     def __init__(
-        self,
-        db_session: AsyncSession,
-        dao: LessonDAO | None = None,
+            self,
+            db_session: AsyncSession,
+            dao: LessonDAO | None = None,
     ) -> None:
         super().__init__(db_session)
-        self._dao: LessonDAO = dao or BaseDAO[
-            Lesson, BaseCreateCourseRequestSchema
-        ](
+        self._dao: LessonDAO = dao or LessonDAO(
             db_session,
             Lesson,
         )
 
     async def create_lesson(
-        self,
-        course: Course,
-        lesson_schema: CreateLessonRequestSchema,
+            self,
+            course: Course,
+            lesson_schema: CreateLessonRequestSchema,
     ) -> Lesson:
         lesson_data = lesson_schema.model_dump()
         lesson_data['course_id'] = course.id
@@ -43,11 +37,13 @@ class LessonService(BaseService):
         return lesson
 
     async def get_lesson(
-        self,
-        lesson_id: uuid.UUID,
+            self,
+            lesson_id: uuid.UUID,
     ) -> Lesson:
         async with self.session.begin():
-            lesson: Lesson | None = await self._dao.get_one(id=lesson_id)
+            lesson: Lesson | None = await self._dao.get_lesson_with_course(
+                id=lesson_id
+            )
         if not lesson:
             raise LessonIsNotPublishedException
         return lesson
