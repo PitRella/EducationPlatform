@@ -53,5 +53,8 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
     session: AsyncSession = async_db_session()
     try:
         yield session
+    except Exception:
+        await session.rollback()
+        raise
     finally:
         await session.close()
