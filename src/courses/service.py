@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
+from src.courses.dao import CourseDAO
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
 from src.courses.schemas import (
@@ -16,7 +17,7 @@ from src.users import User
 from src.users.models import Author
 from src.utils import make_slug
 
-type CourseDAO = BaseDAO[Course, BaseCreateCourseRequestSchema]
+type CourseDAOType = BaseDAO[Course, BaseCreateCourseRequestSchema]
 
 
 class CourseService(BaseService):
@@ -40,7 +41,7 @@ class CourseService(BaseService):
 
         """
         super().__init__(db_session)
-        self._course_dao: CourseDAO = dao or BaseDAO[
+        self._course_dao: CourseDAOType = dao or BaseDAO[
             Course, BaseCreateCourseRequestSchema
         ](
             db_session,
