@@ -17,8 +17,6 @@ from src.users import User
 from src.users.models import Author
 from src.utils import make_slug
 
-type CourseDAOType = BaseDAO[Course, BaseCreateCourseRequestSchema]
-
 
 class CourseService(BaseService):
     """Service class for handling course-related business logic."""
@@ -41,9 +39,7 @@ class CourseService(BaseService):
 
         """
         super().__init__(db_session)
-        self._course_dao: CourseDAOType = dao or BaseDAO[
-            Course, BaseCreateCourseRequestSchema
-        ](
+        self._course_dao: CourseDAO = dao or CourseDAO(
             db_session,
             Course,
         )
@@ -68,7 +64,7 @@ class CourseService(BaseService):
         if author:
             filters['author_id'] = author.id
         async with self.session.begin():
-            course: Course | None = await self._course_dao.get_one(
+            course: Course | None = await self._course_dao.get_course_with_lessons(
                 **filters,
             )
         if not course:
