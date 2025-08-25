@@ -60,7 +60,7 @@ class AuthorService(BaseService):
 
         """
         async with self.session.begin():
-            author: Author | None = await self._dao.get_one(
+            author: Author | None = await self._dao.get_author(
                 user_id=user_id, is_verified=True
             )
         if not author:
