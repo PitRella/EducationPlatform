@@ -20,8 +20,17 @@ class CreateLessonRequestSchema(BaseModel):
     quiz_data: dict[str, Any] | None = None
     estimated_duration: int | None = None
 
-class UpdateLessonRequestSchema(CreateLessonRequestSchema):
+class UpdateLessonRequestSchema(BaseModel):
     """Schema for updating a lesson."""
+    title: Annotated[str | None, Field(min_length=5, max_length=200)]
+    description: Annotated[str | None, Field(min_length=5, max_length=512)]
+    order_number: Annotated[int | None, Field(ge=1, le=100)]
+    type: LessonTypeEnum | None
+    video_url: str | None = None
+    video_duration: int | None = None
+    materials: dict[str, Any] | None = None
+    quiz_data: dict[str, Any] | None = None
+    estimated_duration: int | None = None
 
 class LessonResponseSchema(BaseSchema):
     """Schema for lesson response."""
