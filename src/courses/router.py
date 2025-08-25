@@ -116,7 +116,6 @@ async def update_course(
                     [
                         IsAuthorCourse
                     ],
-                    logic="OR"
                 )
             )
         ],
@@ -139,7 +138,6 @@ async def deactivate_course_by_id(
                     [
                         IsAuthorCourse
                     ],
-                    logic="OR"
                 )
             )
         ],
