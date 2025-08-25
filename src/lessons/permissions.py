@@ -17,6 +17,6 @@ class BaseLessonPermission(BasePermission, ABC):
 
 class IsLessonPublished(BaseLessonPermission):
     async def validate_permission(self) -> None:
-        if not self.lesson.is_published:
+        if self.lesson.is_published:
             return None # If the lesson published - everyone can get it
         raise LessonIsNotPublishedException
