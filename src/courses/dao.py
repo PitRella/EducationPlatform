@@ -12,12 +12,14 @@ from sqlalchemy import (
 )
 
 
-
 class CourseDAO(BaseDAO[Course, BaseCreateCourseRequestSchema]):
-    async def get_course_with_lessons(self, *filters: Any, **filters_by: Any) -> Course | None:
-        query: Select[Any] = (
-            select(self.model).where(*filters).filter_by(**filters_by).options(
-                selectinload(self.model.lessons))
+    async def get_course_with_lessons(
+            self,
+            *filters: Any,
+            **filters_by: Any
+    ) -> Course | None:
+        return await self.get_one_with_relations(
+            *filters,
+            relations=["lessons"],
+            **filters_by
         )
-        result: Result[Any] = await self.session.execute(query)
-        return result.scalar_one_or_none()

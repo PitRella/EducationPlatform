@@ -116,8 +116,8 @@ CreateSchema = None,
 
     async def get_one_with_relations(
             self,
-            relations: list[str],
             *filters: Any,
+            relations: list[str],
             **filters_by: Any
     ) -> Model | None:
         options = [
