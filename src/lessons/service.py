@@ -64,3 +64,22 @@ class LessonService(BaseService):
             )
         if not updated_lesson:
             raise LessonIsNotPublishedException
+
+    async def update_lesson(
+            self,
+            lesson: Lesson,
+            lesson_fields: CreateLessonRequestSchema,
+    ) -> Lesson:
+        filtered_lesson_fields: dict[str, str] = (
+            self._validate_schema_for_update_request(lesson_fields)
+        )
+        lesson_title = filtered_lesson_fields.get('title')
+        if lesson_title: # If title changed - change slug
+                filtered_lesson_fields['slug'] = make_slug(lesson_title)
+        async with self.session.begin():
+            updated_lesson: Lesson | None = await self._dao.update(
+                filtered_lesson_fields, id=lesson.id,
+            )
+        if not updated_lesson:
+            raise LessonIsNotPublishedException
+        return updated_lesson

@@ -20,6 +20,8 @@ class CreateLessonRequestSchema(BaseModel):
     quiz_data: dict[str, Any] | None = None
     estimated_duration: int | None = None
 
+class UpdateLessonRequestSchema(CreateLessonRequestSchema):
+    """Schema for updating a lesson."""
 
 class LessonResponseSchema(BaseSchema):
     """Schema for lesson response."""

@@ -11,7 +11,8 @@ from src.courses.permissions import IsAuthorCourse, IsCourseActive
 from src.lessons.dependencies import LessonPermissionDependency
 from src.lessons.models import Lesson
 from src.lessons.permissions import IsLessonPublished, IsLessonAuthor
-from src.lessons.schemas import CreateLessonRequestSchema, LessonResponseSchema
+from src.lessons.schemas import CreateLessonRequestSchema, \
+    LessonResponseSchema, UpdateLessonRequestSchema
 from src.lessons.service import LessonService
 
 lesson_router = APIRouter()
@@ -70,3 +71,23 @@ async def deactivate_lesson_by_id(
         service: Annotated[LessonService, Depends(get_service(LessonService))],
 ) -> None:
     await service.deactivate_lesson(lesson=lesson)
+
+@lesson_router.patch('/{lesson_id}', response_model=LessonResponseSchema)
+async def update_lesson(
+        lesson_fields: UpdateLessonRequestSchema,
+        lesson: Annotated[
+            Lesson,
+            Security(
+                LessonPermissionDependency(
+                    [
+                        IsLessonAuthor
+                    ],
+                )
+            )
+        ],
+        service: Annotated[LessonService, Depends(get_service(LessonService))],
+) -> LessonResponseSchema:
+    updated_lesson: Lesson = await service.update_lesson(
+        lesson=lesson, lesson_fields=lesson_fields
+    )
+    return LessonResponseSchema.model_validate(updated_lesson)
