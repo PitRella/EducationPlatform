@@ -8,7 +8,9 @@ from src.base.dependencies import get_service
 from src.courses.dependencies import CoursePermissionDependency
 from src.courses.models import Course
 from src.courses.permissions import IsAuthorCourse, IsCourseActive
+from src.lessons.dependencies import LessonPermissionDependency
 from src.lessons.models import Lesson
+from src.lessons.permissions import IsLessonPublished
 from src.lessons.schemas import CreateLessonRequestSchema, LessonResponseSchema
 from src.lessons.service import LessonService
 
@@ -38,8 +40,15 @@ async def create_lesson(
 
 @lesson_router.get('/{lesson_id}', response_model=LessonResponseSchema)
 async def get_lesson(
-        lesson_id: uuid.UUID,
-        service: Annotated[LessonService, Depends(get_service(LessonService))],
+        lesson: Annotated[
+            Lesson,
+            Security(
+                LessonPermissionDependency(
+                    [
+                        IsLessonPublished,
+                    ],
+                )
+            )
+        ]
 ) -> LessonResponseSchema:
-    lesson: Lesson = await service.get_lesson(lesson_id=lesson_id)
     return LessonResponseSchema.model_validate(lesson)
