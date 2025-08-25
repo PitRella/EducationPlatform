@@ -109,27 +109,23 @@ async def get_course(
 
 @course_router.patch('/{course_id}', response_model=BaseCourseResponseSchema)
 async def update_course(
-        course_id: uuid.UUID,
-        course_fields: UpdateCourseRequestSchema,
-        author: Annotated[
-            Author, Security(
-                AuthorPermissionDependency([IsAuthorPermission]))],
+        course: Annotated[
+            Course,
+            Security(
+                CoursePermissionDependency(
+                    [
+                        IsAuthorCourse
+                    ],
+                    logic="OR"
+                )
+            )
+        ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
+        course_fields: UpdateCourseRequestSchema,
+
 ) -> BaseCourseResponseSchema:
-    """Update an existing course by its ID.
-
-    Args:
-        course_id (uuid.UUID): The unique identifier of the course to update.
-        course_fields (UpdateCourseRequestSchema): Fields to update.
-        author (Author): The authenticated author performing the update.
-        service (CourseService): Service for course operations.
-
-    Returns:
-        BaseCourseResponseSchema: The updated course data.
-
-    """
     updated_course = await service.update_course(
-        course_id=course_id, author=author, course_fields=course_fields
+        course=course, course_fields=course_fields
     )
     return BaseCourseResponseSchema.model_validate(updated_course)
 

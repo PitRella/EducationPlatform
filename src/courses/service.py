@@ -73,24 +73,9 @@ class CourseService(BaseService):
 
     async def update_course(
             self,
-            course_id: uuid.UUID,
-            author: Author,
+            course: Course,
             course_fields: UpdateCourseRequestSchema,
     ) -> Course:
-        """Update an existing course by ID and author with the provided fields.
-
-        Args:
-            course_id (uuid.UUID): The ID of the course to update.
-            author (Author): The author of the course.
-            course_fields (UpdateCourseRequestSchema): Fields to update.
-
-        Returns:
-            Course: The updated course instance.
-
-        Raises:
-            CourseNotFoundByIdException: If the course does not exist.
-
-        """
         filtered_course_fields: dict[str, str] = (
             self._validate_schema_for_update_request(course_fields)
         )
@@ -100,7 +85,7 @@ class CourseService(BaseService):
             )
         async with self.session.begin():
             updated_course: Course | None = await self._course_dao.update(
-                filtered_course_fields, id=course_id, author_id=author.id
+                filtered_course_fields, id=course.id,
             )
         if not updated_course:
             raise CourseNotFoundByIdException
