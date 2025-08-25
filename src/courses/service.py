@@ -124,28 +124,12 @@ class CourseService(BaseService):
 
     async def deactivate_course(
             self,
-            course_id: uuid.UUID,
-            author: Author,
+            course: Course,
     ) -> None:
-        """Deactivate a course in the database.
-
-        Args:
-            course_id (uuid.UUID): The ID of the course to deactivate.
-            author (Author): The author of the course.
-
-        Raises:
-            CourseNotFoundByIdException: If the course does not exist or
-                does not belong to the specified author.
-
-        Note:
-            This operation sets the course's is_active flag to False.
-
-        """
         async with self.session.begin():
             deleted_course: Course | None = await self._course_dao.update(
                 self._DEACTIVATE_COURSE_UPDATE,
-                id=course_id,
-                author_id=author.id,
+                id=course.id,
             )
         if not deleted_course:
             raise CourseNotFoundByIdException

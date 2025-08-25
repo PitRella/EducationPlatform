@@ -132,27 +132,20 @@ async def update_course(
 
 @course_router.delete('/{course_id}', status_code=204)
 async def deactivate_course_by_id(
-        course_id: uuid.UUID,
-        author: Annotated[
-            Author, Security(
-                AuthorPermissionDependency([IsAuthorPermission]))],
+        course: Annotated[
+            Course,
+            Security(
+                CoursePermissionDependency(
+                    [
+                        IsAuthorCourse
+                    ],
+                    logic="OR"
+                )
+            )
+        ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
-    """Deactivate a course by its ID.
-
-    Args:
-        course_id (uuid.UUID): The unique id of the course to deactivate.
-        author (Author): The authenticated author performing the deactivation.
-        service (CourseService): Service for course operations.
-
-    Returns:
-        None
-
-    Note:
-        This endpoint returns a 204 status code on successful deactivation.
-
-    """
-    await service.deactivate_course(course_id=course_id, author=author)
+    await service.deactivate_course(course=course)
 
 
 @course_router.post('/purchase/{course_id}', status_code=201)
