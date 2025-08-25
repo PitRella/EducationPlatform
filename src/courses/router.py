@@ -156,11 +156,10 @@ async def purchase_course_by_id(
                 CoursePermissionDependency(
                     [
                         IsCourseActive,
-                        IsAuthorCourse
                     ]
                 )
             )
         ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
-    pass
+    await service.purchase_course(course=course, user=user)

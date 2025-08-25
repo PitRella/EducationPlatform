@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.courses.dao import CourseDAO
-from src.courses.exceptions import CourseNotFoundByIdException
+from src.courses.exceptions import CourseNotFoundByIdException, \
+    CourseWasNotBoughtException
 from src.courses.models import Course
 from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
@@ -16,6 +17,9 @@ from src.courses.schemas import (
 from src.users import User
 from src.users.models import Author
 from src.utils import make_slug
+from src.users.models import UserCourses
+
+type UserCourseDAO = BaseDAO[UserCourses]
 
 
 class CourseService(BaseService):
@@ -26,23 +30,27 @@ class CourseService(BaseService):
     def __init__(
             self,
             db_session: AsyncSession,
-            dao: CourseDAO | None = None,
+            course_dao: CourseDAO | None = None,
+            user_courses_dao: UserCourseDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
         Args:
             db_session (AsyncSession): The SQLAlchemy async session
-            dao (UserDAO | None, optional): Data Access Object
+            course_dao (UserDAO | None, optional): Data Access Object
              for user operations.
                 If None, creates a new UserDAO instance.
                 Defaults to None.
 
         """
         super().__init__(db_session)
-        self._course_dao: CourseDAO = dao or CourseDAO(
+        self._course_dao: CourseDAO = course_dao or CourseDAO(
             db_session,
             Course,
         )
+        self._user_courses_dao: UserCourseDAO = user_courses_dao or BaseDAO[
+            UserCourses
+        ](db_session, model=UserCourses)
 
     async def create_course(
             self, author: Author, course_schema: BaseCreateCourseRequestSchema
@@ -134,9 +142,17 @@ class CourseService(BaseService):
         if not deleted_course:
             raise CourseNotFoundByIdException
 
-    async def buy_course(
+    async def purchase_course(
             self,
             course: Course,
             user: User,
     ) -> None:
-        pass
+        async with self.session.begin():
+            bought_course: UserCourses | None = await self._user_courses_dao.create(
+                {
+                    "user_id": user.id,
+                    "course_id": course.id
+                }
+            )
+        if not bought_course:
+            raise CourseWasNotBoughtException
