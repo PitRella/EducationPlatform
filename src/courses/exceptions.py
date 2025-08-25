@@ -19,3 +19,11 @@ class ThisUserDoesntBoughtTheCourseException(HTTPException):
         super().__init__(
             status_code=404, detail='Current user does not bought the course'
         )
+
+class CourseWasNotBoughtException(HTTPException):
+    """Course was not bought."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=404, detail='Course was not bought.'
+        )
