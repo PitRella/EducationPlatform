@@ -1,4 +1,5 @@
 import uuid
+from typing import ClassVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,10 @@ from src.utils import make_slug
 
 
 class LessonService(BaseService):
+    _DEACTIVATE_LESSON_UPDATE: ClassVar[dict[str, bool]] = {
+        'is_published': False
+    }
+
     def __init__(
             self,
             db_session: AsyncSession,
@@ -47,3 +52,15 @@ class LessonService(BaseService):
         if not lesson:
             raise LessonIsNotPublishedException
         return lesson
+
+    async def deactivate_lesson(
+            self,
+            lesson: Lesson,
+    ) -> None:
+        async with self.session.begin():
+            updated_lesson: Lesson | None = await self._dao.update(
+                self._DEACTIVATE_LESSON_UPDATE,
+                id=lesson.id,
+            )
+        if not updated_lesson:
+            raise LessonIsNotPublishedException

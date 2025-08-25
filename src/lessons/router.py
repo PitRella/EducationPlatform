@@ -54,3 +54,19 @@ async def get_lesson(
         ]
 ) -> LessonResponseSchema:
     return LessonResponseSchema.model_validate(lesson)
+
+@lesson_router.delete('/{lesson_id}', status_code=204)
+async def deactivate_lesson_by_id(
+        lesson: Annotated[
+            Lesson,
+            Security(
+                LessonPermissionDependency(
+                    [
+                        IsLessonAuthor
+                    ],
+                )
+            )
+        ],
+        service: Annotated[LessonService, Depends(get_service(LessonService))],
+) -> None:
+    await service.deactivate_lesson(lesson=lesson)
