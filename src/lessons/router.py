@@ -10,7 +10,7 @@ from src.courses.models import Course
 from src.courses.permissions import IsAuthorCourse, IsCourseActive
 from src.lessons.dependencies import LessonPermissionDependency
 from src.lessons.models import Lesson
-from src.lessons.permissions import IsLessonPublished
+from src.lessons.permissions import IsLessonPublished, IsLessonAuthor
 from src.lessons.schemas import CreateLessonRequestSchema, LessonResponseSchema
 from src.lessons.service import LessonService
 
@@ -46,7 +46,9 @@ async def get_lesson(
                 LessonPermissionDependency(
                     [
                         IsLessonPublished,
+                        IsLessonAuthor,
                     ],
+                    logic="OR"
                 )
             )
         ]
