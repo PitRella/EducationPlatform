@@ -7,7 +7,8 @@ from src.base.service import BaseService
 from src.courses.models import Course
 
 from src.lessons.dao import LessonDAO
-from src.lessons.exceptions import LessonIsNotPublishedException
+from src.lessons.exceptions import LessonIsNotPublishedException, \
+    LessonNotFoundByIdException
 from src.lessons.models import Lesson
 from src.lessons.schemas import CreateLessonRequestSchema
 from src.utils import make_slug
@@ -63,7 +64,7 @@ class LessonService(BaseService):
                 id=lesson.id,
             )
         if not updated_lesson:
-            raise LessonIsNotPublishedException
+            raise LessonNotFoundByIdException
 
     async def update_lesson(
             self,
@@ -81,5 +82,5 @@ class LessonService(BaseService):
                 filtered_lesson_fields, id=lesson.id,
             )
         if not updated_lesson:
-            raise LessonIsNotPublishedException
+            raise LessonNotFoundByIdException
         return updated_lesson
