@@ -1,0 +1,60 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Run linters and checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run ruff (lint)
+        run: uv run ruff check .
+
+      - name: Run ruff (format check)
+        run: uv run ruff format --check .
+
+      - name: Run mypy
+        run: uv run mypy --config-file pyproject.toml .
+
+      - name: Check YAML syntax
+        run: |
+          find . -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | \
+            xargs -0 -I {} uv run python -c "import sys, yaml; yaml.safe_load(open('{}', 'r'))"
+
+      - name: Check for trailing whitespace
+        run: |
+          if grep -rIn --exclude-dir={.git,.venv,venv,__pycache__} '\s$' .; then
+            echo "Trailing whitespace found"
+            exit 1
+          fi
+
+      - name: Check for missing newline at end of file
+        run: |
+          if find . -type f -not -path "*/\.*" | xargs -I {} bash -c 'tail -c1 "{}" | od -An -t x1 | grep -qv "0a" && echo "{} missing newline"'; then
+            echo "Missing newline at end of file found"
+            exit 1
+          fi
+
+      - name: Check for debug statements
+        run: |
+          if grep -rInE '\b(print|pdb\.set_trace)\b' src/ --exclude-dir={.git,.venv,venv,__pycache__,.mypy_cache} 2>/dev/null; then
+            echo "Debug statements found in source code"
+            exit 1
+          fi
