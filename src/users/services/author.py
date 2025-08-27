@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.users import User
+from src.users.dao import AuthorDAO
 from src.users.exceptions.author import (
     AdminCannotBeAuthorException,
     UserIsNotAuthorException,
@@ -13,8 +14,6 @@ from src.users.exceptions.author import (
 from src.users.models import Author
 from src.users.schemas import CreateAuthorRequestSchema
 from src.utils import make_slug
-
-type AuthorDAO = BaseDAO[Author, CreateAuthorRequestSchema]
 
 
 class AuthorService(BaseService):
@@ -27,9 +26,9 @@ class AuthorService(BaseService):
     """
 
     def __init__(
-        self,
-        db_session: AsyncSession,
-        dao: AuthorDAO | None = None,
+            self,
+            db_session: AsyncSession,
+            dao: AuthorDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -42,9 +41,10 @@ class AuthorService(BaseService):
 
         """
         super().__init__(db_session)
-        self._dao: AuthorDAO = dao or BaseDAO[
-            Author, CreateAuthorRequestSchema
-        ](session=db_session, model=Author)
+        self._dao: AuthorDAO = dao or AuthorDAO(
+            session=db_session,
+            model=Author
+        )
 
     async def get_author_by_user_id(self, user_id: uuid.UUID | str) -> Author:
         """Check if a user is a verified author.
@@ -60,7 +60,7 @@ class AuthorService(BaseService):
 
         """
         async with self.session.begin():
-            author: Author | None = await self._dao.get_one(
+            author: Author | None = await self._dao.get_author(
                 user_id=user_id, is_verified=True
             )
         if not author:
@@ -89,7 +89,7 @@ class AuthorService(BaseService):
         return author
 
     async def become_author(
-        self, user: User, author_schema: CreateAuthorRequestSchema
+            self, user: User, author_schema: CreateAuthorRequestSchema
     ) -> Author:
         """Create a new Author for a user if they are not in the admin group.
 

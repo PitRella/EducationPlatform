@@ -1,50 +1,28 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import TypedDict, Unpack
 
-from starlette.requests import Request
+from fastapi.requests import Request
 
-from src.users.models import User
+from src.courses.models import Course
+from src.lessons.models import Lesson
+from src.users import Author, User
 
 logger = logging.getLogger(__name__)
 
+class PermissionKwargs(TypedDict, total=False):
+    user: User | None
+    target_user: User
+    author: Author | None
+    course: Course
+    lesson: Lesson
 
-# Abstract base class for all permission services.
-# Enforces a contract for permission validation logic.
-class BasePermissionService(ABC):
-    """Abstract base class for implementing permission validation.
-
-    Provides a standardized interface for permission checking.
-    All permission services must inherit from this class and implement the
-    validate_permission() method to enforce their specific access control rules.
-
-    Attributes:
-        user (User): The authenticated user making the request
-        request (Request): The current HTTP request being processed
-
-    """
-
+class BasePermission:
     def __init__(
         self,
-        user: User,
         request: Request,
+        **kwargs: Unpack[PermissionKwargs],
     ):
-        """Initialize BasePermissionService with user and request.
-
-        Base class for implementing permission validation logic.
-        All permission services should inherit from this class
-        and implement validate_permission().
-
-        Args:
-            user (User): The authenticated user making the request
-            request (Request): The current HTTP request being processed
-
-        The class provides core functionality for permission checking
-        by storing the authenticated user and current request context.
-
-        """
-        # The current authenticated user
-        self.user: User = user
-
         # The current HTTP request
         self.request: Request = request
 
@@ -57,3 +35,4 @@ class BasePermissionService(ABC):
         Should raise an exception if the permission check fails.
         """
         ...
+

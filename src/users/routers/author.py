@@ -1,12 +1,14 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
-from src.auth.dependencies import get_user_from_jwt
+from src.auth.dependencies import UserPermissionDependency
+from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
-from src.users.dependencies import get_author_from_jwt
+from src.users.dependencies import AuthorPermissionDependency
 from src.users.models import Author, User
+from src.users.permissions import IsAuthorPermission
 from src.users.schemas import AuthorResponseSchema, CreateAuthorRequestSchema
 from src.users.services import AuthorService
 
@@ -19,9 +21,10 @@ author_router = APIRouter()
     response_model=AuthorResponseSchema,
 )
 async def become_author(
-    author_schema: CreateAuthorRequestSchema,
-    user: Annotated[User, Depends(get_user_from_jwt)],
-    service: Annotated[AuthorService, Depends(get_service(AuthorService))],
+        author_schema: CreateAuthorRequestSchema,
+        user: Annotated[
+            User, Security(UserPermissionDependency([IsAuthenticated]))],
+        service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to create a new author profile for a user.
 
@@ -46,7 +49,9 @@ async def become_author(
     response_model=AuthorResponseSchema,
 )
 async def get_current_author(
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+        author: Annotated[
+            Author, Security(
+                AuthorPermissionDependency([IsAuthorPermission]))],
 ) -> AuthorResponseSchema:
     """Endpoint to retrieve the current authenticated author's information.
 
@@ -63,8 +68,8 @@ async def get_current_author(
     response_model=AuthorResponseSchema,
 )
 async def get_author_by_id(
-    author_id: uuid.UUID,
-    service: Annotated[AuthorService, Depends(get_service(AuthorService))],
+        author_id: uuid.UUID,
+        service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to retrieve author information by their ID.
 

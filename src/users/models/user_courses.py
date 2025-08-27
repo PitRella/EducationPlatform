@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,3 +25,5 @@ class UserCourses(BaseUUIDMixin, BaseTimeStampMixin):
         ForeignKey('courses.id', ondelete='CASCADE'),
         primary_key=True,
     )
+
+    __table_args__ = (UniqueConstraint('user_id', 'course_id'),)
