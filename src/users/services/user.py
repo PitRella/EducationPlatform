@@ -79,7 +79,7 @@ class UserService(BaseService):
         """
         return self._dao
 
-    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
+    async def get_user_by_id(self, user_id: uuid.UUID | str) -> User:
         """Retrieve a user by their ID from the database.
 
         Args:

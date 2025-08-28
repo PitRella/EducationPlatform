@@ -66,7 +66,7 @@ async def deactivate_user_by_id(
         Sets user's is_active flag to False but does not delete the record
 
     """
-    return await service.deactivate_user(target_user=target_user)
+    await service.deactivate_user(target_user=target_user)
 
 
 @admin_router.patch(
