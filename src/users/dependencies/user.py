@@ -63,7 +63,7 @@ class AdminPermissionDependency(BasePermissionDependency):
     def __init__(
         self,
         permissions: Sequence[type[TargetUserAdminPermission]],
-        logic: Literal['AND', 'OR'] = BasePermissionDependency._LOGIC_AND,
+        logic: Literal['AND', 'OR'] = BasePermissionDependency.LOGIC_AND,
     ):
         """Initialize the admin permission dependency."""
         super().__init__(permissions, logic)

@@ -67,13 +67,13 @@ class BasePermissionDependency:
     and supports validating all or any permissions based on the logic.
     """
 
-    _LOGIC_AND: Literal['AND'] = 'AND'
-    _LOGIC_OR: Literal['OR'] = 'OR'
+    LOGIC_AND: Literal['AND'] = 'AND'
+    LOGIC_OR: Literal['OR'] = 'OR'
 
     def __init__(
         self,
         permissions: Sequence[type[BasePermission]],
-        logic: Literal['AND', 'OR'] = _LOGIC_AND,
+        logic: Literal['AND', 'OR'] = LOGIC_AND,
     ):
         """Initialize permission dependency with logic and permissions.
 
@@ -101,9 +101,9 @@ class BasePermissionDependency:
 
         """
         match self.logic:
-            case self._LOGIC_AND:
+            case self.LOGIC_AND:
                 await self._validate_all_permissions(request, **context)
-            case self._LOGIC_OR:
+            case self.LOGIC_OR:
                 await self._validate_any_permissions(request, **context)
 
     async def _validate_all_permissions(

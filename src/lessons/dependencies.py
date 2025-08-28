@@ -31,7 +31,7 @@ class LessonPermissionDependency(BasePermissionDependency):
     def __init__(
         self,
         permissions: Sequence[type[BaseLessonPermission]],
-        logic: Literal['AND', 'OR'] = BasePermissionDependency._LOGIC_AND,
+        logic: Literal['AND', 'OR'] = BasePermissionDependency.LOGIC_AND,
     ):
         """Initialize the LessonPermissionDependency.
 
