@@ -28,7 +28,6 @@ from src.users.permissions import IsAuthorPermission
 
 course_router = APIRouter()
 
-
 @course_router.get('/all', response_model=list[BaseCourseResponseSchema])
 async def get_all_courses(
         service: Annotated[CourseService, Depends(get_service(CourseService))],
@@ -40,14 +39,14 @@ async def get_all_courses(
 
     Args:
         service (CourseService): Service for course operations.
-        created_at (datetime, optional): Filter created courses by timestamp.
+        created_at (datetime, optional): Filter courses created after this
+            timestamp.
         last_id (UUID, optional): Get courses after this course ID.
         limit (int, optional): Maximum number of courses to return.
 
     Returns:
-        list[BaseCourseResponseSchema]: List of course objects.
-        None if no courses are found.
-
+        list[BaseCourseResponseSchema] | None: List of course schemas or None
+            if no courses exist.
     """
     courses: list[Course] = await service.get_all_courses(
         created_at, last_id, limit
@@ -65,14 +64,15 @@ async def create_course(
 ) -> BaseCourseResponseSchema:
     """Create a new course.
 
+    Only authenticated authors can create a course.
+
     Args:
-        course_schema (BaseCreateCourseRequestSchema): Schema containing course details.
-        author (Author): The authenticated author creating the course.
+        course_schema (BaseCreateCourseRequestSchema): Schema with course data.
+        author (Author): Authenticated author creating the course.
         service (CourseService): Service for course operations.
 
     Returns:
-        BaseCourseResponseSchema: The created course data.
-
+        BaseCourseResponseSchema: The created course schema.
     """
     course = await service.create_course(
         author=author, course_schema=course_schema
@@ -97,12 +97,13 @@ async def get_course(
 ) -> BaseCourseResponseSchema:
     """Retrieve a specific course by its ID.
 
+    A course can be retrieved if it is active or if the requester is the author.
+
     Args:
-        course (Course): The course object retrieved by ID dependency.
+        course (Course): Course instance retrieved via permission dependency.
 
     Returns:
-        BaseCourseResponseSchema: The course data.
-
+        BaseCourseResponseSchema: Schema of the course.
     """
     return BaseCourseResponseSchema.model_validate(course)
 
@@ -121,8 +122,19 @@ async def update_course(
         ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
         course_fields: UpdateCourseRequestSchema,
-
 ) -> BaseCourseResponseSchema:
+    """Update an existing course.
+
+    Only the course author can update it. Changes are saved and returned.
+
+    Args:
+        course (Course): Course instance retrieved via permission dependency.
+        service (CourseService): Service for course operations.
+        course_fields (UpdateCourseRequestSchema): Schema with updated fields.
+
+    Returns:
+        BaseCourseResponseSchema: Schema of the updated course.
+    """
     updated_course = await service.update_course(
         course=course, course_fields=course_fields
     )
@@ -143,6 +155,18 @@ async def deactivate_course_by_id(
         ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
+    """Deactivate a course by its ID.
+
+    Only the course author can deactivate it. Deactivation marks the course
+    as inactive.
+
+    Args:
+        course (Course): Course instance retrieved via permission dependency.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        None
+    """
     await service.deactivate_course(course=course)
 
 
@@ -162,4 +186,16 @@ async def purchase_course_by_id(
         ],
         service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
+    """Purchase a course by its ID.
+
+    The user must be authenticated. The course must be active.
+
+    Args:
+        user (User): Authenticated user purchasing the course.
+        course (Course): Course instance retrieved via permission dependency.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        None
+    """
     await service.purchase_course(course=course, user=user)
