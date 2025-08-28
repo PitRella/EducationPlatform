@@ -26,6 +26,7 @@ dependencies = [
 
 [tool.mypy]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
+exclude = "grafana_storage/|migrations/|tests/|docs/"
 strict = true
 local_partial_types = true
 warn_unreachable = true
