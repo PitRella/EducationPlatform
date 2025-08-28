@@ -3,7 +3,6 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.users import User
 from src.users.dao import AuthorDAO
@@ -26,9 +25,9 @@ class AuthorService(BaseService):
     """
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            dao: AuthorDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        dao: AuthorDAO | None = None,
     ) -> None:
         """Initialize a new UserService instance.
 
@@ -42,8 +41,7 @@ class AuthorService(BaseService):
         """
         super().__init__(db_session)
         self._dao: AuthorDAO = dao or AuthorDAO(
-            session=db_session,
-            model=Author
+            session=db_session, model=Author
         )
 
     async def get_author_by_user_id(self, user_id: uuid.UUID | str) -> Author:
@@ -89,7 +87,7 @@ class AuthorService(BaseService):
         return author
 
     async def become_author(
-            self, user: User, author_schema: CreateAuthorRequestSchema
+        self, user: User, author_schema: CreateAuthorRequestSchema
     ) -> Author:
         """Create a new Author for a user if they are not in the admin group.
 

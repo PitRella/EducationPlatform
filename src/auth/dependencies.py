@@ -19,11 +19,9 @@ oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 
 
 async def _get_optional_user_from_jwt(
-        token: Annotated[str, Security(oauth_scheme)],
-        auth_service: Annotated[
-            AuthService, Depends(get_service(AuthService))],
-        user_service: Annotated[
-            UserService, Depends(get_service(UserService))],
+    token: Annotated[str, Security(oauth_scheme)],
+    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
+    user_service: Annotated[UserService, Depends(get_service(UserService))],
 ) -> User | None:
     if not token:
         return None
@@ -57,13 +55,19 @@ class UserPermissionDependency:
     """
 
     def __init__(self, permissions: list[type[BaseUserPermission]]):
-        # Store a list of permission class types to be validated later
+        """Initialize the permission dependency with a list of permissions.
+
+        Args:
+            permissions (list[type[BaseUserPermission]]): List of permission
+                classes to validate against the current user context.
+
+        """
         self.permissions = permissions
 
     async def __call__(
-            self,
-            request: Request,
-            user: Annotated[User | None, Depends(_get_optional_user_from_jwt)],
+        self,
+        request: Request,
+        user: Annotated[User | None, Depends(_get_optional_user_from_jwt)],
     ) -> User:
         """Callable used as a FastAPI dependency.
 
@@ -77,7 +81,7 @@ class UserPermissionDependency:
             #  the actual permission check
             await p_class.validate_permission()
 
-        # Just to be sure that the user is authenticated after the permission check.
+        # Just to be sure that the user is authenticated after the permission.
         if not user:
             raise UserNotAuthorizedException
         return user

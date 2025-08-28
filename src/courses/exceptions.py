@@ -2,10 +2,10 @@ from fastapi import HTTPException
 
 
 class CourseNotFoundByIdException(HTTPException):
-    """Course cannot be found by id."""
+    """Exception raised when a course cannot be found by its ID."""
 
     def __init__(self) -> None:
-        """Initialize the CourseNotFoundByIdException with status 404."""
+        """Initialize the exception with HTTP 404 status code."""
         super().__init__(
             status_code=404,
             detail='Active course cannot be not found.',
@@ -13,17 +13,22 @@ class CourseNotFoundByIdException(HTTPException):
 
 
 class ThisUserDoesntBoughtTheCourseException(HTTPException):
-    """This user doesn't buy the course."""
+    """Exception raised when a user has not purchased a course."""
 
     def __init__(self) -> None:
+        """Initialize the exception with HTTP 404 status code."""
         super().__init__(
-            status_code=404, detail='Current user does not bought the course'
+            status_code=404,
+            detail='Current user does not bought the course',
         )
 
+
 class CourseWasNotBoughtException(HTTPException):
-    """Course was not bought."""
+    """Exception raised when a course purchase operation fails."""
 
     def __init__(self) -> None:
+        """Initialize the exception with HTTP 404 status code."""
         super().__init__(
-            status_code=404, detail='Course was not bought.'
+            status_code=404,
+            detail='Course was not bought.',
         )

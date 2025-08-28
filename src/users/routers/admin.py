@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, Security
 from src.base.dependencies import get_service
 from src.users import User
 from src.users.dependencies import AdminPermissionDependency
-from src.users.permissions import TargetUserAdminPermission, TargetUserSuperadminPermission
+from src.users.permissions import (
+    TargetUserAdminPermission,
+    TargetUserSuperadminPermission,
+)
 from src.users.schemas import UserResponseShema
 from src.users.services import UserService
 
@@ -63,7 +66,7 @@ async def deactivate_user_by_id(
         Sets user's is_active flag to False but does not delete the record
 
     """
-    return await service.deactivate_user(target_user=target_user)
+    await service.deactivate_user(target_user=target_user)
 
 
 @admin_router.patch(
@@ -74,7 +77,8 @@ async def deactivate_user_by_id(
 async def set_admin_privilege(
     service: Annotated[UserService, Depends(get_service(UserService))],
     target_user: Annotated[
-        User, Security(AdminPermissionDependency([TargetUserSuperadminPermission]))
+        User,
+        Security(AdminPermissionDependency([TargetUserSuperadminPermission])),
     ],
 ) -> UserResponseShema:
     """Grant admin privileges to a user.
@@ -104,7 +108,8 @@ async def set_admin_privilege(
 async def revoke_admin_privilege(
     service: Annotated[UserService, Depends(get_service(UserService))],
     target_user: Annotated[
-        User, Security(AdminPermissionDependency([TargetUserSuperadminPermission]))
+        User,
+        Security(AdminPermissionDependency([TargetUserSuperadminPermission])),
     ],
 ) -> UserResponseShema:
     """Revoke admin privileges from a user.

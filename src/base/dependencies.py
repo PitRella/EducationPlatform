@@ -1,9 +1,10 @@
-from collections.abc import Callable
-from typing import Annotated, TypeVar, Unpack, Sequence, Literal
+from collections.abc import Callable, Sequence
+from typing import Annotated, Literal, TypeVar, Unpack
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.requests import Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.base.permission import BasePermission, PermissionKwargs
 from src.base.service import BaseService
 from src.database import get_db
@@ -11,8 +12,26 @@ from src.database import get_db
 Service = TypeVar('Service', bound=BaseService)
 
 
+class PermissionValidationError(Exception):
+    """Exception raised when permission validation fails."""
+
+    def __init__(self, permission_errors: list[str]) -> None:
+        """Initialize with list of permission errors.
+
+        Args:
+            permission_errors: List of error messages from failed permissions.
+
+        """
+        message = (
+            f'None of the permissions were satisfied: '
+            f'{"; ".join(permission_errors)}'
+        )
+        super().__init__(message)
+        self.permission_errors = permission_errors
+
+
 def get_service[Service](
-        service_type: type[Service],
+    service_type: type[Service],
 ) -> Callable[[AsyncSession], Service]:
     """Create a FastAPI dependency for service injection using factory.
 
@@ -42,56 +61,88 @@ def get_service[Service](
 
 
 class BasePermissionDependency:
-    _LOGIC_AND: Literal["AND"] = "AND"
-    _LOGIC_OR: Literal["OR"] = "OR"
+    """Handles validation of multiple permission classes with AND/OR logic.
+
+    This class allows composing multiple permission checks for a request,
+    and supports validating all or any permissions based on the logic.
+    """
+
+    LOGIC_AND: Literal['AND'] = 'AND'
+    LOGIC_OR: Literal['OR'] = 'OR'
 
     def __init__(
-            self,
-            permissions: Sequence[type[BasePermission]],
-            logic: Literal["AND", "OR"] = _LOGIC_AND
+        self,
+        permissions: Sequence[type[BasePermission]],
+        logic: Literal['AND', 'OR'] = LOGIC_AND,
     ):
+        """Initialize permission dependency with logic and permissions.
+
+        Args:
+            permissions (Sequence[type[BasePermission]]): List of permission
+                classes to validate.
+            logic (Literal['AND', 'OR'], optional): Validation logic.
+                Defaults to 'AND'.
+
+        """
         self.permissions = permissions
-        self.logic: Literal["AND", "OR"] = logic
+        self.logic: Literal['AND', 'OR'] = logic
 
     async def _validate_permissions(
-            self,
-            request: Request,
-            **context: Unpack[PermissionKwargs]
+        self, request: Request, **context: Unpack[PermissionKwargs]
     ) -> None:
+        """Validate permissions according to the configured logic.
+
+        Args:
+            request (Request): The current HTTP request.
+            **context (PermissionKwargs): Context for permission checks.
+
+        Raises:
+            Exception: If the permissions are not satisfied based on logic.
+
+        """
         match self.logic:
-            case self._LOGIC_AND:
+            case self.LOGIC_AND:
                 await self._validate_all_permissions(request, **context)
-            case self._LOGIC_OR:
+            case self.LOGIC_OR:
                 await self._validate_any_permissions(request, **context)
 
     async def _validate_all_permissions(
-            self,
-            request: Request,
-            **context: Unpack[PermissionKwargs]
+        self, request: Request, **context: Unpack[PermissionKwargs]
     ) -> None:
+        """Validate that all permissions are satisfied.
+
+        Args:
+            request (Request): The current HTTP request.
+            **context (PermissionKwargs): Context for permission checks.
+
+        Raises:
+            PermissionValidationError: If any permission is not satisfied.
+
+        """
         for permission_cls in self.permissions:
-            permission_instance = permission_cls(
-                request=request,
-                **context
-            )
+            permission_instance = permission_cls(request=request, **context)
             await permission_instance.validate_permission()
 
     async def _validate_any_permissions(
-            self,
-            request: Request,
-            **context: Unpack[PermissionKwargs]
+        self, request: Request, **context: Unpack[PermissionKwargs]
     ) -> None:
+        """Validate that at least one permission is satisfied.
+
+        Args:
+            request (Request): The current HTTP request.
+            **context (PermissionKwargs): Context for permission checks.
+
+        Raises:
+            PermissionValidationError: If none of the permissions are satisfied.
+
+        """
         errors: list[str] = []
         for permission_cls in self.permissions:
             try:
-                permission_instance = permission_cls(
-                    request=request,
-                    **context
-                )
+                permission_instance = permission_cls(request=request, **context)
                 await permission_instance.validate_permission()
-                return # If at least one permission is satisfied - return
             except Exception as e:
-                errors.append(f"{permission_cls.__name__}: {str(e)}")
-        raise Exception(
-            f"None of the permissions were satisfied: {'; '.join(errors)}"
-        )
+                errors.append(f'{permission_cls.__name__}: {e!s}')
+            else:
+                return  # At least one permission satisfied
+            raise PermissionValidationError(errors)
