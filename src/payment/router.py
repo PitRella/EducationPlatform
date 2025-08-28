@@ -1,14 +1,23 @@
-from fastapi import APIRouter
+from typing import Annotated
 
-from src.courses.schemas import (
-    BaseCourseResponseSchema,
+from fastapi import APIRouter, Security
 
+from src.auth.dependencies import UserPermissionDependency
+from src.auth.permissions import IsAuthenticated
+from src.payment.schemas import (
+    PaymentResponseSchema,
+    CreatePaymentRequestSchema
 )
+from src.users import User
 
 payment_router = APIRouter()
 
 
-@payment_router.post('/')
+@payment_router.post('/', response_model=PaymentResponseSchema)
 async def create_payment(
-) -> BaseCourseResponseSchema:
+        payment_schema: CreatePaymentRequestSchema,
+        user: Annotated[
+            User, Security(UserPermissionDependency([IsAuthenticated]))
+        ],
+) -> PaymentResponseSchema:
     pass
