@@ -65,6 +65,7 @@ class AdminPermissionDependency(BasePermissionDependency):
         permissions: Sequence[type[TargetUserAdminPermission]],
         logic: Literal['AND', 'OR'] = BasePermissionDependency._LOGIC_AND,
     ):
+        """Initialize the admin permission dependency."""
         super().__init__(permissions, logic)
 
     async def __call__(
@@ -75,6 +76,20 @@ class AdminPermissionDependency(BasePermissionDependency):
             User | None, Depends(_get_optional_user_from_jwt)
         ],
     ) -> User:
+        """Validate permissions for the target user.
+
+        Args:
+            request (Request): Current HTTP request.
+            target_user (User): Target user for the operation.
+            source_user (User | None): Authenticated source user.
+
+        Returns:
+            User: The target user if all permissions pass.
+
+        Raises:
+            Exception: If any permission is not satisfied.
+
+        """
         await self._validate_permissions(
             request=request, user=source_user, target_user=target_user
         )

@@ -117,6 +117,17 @@ class BaseDAO[
     async def get_one_with_relations(
         self, *filters: Any, relations: list[str], **filters_by: Any
     ) -> Model | None:
+        """Retrieve a single record with specified relationships loaded.
+
+        Args:
+            *filters: Positional SQLAlchemy filter expressions.
+            relations (list[str]): List of relation names to eager load.
+            **filters_by: Keyword filters for columns.
+
+        Returns:
+            Model | None: Model instance with relations or None.
+
+        """
         options = [
             selectinload(getattr(self.model, relation))
             for relation in relations
