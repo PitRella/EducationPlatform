@@ -22,6 +22,7 @@ dependencies = [
     "uvicorn>=0.34.3",
     "python-slugify>=8.0.4",
     "sqladmin>=0.21.0",
+    "stripe>=12.5.0",
 ]
 
 [tool.mypy]
