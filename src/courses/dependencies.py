@@ -33,11 +33,26 @@ async def _get_course_by_id(
 
 
 class CoursePermissionDependency(BasePermissionDependency):
+    """Dependency class for validating course-related permissions.
+
+    This dependency checks if the given author has the required
+    permissions to access or modify a course. Multiple permission checks
+    can be combined with logical operators (AND/OR).
+    """
+
     def __init__(
             self,
             permissions: Sequence[type[BaseCoursePermission]],
             logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND
     ):
+        """Initialize the course permission dependency.
+
+        Args:
+            permissions (Sequence[type[BaseCoursePermission]]): A sequence of
+                course permission classes to validate.
+            logic (Literal["AND", "OR"]): Logical operator to combine multiple
+                permission checks. Defaults to "AND".
+        """
         super().__init__(permissions, logic)
 
     async def __call__(
@@ -49,6 +64,24 @@ class CoursePermissionDependency(BasePermissionDependency):
             ],
             course: Annotated[Course, Depends(_get_course_by_id)],
     ) -> Course:
+        """Validate permissions for accessing or modifying a course.
+
+        This method is invoked as a FastAPI dependency. It ensures that
+        the current author has the required permissions for the given
+        course.
+
+        Args:
+            request (Request): The current HTTP request.
+            author (Author | None): The author extracted from the JWT, if any.
+            course (Course): The course retrieved from the request context.
+
+        Returns:
+            Course: The validated course instance.
+
+        Raises:
+            HTTPException: If the author does not have the required
+                permissions.
+        """
         await self._validate_permissions(
             request=request,
             author=author,
