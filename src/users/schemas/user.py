@@ -52,7 +52,6 @@ class CreateUserRequestSchema(BaseModel):
             max_length=50,
         ),
     ]
-    role: Sequence[UserRole] | None = None
 
     @field_validator('email')
     def validate_email(cls, value: str) -> str:
