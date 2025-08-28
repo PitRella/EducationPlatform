@@ -12,6 +12,24 @@ from src.database import get_db
 Service = TypeVar('Service', bound=BaseService)
 
 
+class PermissionValidationError(Exception):
+    """Exception raised when permission validation fails."""
+
+    def __init__(self, permission_errors: list[str]) -> None:
+        """Initialize with list of permission errors.
+
+        Args:
+            permission_errors: List of error messages from failed permissions.
+
+        """
+        message = (
+            f'None of the permissions were satisfied: '
+            f'{"; ".join(permission_errors)}'
+        )
+        super().__init__(message)
+        self.permission_errors = permission_errors
+
+
 def get_service[Service](
     service_type: type[Service],
 ) -> Callable[[AsyncSession], Service]:
@@ -98,7 +116,7 @@ class BasePermissionDependency:
             **context (PermissionKwargs): Context for permission checks.
 
         Raises:
-            Exception: If any permission is not satisfied.
+            PermissionValidationError: If any permission is not satisfied.
 
         """
         for permission_cls in self.permissions:
@@ -115,7 +133,7 @@ class BasePermissionDependency:
             **context (PermissionKwargs): Context for permission checks.
 
         Raises:
-            Exception: If none of the permissions are satisfied.
+            PermissionValidationError: If none of the permissions are satisfied.
 
         """
         errors: list[str] = []
@@ -123,9 +141,8 @@ class BasePermissionDependency:
             try:
                 permission_instance = permission_cls(request=request, **context)
                 await permission_instance.validate_permission()
-                return  # At least one permission satisfied
             except Exception as e:
                 errors.append(f'{permission_cls.__name__}: {e!s}')
-        raise Exception(
-            f'None of the permissions were satisfied: {"; ".join(errors)}'
-        )
+            else:
+                return  # At least one permission satisfied
+            raise PermissionValidationError(errors)
