@@ -5,6 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+class StripePaymentSettings(BaseSettings):
+    """Payment-related settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix='STRIPE_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
+    SECRET_KEY: str = ''
 
 class TokenSettings(BaseSettings):
     """Token-related settings."""
