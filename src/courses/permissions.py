@@ -16,9 +16,9 @@ class BaseCoursePermission(BasePermission, ABC):
     """
 
     def __init__(
-            self,
-            request: Request,
-            **kwargs: Unpack[PermissionKwargs],
+        self,
+        request: Request,
+        **kwargs: Unpack[PermissionKwargs],
     ):
         """Initialize the base course permission.
 
@@ -26,15 +26,14 @@ class BaseCoursePermission(BasePermission, ABC):
             request (Request): The current HTTP request.
             **kwargs (PermissionKwargs): Additional keyword arguments
                 including the course instance.
+
         """
         super().__init__(request, **kwargs)
         self.course = kwargs['course']
 
 
 class BaseAuthorCoursePermission(
-    BaseCoursePermission,
-    BaseAuthorPermission,
-    ABC
+    BaseCoursePermission, BaseAuthorPermission, ABC
 ):
     """Abstract base class for permissions requiring course and author.
 
@@ -53,6 +52,7 @@ class BaseAuthorCoursePermission(
             request (Request): The current HTTP request.
             **kwargs (PermissionKwargs): Additional keyword arguments
                 including the course and author context.
+
         """
         super().__init__(request, **kwargs)
 
@@ -65,6 +65,7 @@ class IsCourseActive(BaseCoursePermission):
 
         Raises:
             UserPermissionException: If the course is inactive.
+
         """
         if self.course.is_active:
             return  # Active courses are accessible to everyone
@@ -79,6 +80,7 @@ class IsAuthorCourse(BaseAuthorCoursePermission):
 
         Raises:
             UserPermissionException: If the author is not the course owner.
+
         """
         author = self._is_author_authorized()
         if author.id == self.course.author_id:

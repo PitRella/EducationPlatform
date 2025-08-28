@@ -1,10 +1,11 @@
 import uuid
-from typing import Annotated, Sequence, Literal
+from collections.abc import Sequence
+from typing import Annotated, Literal
 
 from fastapi import Depends
 from fastapi.requests import Request
 
-from src.base.dependencies import get_service, BasePermissionDependency
+from src.base.dependencies import BasePermissionDependency, get_service
 from src.courses.models import Course
 from src.courses.permissions import BaseCoursePermission
 from src.courses.service import CourseService
@@ -13,8 +14,8 @@ from src.users.dependencies.author import _get_optional_author_from_jwt
 
 
 async def _get_course_by_id(
-        course_id: uuid.UUID,
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_id: uuid.UUID,
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> Course:
     """Dependency function to retrieve a course by its ID.
 
@@ -41,9 +42,9 @@ class CoursePermissionDependency(BasePermissionDependency):
     """
 
     def __init__(
-            self,
-            permissions: Sequence[type[BaseCoursePermission]],
-            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND
+        self,
+        permissions: Sequence[type[BaseCoursePermission]],
+        logic: Literal['AND', 'OR'] = BasePermissionDependency._LOGIC_AND,
     ):
         """Initialize the course permission dependency.
 
@@ -52,17 +53,17 @@ class CoursePermissionDependency(BasePermissionDependency):
                 course permission classes to validate.
             logic (Literal["AND", "OR"]): Logical operator to combine multiple
                 permission checks. Defaults to "AND".
+
         """
         super().__init__(permissions, logic)
 
     async def __call__(
-            self,
-            request: Request,
-            author: Annotated[
-                Author | None,
-                Depends(_get_optional_author_from_jwt)
-            ],
-            course: Annotated[Course, Depends(_get_course_by_id)],
+        self,
+        request: Request,
+        author: Annotated[
+            Author | None, Depends(_get_optional_author_from_jwt)
+        ],
+        course: Annotated[Course, Depends(_get_course_by_id)],
     ) -> Course:
         """Validate permissions for accessing or modifying a course.
 
@@ -81,10 +82,9 @@ class CoursePermissionDependency(BasePermissionDependency):
         Raises:
             HTTPException: If the author does not have the required
                 permissions.
+
         """
         await self._validate_permissions(
-            request=request,
-            author=author,
-            course=course
+            request=request, author=author, course=course
         )
         return course

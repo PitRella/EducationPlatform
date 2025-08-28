@@ -10,12 +10,14 @@ from src.users import Author, User
 
 logger = logging.getLogger(__name__)
 
+
 class PermissionKwargs(TypedDict, total=False):
     user: User | None
     target_user: User
     author: Author | None
     course: Course
     lesson: Lesson
+
 
 class BasePermission:
     def __init__(
@@ -35,4 +37,3 @@ class BasePermission:
         Should raise an exception if the permission check fails.
         """
         ...
-

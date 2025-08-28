@@ -1,24 +1,24 @@
-from typing import Annotated, Sequence, Literal
+from collections.abc import Sequence
+from typing import Annotated, Literal
 
 from fastapi import Depends, Security
+from fastapi.requests import Request
 
 from src.auth.dependencies import oauth_scheme
 from src.auth.services import AuthService
-from src.base.dependencies import get_service, BasePermissionDependency
+from src.base.dependencies import BasePermissionDependency, get_service
 from src.users.exceptions import UserIsNotAuthorException
 from src.users.models import Author
 from src.users.permissions import BaseAuthorPermission
 from src.users.services import AuthorService
-from fastapi.requests import Request
 
 
 async def _get_optional_author_from_jwt(
-        token: Annotated[str, Security(oauth_scheme)],
-        auth_service: Annotated[
-            AuthService, Depends(get_service(AuthService))],
-        author_service: Annotated[
-            AuthorService, Depends(get_service(AuthorService))
-        ],
+    token: Annotated[str, Security(oauth_scheme)],
+    auth_service: Annotated[AuthService, Depends(get_service(AuthService))],
+    author_service: Annotated[
+        AuthorService, Depends(get_service(AuthorService))
+    ],
 ) -> Author | None:
     if not token:
         return None
@@ -28,16 +28,18 @@ async def _get_optional_author_from_jwt(
 
 class AuthorPermissionDependency(BasePermissionDependency):
     def __init__(
-            self,
-            permissions: Sequence[type[BaseAuthorPermission]],
-            logic: Literal["AND", "OR"] = BasePermissionDependency._LOGIC_AND):
+        self,
+        permissions: Sequence[type[BaseAuthorPermission]],
+        logic: Literal['AND', 'OR'] = BasePermissionDependency._LOGIC_AND,
+    ):
         super().__init__(permissions, logic)
 
     async def __call__(
-            self,
-            request: Request,
-            author: Annotated[
-                Author | None, Depends(_get_optional_author_from_jwt)],
+        self,
+        request: Request,
+        author: Annotated[
+            Author | None, Depends(_get_optional_author_from_jwt)
+        ],
     ) -> Author:
         await self._validate_permissions(
             request=request,

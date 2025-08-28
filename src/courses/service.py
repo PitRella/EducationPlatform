@@ -7,19 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.courses.dao import CourseDAO
-from src.courses.exceptions import CourseNotFoundByIdException, \
-    CourseWasNotBoughtException
+from src.courses.exceptions import (
+    CourseNotFoundByIdException,
+    CourseWasNotBoughtException,
+)
 from src.courses.models import Course
 from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
 from src.users import User
-from src.users.models import Author
+from src.users.models import Author, UserCourses
 from src.utils import make_slug
-from src.users.models import UserCourses
 
 type UserCourseDAO = BaseDAO[UserCourses]
+
 
 class CourseService(BaseService):
     """Service class for handling course-related business logic.
@@ -32,10 +34,10 @@ class CourseService(BaseService):
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            course_dao: CourseDAO | None = None,
-            user_courses_dao: UserCourseDAO | None = None,
+        self,
+        db_session: AsyncSession,
+        course_dao: CourseDAO | None = None,
+        user_courses_dao: UserCourseDAO | None = None,
     ) -> None:
         """Initialize the CourseService.
 
@@ -46,6 +48,7 @@ class CourseService(BaseService):
             user_courses_dao (UserCourseDAO | None, optional): DAO for user
                 courses operations. If None, a new BaseDAO[UserCourses] is
                 created. Defaults to None.
+
         """
         super().__init__(db_session)
         self._course_dao: CourseDAO = course_dao or CourseDAO(
@@ -57,7 +60,7 @@ class CourseService(BaseService):
         ](db_session, model=UserCourses)
 
     async def create_course(
-            self, author: Author, course_schema: BaseCreateCourseRequestSchema
+        self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course for a specific author.
 
@@ -68,6 +71,7 @@ class CourseService(BaseService):
 
         Returns:
             Course: The created course instance.
+
         """
         course_data = course_schema.model_dump()
         course_data['author_id'] = author.id
@@ -77,9 +81,9 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author | None = None,
+        self,
+        course_id: uuid.UUID,
+        author: Author | None = None,
     ) -> Course:
         """Retrieve a course by its ID, optionally filtered by author.
 
@@ -93,12 +97,15 @@ class CourseService(BaseService):
 
         Returns:
             Course: The retrieved course instance with lessons loaded.
+
         """
         filters = {'id': course_id}
         if author:
             filters['author_id'] = author.id
         async with self.session.begin():
-            course: Course | None = await self._course_dao.get_course_with_lessons(
+            course: (
+                Course | None
+            ) = await self._course_dao.get_course_with_lessons(
                 **filters,
             )
         if not course:
@@ -106,9 +113,9 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-            self,
-            course: Course,
-            course_fields: UpdateCourseRequestSchema,
+        self,
+        course: Course,
+        course_fields: UpdateCourseRequestSchema,
     ) -> Course:
         """Update an existing course with new data.
 
@@ -121,6 +128,7 @@ class CourseService(BaseService):
 
         Returns:
             Course: The updated course instance.
+
         """
         filtered_course_fields: dict[str, str] = (
             self._validate_schema_for_update_request(course_fields)
@@ -131,17 +139,18 @@ class CourseService(BaseService):
             )
         async with self.session.begin():
             updated_course: Course | None = await self._course_dao.update(
-                filtered_course_fields, id=course.id,
+                filtered_course_fields,
+                id=course.id,
             )
         if not updated_course:
             raise CourseNotFoundByIdException
         return updated_course
 
     async def get_all_courses(
-            self,
-            created_at: dt.datetime | None = None,
-            last_id: uuid.UUID | None = None,
-            limit: int | None = None,
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
     ) -> list[Course]:
         """Retrieve all active courses with optional filtering and pagination.
 
@@ -153,6 +162,7 @@ class CourseService(BaseService):
 
         Returns:
             list[Course]: List of active courses. Empty if no courses exist.
+
         """
         async with self.session.begin():
             courses: list[Course] | None = await self._course_dao.get_all(
@@ -165,8 +175,8 @@ class CourseService(BaseService):
         return courses if courses else []
 
     async def deactivate_course(
-            self,
-            course: Course,
+        self,
+        course: Course,
     ) -> None:
         """Deactivate a course (mark as inactive).
 
@@ -175,6 +185,7 @@ class CourseService(BaseService):
 
         Raises:
             CourseNotFoundByIdException: If the course does not exist.
+
         """
         async with self.session.begin():
             deleted_course: Course | None = await self._course_dao.update(
@@ -185,9 +196,9 @@ class CourseService(BaseService):
             raise CourseNotFoundByIdException
 
     async def purchase_course(
-            self,
-            course: Course,
-            user: User,
+        self,
+        course: Course,
+        user: User,
     ) -> None:
         """Record a purchase of a course by a user.
 
@@ -197,13 +208,13 @@ class CourseService(BaseService):
 
         Raises:
             CourseWasNotBoughtException: If the purchase could not be recorded.
+
         """
         async with self.session.begin():
-            bought_course: UserCourses | None = await self._user_courses_dao.create(
-                {
-                    "user_id": user.id,
-                    "course_id": course.id
-                }
+            bought_course: (
+                UserCourses | None
+            ) = await self._user_courses_dao.create(
+                {'user_id': user.id, 'course_id': course.id}
             )
         if not bought_course:
             raise CourseWasNotBoughtException

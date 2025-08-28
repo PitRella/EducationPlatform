@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Unpack
 
 from fastapi.requests import Request
+
 from src.base.permission import BasePermission, PermissionKwargs
 from src.lessons.exceptions import LessonIsNotPublishedException
 from src.users.permissions import BaseAuthorPermission
@@ -15,9 +16,9 @@ class BaseLessonPermission(BasePermission, ABC):
     """
 
     def __init__(
-            self,
-            request: Request,
-            **kwargs: Unpack[PermissionKwargs],
+        self,
+        request: Request,
+        **kwargs: Unpack[PermissionKwargs],
     ):
         """Initialize the base lesson permission.
 
@@ -25,15 +26,14 @@ class BaseLessonPermission(BasePermission, ABC):
             request (Request): The current HTTP request.
             **kwargs (PermissionKwargs): Additional keyword arguments
                 including the lesson instance.
+
         """
         super().__init__(request, **kwargs)
         self.lesson = kwargs['lesson']
 
 
 class BaseAuthorLessonPermission(
-    BaseLessonPermission,
-    BaseAuthorPermission,
-    ABC
+    BaseLessonPermission, BaseAuthorPermission, ABC
 ):
     """Abstract base class for permissions requiring lesson and author.
 
@@ -52,6 +52,7 @@ class BaseAuthorLessonPermission(
             request (Request): The current HTTP request.
             **kwargs (PermissionKwargs): Additional keyword arguments
                 including the lesson and author context.
+
         """
         super().__init__(request, **kwargs)
 
@@ -64,9 +65,10 @@ class IsLessonPublished(BaseLessonPermission):
 
         Raises:
             LessonIsNotPublishedException: If the lesson is not published.
+
         """
         if self.lesson.is_published:
-            return None  # If published, everyone can access it
+            return  # If published, everyone can access it
         raise LessonIsNotPublishedException
 
 
@@ -79,8 +81,9 @@ class IsLessonAuthor(BaseAuthorLessonPermission):
         Raises:
             LessonIsNotPublishedException: If the author is not the lesson
                 owner, and the lesson is unpublished.
+
         """
         author = self._is_author_authorized()
         if self.lesson.course.author_id == author.id:
-            return None  # Author can access unpublished lessons
+            return  # Author can access unpublished lessons
         raise LessonIsNotPublishedException

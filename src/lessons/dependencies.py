@@ -19,6 +19,7 @@ async def _get_lesson_by_id(
 ) -> Lesson:
     return await service.get_lesson(lesson_id)
 
+
 class LessonPermissionDependency(BasePermissionDependency):
     """Dependency class for validating lesson-related permissions.
 
@@ -39,6 +40,7 @@ class LessonPermissionDependency(BasePermissionDependency):
                 permission classes to validate against.
             logic (Literal['AND', 'OR']): Logical operator that defines how
                 multiple permissions are combined. Defaults to 'AND'.
+
         """
         super().__init__(permissions, logic)
 
@@ -66,6 +68,7 @@ class LessonPermissionDependency(BasePermissionDependency):
         Raises:
             HTTPException: If the author does not have the required
                 permissions.
+
         """
         await self._validate_permissions(
             request=request,

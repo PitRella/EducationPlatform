@@ -21,10 +21,11 @@ author_router = APIRouter()
     response_model=AuthorResponseSchema,
 )
 async def become_author(
-        author_schema: CreateAuthorRequestSchema,
-        user: Annotated[
-            User, Security(UserPermissionDependency([IsAuthenticated]))],
-        service: Annotated[AuthorService, Depends(get_service(AuthorService))],
+    author_schema: CreateAuthorRequestSchema,
+    user: Annotated[
+        User, Security(UserPermissionDependency([IsAuthenticated]))
+    ],
+    service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to create a new author profile for a user.
 
@@ -49,9 +50,9 @@ async def become_author(
     response_model=AuthorResponseSchema,
 )
 async def get_current_author(
-        author: Annotated[
-            Author, Security(
-                AuthorPermissionDependency([IsAuthorPermission]))],
+    author: Annotated[
+        Author, Security(AuthorPermissionDependency([IsAuthorPermission]))
+    ],
 ) -> AuthorResponseSchema:
     """Endpoint to retrieve the current authenticated author's information.
 
@@ -68,8 +69,8 @@ async def get_current_author(
     response_model=AuthorResponseSchema,
 )
 async def get_author_by_id(
-        author_id: uuid.UUID,
-        service: Annotated[AuthorService, Depends(get_service(AuthorService))],
+    author_id: uuid.UUID,
+    service: Annotated[AuthorService, Depends(get_service(AuthorService))],
 ) -> AuthorResponseSchema:
     """Endpoint to retrieve author information by their ID.
 

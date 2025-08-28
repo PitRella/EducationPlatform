@@ -24,8 +24,8 @@ CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
 
 
 class BaseDAO[
-Model,
-CreateSchema = None,
+    Model,
+    CreateSchema = None,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -115,14 +115,11 @@ CreateSchema = None,
         return result.scalar_one_or_none()
 
     async def get_one_with_relations(
-            self,
-            *filters: Any,
-            relations: list[str],
-            **filters_by: Any
+        self, *filters: Any, relations: list[str], **filters_by: Any
     ) -> Model | None:
         options = [
-            selectinload(getattr(self.model, relation)) for relation in
-            relations
+            selectinload(getattr(self.model, relation))
+            for relation in relations
         ]
         query: Select[Any] = (
             select(self.model)
@@ -134,13 +131,13 @@ CreateSchema = None,
         return result.scalar_one_or_none()
 
     async def get_all(
-            self,
-            created_at: dt.datetime | None = None,
-            last_id: uuid.UUID | None = None,
-            limit: int | None = None,
-            order_by: list[str] | None = None,
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
+        order_by: list[str] | None = None,
+        *filters: Any,
+        **filters_by: Any,
     ) -> list[Model] | None:
         """Retrieve all records matching the specified filters.
 
@@ -183,10 +180,10 @@ CreateSchema = None,
         return cast(list[Model], result.scalars().all())
 
     async def update(
-            self,
-            update_data: dict[str, Any],
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        update_data: dict[str, Any],
+        *filters: Any,
+        **filters_by: Any,
     ) -> Model | None:
         """Update records matching the specified filters with provided data.
 
@@ -210,9 +207,9 @@ CreateSchema = None,
         return result.scalar_one_or_none()
 
     async def delete(
-            self,
-            *filters: Any,
-            **filters_by: Any,
+        self,
+        *filters: Any,
+        **filters_by: Any,
     ) -> None:
         """Delete records matching the specified filters.
 
