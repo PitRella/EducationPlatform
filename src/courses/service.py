@@ -21,9 +21,13 @@ from src.users.models import UserCourses
 
 type UserCourseDAO = BaseDAO[UserCourses]
 
-
 class CourseService(BaseService):
-    """Service class for handling course-related business logic."""
+    """Service class for handling course-related business logic.
+
+    Provides methods to create, retrieve, update, deactivate, and purchase
+    courses. All operations are performed via CourseDAO and UserCourseDAO
+    within the database session.
+    """
 
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
@@ -33,15 +37,15 @@ class CourseService(BaseService):
             course_dao: CourseDAO | None = None,
             user_courses_dao: UserCourseDAO | None = None,
     ) -> None:
-        """Initialize a new UserService instance.
+        """Initialize the CourseService.
 
         Args:
-            db_session (AsyncSession): The SQLAlchemy async session
-            course_dao (UserDAO | None, optional): Data Access Object
-             for user operations.
-                If None, creates a new UserDAO instance.
-                Defaults to None.
-
+            db_session (AsyncSession): SQLAlchemy async database session.
+            course_dao (CourseDAO | None, optional): DAO for course operations.
+                If None, a new CourseDAO instance is created. Defaults to None.
+            user_courses_dao (UserCourseDAO | None, optional): DAO for user
+                courses operations. If None, a new BaseDAO[UserCourses] is
+                created. Defaults to None.
         """
         super().__init__(db_session)
         self._course_dao: CourseDAO = course_dao or CourseDAO(
@@ -55,7 +59,16 @@ class CourseService(BaseService):
     async def create_course(
             self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
-        """Create a new course in the database."""
+        """Create a new course for a specific author.
+
+        Args:
+            author (Author): The author creating the course.
+            course_schema (BaseCreateCourseRequestSchema): Schema with course
+                details.
+
+        Returns:
+            Course: The created course instance.
+        """
         course_data = course_schema.model_dump()
         course_data['author_id'] = author.id
         course_data['slug'] = make_slug(course_data.get('title'))
@@ -68,6 +81,19 @@ class CourseService(BaseService):
             course_id: uuid.UUID,
             author: Author | None = None,
     ) -> Course:
+        """Retrieve a course by its ID, optionally filtered by author.
+
+        Args:
+            course_id (uuid.UUID): The course ID to retrieve.
+            author (Author | None, optional): Restrict retrieval to courses
+                owned by this author. Defaults to None.
+
+        Raises:
+            CourseNotFoundByIdException: If no matching course is found.
+
+        Returns:
+            Course: The retrieved course instance with lessons loaded.
+        """
         filters = {'id': course_id}
         if author:
             filters['author_id'] = author.id
@@ -84,6 +110,18 @@ class CourseService(BaseService):
             course: Course,
             course_fields: UpdateCourseRequestSchema,
     ) -> Course:
+        """Update an existing course with new data.
+
+        Args:
+            course (Course): The course instance to update.
+            course_fields (UpdateCourseRequestSchema): Fields to update.
+
+        Raises:
+            CourseNotFoundByIdException: If the course does not exist.
+
+        Returns:
+            Course: The updated course instance.
+        """
         filtered_course_fields: dict[str, str] = (
             self._validate_schema_for_update_request(course_fields)
         )
@@ -105,20 +143,16 @@ class CourseService(BaseService):
             last_id: uuid.UUID | None = None,
             limit: int | None = None,
     ) -> list[Course]:
-        """Retrieve a list of all active courses from the database.
+        """Retrieve all active courses with optional filtering and pagination.
 
         Args:
             created_at (dt.datetime | None, optional): Filter courses created
-                after this timestamp. Defaults to None.
-            last_id (uuid.UUID | None, optional): Last course ID for paginating.
-                Defaults to None.
+                after this timestamp.
+            last_id (uuid.UUID | None, optional): Last course ID for pagination.
             limit (int | None, optional): Maximum number of courses to return.
-                Defaults to None.
 
         Returns:
-            list[Course]: List of active courses, ordered by rating.
-            Returns an empty list if no courses found.
-
+            list[Course]: List of active courses. Empty if no courses exist.
         """
         async with self.session.begin():
             courses: list[Course] | None = await self._course_dao.get_all(
@@ -134,6 +168,14 @@ class CourseService(BaseService):
             self,
             course: Course,
     ) -> None:
+        """Deactivate a course (mark as inactive).
+
+        Args:
+            course (Course): The course to deactivate.
+
+        Raises:
+            CourseNotFoundByIdException: If the course does not exist.
+        """
         async with self.session.begin():
             deleted_course: Course | None = await self._course_dao.update(
                 self._DEACTIVATE_COURSE_UPDATE,
@@ -147,6 +189,15 @@ class CourseService(BaseService):
             course: Course,
             user: User,
     ) -> None:
+        """Record a purchase of a course by a user.
+
+        Args:
+            course (Course): The course being purchased.
+            user (User): The user purchasing the course.
+
+        Raises:
+            CourseWasNotBoughtException: If the purchase could not be recorded.
+        """
         async with self.session.begin():
             bought_course: UserCourses | None = await self._user_courses_dao.create(
                 {
