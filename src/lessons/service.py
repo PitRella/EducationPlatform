@@ -10,7 +10,8 @@ from src.lessons.dao import LessonDAO
 from src.lessons.exceptions import LessonIsNotPublishedException, \
     LessonNotFoundByIdException
 from src.lessons.models import Lesson
-from src.lessons.schemas import CreateLessonRequestSchema
+from src.lessons.schemas import CreateLessonRequestSchema, \
+    UpdateLessonRequestSchema
 from src.utils import make_slug
 
 
@@ -69,7 +70,7 @@ class LessonService(BaseService):
     async def update_lesson(
             self,
             lesson: Lesson,
-            lesson_fields: CreateLessonRequestSchema,
+            lesson_fields: UpdateLessonRequestSchema,
     ) -> Lesson:
         filtered_lesson_fields: dict[str, str] = (
             self._validate_schema_for_update_request(lesson_fields)
