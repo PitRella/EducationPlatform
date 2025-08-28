@@ -1,7 +1,7 @@
-from .author import get_author_from_jwt
-from .user import UserPermissionDependency
+from .author import AuthorPermissionDependency
+from .user import AdminPermissionDependency
 
 __all__ = [
-    'UserPermissionDependency',
-    'get_author_from_jwt',
+    'AdminPermissionDependency',
+    'AuthorPermissionDependency',
 ]

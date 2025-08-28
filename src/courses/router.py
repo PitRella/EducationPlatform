@@ -2,18 +2,26 @@ import datetime as dt
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
+from src.auth.dependencies import UserPermissionDependency
+from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
+from src.courses.dependencies import (
+    CoursePermissionDependency,
+)
 from src.courses.models import Course
+from src.courses.permissions import IsAuthorCourse, IsCourseActive
 from src.courses.schemas import (
     BaseCourseResponseSchema,
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
 from src.courses.service import CourseService
-from src.users.dependencies.author import get_author_from_jwt
+from src.users import User
+from src.users.dependencies.author import AuthorPermissionDependency
 from src.users.models import Author
+from src.users.permissions import IsAuthorPermission
 
 course_router = APIRouter()
 
@@ -29,13 +37,14 @@ async def get_all_courses(
 
     Args:
         service (CourseService): Service for course operations.
-        created_at (datetime, optional): Filter created courses by timestamp.
+        created_at (datetime, optional): Filter courses created after this
+            timestamp.
         last_id (UUID, optional): Get courses after this course ID.
         limit (int, optional): Maximum number of courses to return.
 
     Returns:
-        list[BaseCourseResponseSchema]: List of course objects.
-        None if no courses are found.
+        list[BaseCourseResponseSchema] | None: List of course schemas or None
+            if no courses exist.
 
     """
     courses: list[Course] = await service.get_all_courses(
@@ -47,10 +56,24 @@ async def get_all_courses(
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
     course_schema: BaseCreateCourseRequestSchema,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    author: Annotated[
+        Author, Security(AuthorPermissionDependency([IsAuthorPermission]))
+    ],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
-    """Endpoint to create a new course."""
+    """Create a new course.
+
+    Only authenticated authors can create a course.
+
+    Args:
+        course_schema (BaseCreateCourseRequestSchema): Schema with course data.
+        author (Author): Authenticated author creating the course.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        BaseCourseResponseSchema: The created course schema.
+
+    """
     course = await service.create_course(
         author=author, course_schema=course_schema
     )
@@ -59,57 +82,117 @@ async def create_course(
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
-    course_id: uuid.UUID,
-    service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsCourseActive, IsAuthorCourse], logic='OR'
+            )
+        ),
+    ],
 ) -> BaseCourseResponseSchema:
-    """Endpoint to get a course by its ID."""
-    course = await service.get_course(course_id)
+    """Retrieve a specific course by its ID.
+
+    A course can be retrieved if it is active or if the requester is the author.
+
+    Args:
+        course (Course): Course instance retrieved via permission dependency.
+
+    Returns:
+        BaseCourseResponseSchema: Schema of the course.
+
+    """
     return BaseCourseResponseSchema.model_validate(course)
 
 
 @course_router.patch('/{course_id}', response_model=BaseCourseResponseSchema)
 async def update_course(
-    course_id: uuid.UUID,
-    course_fields: UpdateCourseRequestSchema,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsAuthorCourse],
+            )
+        ),
+    ],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_fields: UpdateCourseRequestSchema,
 ) -> BaseCourseResponseSchema:
-    """Update an existing course by its ID.
+    """Update an existing course.
+
+    Only the course author can update it. Changes are saved and returned.
 
     Args:
-        course_id (uuid.UUID): The unique identifier of the course to update.
-        course_fields (UpdateCourseRequestSchema): Fields to update.
-        author (Author): The authenticated author performing the update.
+        course (Course): Course instance retrieved via permission dependency.
         service (CourseService): Service for course operations.
+        course_fields (UpdateCourseRequestSchema): Schema with updated fields.
 
     Returns:
-        BaseCourseResponseSchema: The updated course data.
+        BaseCourseResponseSchema: Schema of the updated course.
 
     """
     updated_course = await service.update_course(
-        course_id=course_id, author=author, course_fields=course_fields
+        course=course, course_fields=course_fields
     )
     return BaseCourseResponseSchema.model_validate(updated_course)
 
 
 @course_router.delete('/{course_id}', status_code=204)
 async def deactivate_course_by_id(
-    course_id: uuid.UUID,
-    author: Annotated[Author, Depends(get_author_from_jwt)],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsAuthorCourse],
+            )
+        ),
+    ],
     service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
     """Deactivate a course by its ID.
 
+    Only the course author can deactivate it. Deactivation marks the course
+    as inactive.
+
     Args:
-        course_id (uuid.UUID): The unique id of the course to deactivate.
-        author (Author): The authenticated author performing the deactivation.
+        course (Course): Course instance retrieved via permission dependency.
         service (CourseService): Service for course operations.
 
     Returns:
         None
 
-    Note:
-        This endpoint returns a 204 status code on successful deactivation.
+    """
+    await service.deactivate_course(course=course)
+
+
+@course_router.post('/purchase/{course_id}', status_code=201)
+async def purchase_course_by_id(
+    user: Annotated[
+        User, Security(UserPermissionDependency([IsAuthenticated]))
+    ],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [
+                    IsCourseActive,
+                ]
+            )
+        ),
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
+) -> None:
+    """Purchase a course by its ID.
+
+    The user must be authenticated. The course must be active.
+
+    Args:
+        user (User): Authenticated user purchasing the course.
+        course (Course): Course instance retrieved via permission dependency.
+        service (CourseService): Service for course operations.
+
+    Returns:
+        None
 
     """
-    await service.deactivate_course(course_id=course_id, author=author)
+    await service.purchase_course(course=course, user=user)

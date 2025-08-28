@@ -3,7 +3,6 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.base.models import BaseTimeStampMixin, BaseUUIDMixin
@@ -27,7 +26,6 @@ class Author(BaseUUIDMixin, BaseTimeStampMixin):
 
     # Main fields
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID,
         ForeignKey('users.id', ondelete='CASCADE'),
         comment='User ID',
     )

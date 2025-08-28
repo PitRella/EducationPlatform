@@ -1,111 +1,113 @@
+from abc import ABC
+from typing import Unpack
+
 from fastapi.requests import Request
 
-from src.base.permission import BasePermissionService
+from src.base.permission import BasePermission, PermissionKwargs
 from src.users import User
 from src.users.exceptions import (
+    UserNotAuthorizedException,
     UserPermissionException,
 )
 
 
-class BaseUserPermission(BasePermissionService):
-    """Base permission class for managing user access control.
+class BaseUserPermission(BasePermission, ABC):
+    """Abstract base class for user-related permissions.
 
-    Validates permissions between authenticated users and target users for
-    user management operations. Enforces role-based access control rules
-    to prevent unauthorized modifications between users of similar roles.
-
-    Attributes:
-        user (User): The authenticated user making the request
-        request (Request): The current HTTP request
-        target_user (User): The user being targeted by the operation
-
+    Provides access to the user object from dependency kwargs and a method
+    to check if the user is authorized.
     """
 
     def __init__(
         self,
-        user: User,
         request: Request,
-        target_user: User,
+        **kwargs: Unpack[PermissionKwargs],
     ):
-        """Initialize BaseUserPermission with an authenticated users.
+        """Initialize the base user permission.
 
         Args:
-            user (User): The authenticated user making the request
-            request (Request): The current HTTP request
-            target_user (User): The user being targeted by the operation
-
-        The class manages permissions between authenticated users,
-        enforcing role-based access control for user management operations.
+            request (Request): The current HTTP request.
+            **kwargs (PermissionKwargs): Additional keyword arguments,
+                including the 'user'.
 
         """
-        super().__init__(user=user, request=request)
-        self.target_user = target_user
+        super().__init__(request, **kwargs)
+        self.user: User | None = kwargs.get('user')
 
-    async def validate_permission(
-        self,
-    ) -> None:
-        """Validate permissions between the authenticated users.
-
-        Checks role-based permissions between the authenticated users.
-        Raises UserPermissionException if:
-        - A superadmin tries to modify another superadmin
-        - An admin tries to modify another admin
-        - Any other permission validation fails
-
-        Returns:
-            None
+    def _is_user_authorized(self) -> User:
+        """Check if a user is authorized.
 
         Raises:
-            UserPermissionException: If permission validation fails
+            UserNotAuthorizedException: If the user is not provided.
+
+        Returns:
+            User: The authenticated user.
 
         """
+        if not self.user:
+            raise UserNotAuthorizedException
+        return self.user
+
+
+class TargetUserAdminPermission(BaseUserPermission):
+    """Permission class to validate admin access on a target user.
+
+    Ensures that only admins can perform certain operations and prevents
+    interactions with other admins or superadmins depending on the role.
+    """
+
+    def __init__(
+        self,
+        request: Request,
+        **kwargs: Unpack[PermissionKwargs],
+    ):
+        """Initialize permission with target user.
+
+        Args:
+            request (Request): The current HTTP request.
+            **kwargs (PermissionKwargs): Must include 'target_user'.
+
+        """
+        super().__init__(request, **kwargs)
+        self.target_user = kwargs['target_user']
+
+    async def validate_permission(self) -> None:
+        """Validate if the current user has admin permissions for the target.
+
+        Raises:
+            UserPermissionException: If the user does not have permission.
+
+        """
+        auth_user: User = self._is_user_authorized()
         if (
-            (  # Superadmin cannot interact with another superadmin
-                self.user.is_user_superadmin
+            not auth_user.is_user_admin
+            or (
+                auth_user.is_user_superadmin
                 and self.target_user.is_user_superadmin
             )
-            or (  # Admin cannot interact with another superadmin
-                self.user.is_user_admin and self.target_user.is_user_admin
-            )
-            or (  # Admin cannot interact with superadmin
-                self.user.is_user_admin and self.target_user.is_user_superadmin
-            )
+            or (auth_user.is_user_admin and self.target_user.is_user_admin)
+            or (auth_user.is_user_admin and self.target_user.is_user_superadmin)
         ):
             raise UserPermissionException
 
 
-class SuperadminPermission(BaseUserPermission):
-    """Permission class that enforces superadmin-level access control.
+class TargetUserSuperadminPermission(TargetUserAdminPermission):
+    """Permission class to validate superadmin access on a target user.
 
-    Validates that only users with superadmin privileges can perform
-    certain operations. Prevents superadmins from modifying other
-    superadmin users to maintain security separation.
-
-    Attributes:
-        Inherits all attributes from BaseUserPermission:
-            user (User): The authenticated user making the request
-            request (Request): The current HTTP request
-            target_user (User): The user being targeted by the operation
-
+    Ensures that only superadmins can perform operations and prevents
+    interactions with other superadmins.
     """
 
-    async def validate_permission(
-        self,
-    ) -> None:
-        """Validate superadmin-level permissions.
-
-        Checks if the authenticated user has superadmin privileges and
-        ensures they are not trying to modify another superadmin.
-
-        Returns:
-            None
+    async def validate_permission(self) -> None:
+        """Validate if the current user has superadmin permissions.
 
         Raises:
-            UserPermissionException: If the user is not a superadmin or
-                attempts to modify another superadmin
+            UserPermissionException: If the user does not have permission.
 
         """
-        if not self.user.is_user_superadmin or (
-            self.target_user.is_user_superadmin
+        auth_user: User = self._is_user_authorized()
+        if (
+            not auth_user.is_user_superadmin
+            or self.target_user.is_user_superadmin
         ):
             raise UserPermissionException

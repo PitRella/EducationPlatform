@@ -13,10 +13,10 @@ from src.users.exceptions import (
 from src.users.models import User
 from src.users.schemas import (
     CreateUserRequestSchema,
-    CreateUserResponseShema,
     DeleteUserResponseSchema,
     UpdateUserRequestSchema,
     UpdateUserResponseSchema,
+    UserResponseShema,
 )
 
 type UserDAO = BaseDAO[User, CreateUserRequestSchema]
@@ -79,7 +79,7 @@ class UserService(BaseService):
         """
         return self._dao
 
-    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
+    async def get_user_by_id(self, user_id: uuid.UUID | str) -> User:
         """Retrieve a user by their ID from the database.
 
         Args:
@@ -102,7 +102,7 @@ class UserService(BaseService):
     async def create_new_user(
         self,
         user: CreateUserRequestSchema,
-    ) -> CreateUserResponseShema:
+    ) -> UserResponseShema:
         """Create a new user in the database.
 
         Args:
@@ -122,7 +122,7 @@ class UserService(BaseService):
         user_data['password'] = Hasher.hash_password(user_secret_pass)
         async with self.session.begin():
             created_user = await self.dao.create(user_data)
-        return CreateUserResponseShema.model_validate(created_user)
+        return UserResponseShema.model_validate(created_user)
 
     async def deactivate_user(
         self, target_user: User

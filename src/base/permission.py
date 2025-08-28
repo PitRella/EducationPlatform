@@ -1,59 +1,64 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import TypedDict, Unpack
 
-from starlette.requests import Request
+from fastapi.requests import Request
 
-from src.users.models import User
+from src.courses.models import Course
+from src.lessons.models import Lesson
+from src.users import Author, User
 
 logger = logging.getLogger(__name__)
 
 
-# Abstract base class for all permission services.
-# Enforces a contract for permission validation logic.
-class BasePermissionService(ABC):
-    """Abstract base class for implementing permission validation.
-
-    Provides a standardized interface for permission checking.
-    All permission services must inherit from this class and implement the
-    validate_permission() method to enforce their specific access control rules.
+class PermissionKwargs(TypedDict, total=False):
+    """TypedDict for keyword arguments passed to permission classes.
 
     Attributes:
-        user (User): The authenticated user making the request
-        request (Request): The current HTTP request being processed
+        user (User | None): The current authenticated user.
+        target_user (User): Target user for permission checks.
+        author (Author | None): The current author.
+        course (Course): Target course for permission checks.
+        lesson (Lesson): Target lesson for permission checks.
 
+    """
+
+    user: User | None
+    target_user: User
+    author: Author | None
+    course: Course
+    lesson: Lesson
+
+
+class BasePermission:
+    """Abstract base class for all permission classes.
+
+    Provides a base structure for permission validation and stores
+    the current request context.
     """
 
     def __init__(
         self,
-        user: User,
         request: Request,
+        **kwargs: Unpack[PermissionKwargs],
     ):
-        """Initialize BasePermissionService with user and request.
-
-        Base class for implementing permission validation logic.
-        All permission services should inherit from this class
-        and implement validate_permission().
+        """Initialize the base permission.
 
         Args:
-            user (User): The authenticated user making the request
-            request (Request): The current HTTP request being processed
-
-        The class provides core functionality for permission checking
-        by storing the authenticated user and current request context.
+            request (Request): The current HTTP request.
+            **kwargs (PermissionKwargs): Optional keyword arguments
+                relevant to permission checks.
 
         """
-        # The current authenticated user
-        self.user: User = user
-
-        # The current HTTP request
         self.request: Request = request
 
     @abstractmethod
-    async def validate_permission(
-        self,
-    ) -> None:
-        """Abstract method that must be implemented by all permission classes.
+    async def validate_permission(self) -> None:
+        """Validate that the current request has permission to proceed.
 
-        Should raise an exception if the permission check fails.
+        Raises:
+            Exception: Subclasses should raise an appropriate exception
+                if permission is denied.
+
         """
         ...

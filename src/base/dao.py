@@ -15,6 +15,7 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.database import Base
 
@@ -24,7 +25,7 @@ CreateSchema = TypeVar('CreateSchema', bound=BaseModel)
 
 class BaseDAO[
     Model,
-    CreateSchema,
+    CreateSchema = None,
 ]:
     """Base Data Access Object class providing common database operations.
 
@@ -111,6 +112,33 @@ class BaseDAO[
 
         """
         result: Result[Any] = await self._get(*filters, **filters_by)
+        return result.scalar_one_or_none()
+
+    async def get_one_with_relations(
+        self, *filters: Any, relations: list[str], **filters_by: Any
+    ) -> Model | None:
+        """Retrieve a single record with specified relationships loaded.
+
+        Args:
+            *filters: Positional SQLAlchemy filter expressions.
+            relations (list[str]): List of relation names to eager load.
+            **filters_by: Keyword filters for columns.
+
+        Returns:
+            Model | None: Model instance with relations or None.
+
+        """
+        options = [
+            selectinload(getattr(self.model, relation))
+            for relation in relations
+        ]
+        query: Select[Any] = (
+            select(self.model)
+            .where(*filters)
+            .filter_by(**filters_by)
+            .options(*options)
+        )
+        result: Result[Any] = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_all(

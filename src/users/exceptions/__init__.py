@@ -3,6 +3,7 @@ from .user import (
     BadEmailSchemaException,
     BadPasswordSchemaException,
     ForgottenParametersException,
+    UserNotAuthorizedException,
     UserNotFoundByIdException,
     UserPermissionException,
 )
@@ -13,6 +14,7 @@ __all__ = [
     'BadPasswordSchemaException',
     'ForgottenParametersException',
     'UserIsNotAuthorException',
+    'UserNotAuthorizedException',
     'UserNotFoundByIdException',
     'UserPermissionException',
 ]
