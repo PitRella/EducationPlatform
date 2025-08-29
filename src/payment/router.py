@@ -13,7 +13,7 @@ from src.payment.schemas import (
     PaymentResponseSchema,
     CreatePaymentRequestSchema
 )
-from src.payment.service import PaymentService
+from src.payment.services import PaymentService
 from src.users import User
 
 payment_router = APIRouter()

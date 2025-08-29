@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
