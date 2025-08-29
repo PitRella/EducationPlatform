@@ -1,0 +1,3 @@
+
+class StripePaymentService:
+    pass
