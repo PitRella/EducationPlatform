@@ -14,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.base.models import BaseTimeStampMixin, BaseUUIDMixin
+from src.courses.enums import CurrencyEnum
 from src.payment.enums import (
     PaymentStatusEnum,
     PaymentMethodEnum,
@@ -63,7 +64,6 @@ class Payment(BaseUUIDMixin, BaseTimeStampMixin):
         nullable=False,
         comment='Course being purchased'
     )
-    course: Mapped['Course'] = relationship(back_populates='payments')
 
     # Payment details
     amount: Mapped[Decimal] = mapped_column(
@@ -71,8 +71,8 @@ class Payment(BaseUUIDMixin, BaseTimeStampMixin):
         nullable=False,
         comment='Payment amount'
     )
-    currency: Mapped[str] = mapped_column(
-        String(3),
+    currency: Mapped[CurrencyEnum] = mapped_column(
+        Enum(CurrencyEnum),
         nullable=False,
         comment='Payment currency (ISO 4217)'
     )

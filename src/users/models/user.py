@@ -4,6 +4,7 @@ from sqlalchemy import Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.base.models import BaseTimeStampMixin, BaseUUIDMixin
+from src.payment.models import Payment
 from src.users.enums import UserRole
 
 if TYPE_CHECKING:
@@ -64,6 +65,7 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     purchased_courses: Mapped[list['Course']] = relationship(
         'Course', secondary='user_courses', back_populates='users'
     )
+    payments: Mapped[list['Payment']] = relationship(back_populates='user')
 
     @property
     def is_user_admin(self) -> bool:
