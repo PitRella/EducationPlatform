@@ -75,7 +75,7 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
         index=True,
         comment='Order of lesson in course',
     )
-    type: Mapped[str] = mapped_column(
+    type: Mapped[LessonTypeEnum] = mapped_column(
         Enum(LessonTypeEnum),
         nullable=False,
         comment='Lesson type',
