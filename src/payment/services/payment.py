@@ -4,6 +4,7 @@ from src.base.dao import BaseDAO
 from src.courses.dao import CourseDAO
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
+from src.payment.enums import PaymentProviderEnum
 from src.payment.models import Payment
 from src.base.service import BaseService
 from src.payment.schemas import CreatePaymentRequestSchema
@@ -51,6 +52,10 @@ class PaymentService(BaseService):
             )
         if not course:
             raise CourseNotFoundByIdException
+        match payment_schema.payment_method:
+            case PaymentProviderEnum.STRIPE:
+                self._stripe_service.create_payment(course.price)
+
         data = payment_schema.model_dump()
         data['user_id'] = user.id
         data['course_id'] = course.id

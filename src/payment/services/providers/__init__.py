@@ -1,3 +1,3 @@
-from .stripe import StripePaymentService
+from .stripe import StripePaymentProviderService
 
-__all__ = ['StripePaymentService']
+__all__ = ['StripePaymentProviderService']
