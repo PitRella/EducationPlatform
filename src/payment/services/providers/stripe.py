@@ -33,7 +33,7 @@ class StripePaymentProviderService(AbstractProvider):
     def payment_status(self, payment_id: str) -> str:
         pass
 
-    def payment_cancel(self, payment_id: str) -> None:
+    def cancel_payment(self, payment_id: str) -> None:
         pass
 
     def get_payment_status(self, payment_id: str) -> PaymentStatusEnum:
