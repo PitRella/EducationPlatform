@@ -25,19 +25,17 @@ class PaymentProviderFactory:
             settings = Settings.load()
             provider_type = settings.payment_settings.PROVIDER
         
-        if provider_type == PaymentProviderEnum.STRIPE:
-            return StripePaymentProviderService()
-        elif provider_type == PaymentProviderEnum.PAYPAL:
-            # return PayPalPaymentProviderService()
-            raise NotImplementedError("PayPal provider not implemented yet")
-        elif provider_type == PaymentProviderEnum.LIQPAY:
-            # return LiqPayPaymentProviderService()
-            raise NotImplementedError("LiqPay provider not implemented yet")
-        elif provider_type == PaymentProviderEnum.WAYFORPAY:
-            # return WayForPayPaymentProviderService()
-            raise NotImplementedError("WayForPay provider not implemented yet")
-        
-        raise ValueError(f"Unknown payment provider: {provider_type}")
+        match provider_type:
+            case PaymentProviderEnum.STRIPE:
+                return StripePaymentProviderService()
+            case PaymentProviderEnum.PAYPAL:
+                raise NotImplementedError("PayPal provider not implemented yet")
+            case PaymentProviderEnum.LIQPAY:
+                raise NotImplementedError("LiqPay provider not implemented yet")
+            case PaymentProviderEnum.WAYFORPAY:
+                raise NotImplementedError("WayForPay provider not implemented yet")
+            case _:
+                raise ValueError(f"Unknown payment provider: {provider_type}")
     
     @classmethod
     def get_available_providers(cls) -> list[PaymentProviderEnum]:
@@ -48,7 +46,7 @@ class PaymentProviderFactory:
         """
         return [
             PaymentProviderEnum.STRIPE,
-            # PaymentProviderEnum.PAYPAL,  # Uncomment when implemented
-            # PaymentProviderEnum.LIQPAY,  # Uncomment when implemented
-            # PaymentProviderEnum.WAYFORPAY,  # Uncomment when implemented
+            # PaymentProviderEnum.PAYPAL,  # TODO: Uncomment when implemented
+            # PaymentProviderEnum.LIQPAY,  # TODO: Uncomment when implemented
+            # PaymentProviderEnum.WAYFORPAY,  # TODO: Uncomment when implemented
         ]
