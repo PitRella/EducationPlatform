@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Optional, Any
 
 from src.courses.enums import CurrencyEnum
+from src.payment.dto import PaymentResult
 from src.payment.enums import PaymentMethodEnum, PaymentStatusEnum
 
 
@@ -13,8 +14,8 @@ class AbstractProvider(ABC):
             amount: Decimal,
             currency: CurrencyEnum,
             method: PaymentMethodEnum,
-            metadata: Optional[dict[str, Any]] = None
-    ) -> None:
+            metadata: dict[str, Any] | None = None
+    ) -> PaymentResult:
         pass
 
     @abstractmethod
