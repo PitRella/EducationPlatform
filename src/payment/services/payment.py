@@ -2,13 +2,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
 from src.courses.dao import CourseDAO
+from src.courses.enums import CurrencyEnum
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
-from src.payment.enums import PaymentProviderEnum
 from src.payment.models import Payment
 from src.base.service import BaseService
 from src.payment.schemas import CreatePaymentRequestSchema
-from src.payment.services.stripe import StripePaymentService
+from src.payment.services.providers import StripePaymentProviderService
 from src.users import User
 
 type PaymentDAO = BaseDAO[Payment, CreatePaymentRequestSchema]
@@ -20,7 +20,7 @@ class PaymentService(BaseService):
             db_session: AsyncSession,
             payment_dao: PaymentDAO | None = None,
             course_dao: CourseDAO | None = None,
-            stripe_service: StripePaymentService | None = None,
+            stripe_service: StripePaymentProviderService | None = None,
     ) -> None:
         """Initialize the LessonService.
 
@@ -39,7 +39,7 @@ class PaymentService(BaseService):
             db_session,
             Course,
         )
-        self._stripe_service: StripePaymentService = stripe_service or StripePaymentService()
+        self._stripe_service: StripePaymentProviderService = stripe_service or StripePaymentProviderService()
 
     async def create_payment(
             self,
@@ -52,10 +52,6 @@ class PaymentService(BaseService):
             )
         if not course:
             raise CourseNotFoundByIdException
-        match payment_schema.payment_method:
-            case PaymentProviderEnum.STRIPE:
-                self._stripe_service.create_payment(course.price)
-
         data = payment_schema.model_dump()
         data['user_id'] = user.id
         data['course_id'] = course.id
@@ -63,5 +59,9 @@ class PaymentService(BaseService):
         data['currency'] = course.currency
         async with self.session.begin():
             payment: Payment = await self._payment_dao.create(data)
-        self._stripe_service.create_payment(course.price)
+        payment_result = self._stripe_service.create_payment(
+            amount=payment.amount,
+            currency=CurrencyEnum.EUR,
+            method=payment_schema.payment_method,
+        )
         return payment
