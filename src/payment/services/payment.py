@@ -64,7 +64,6 @@ class PaymentService(BaseService):
         data['currency'] = course.currency
         async with self.session.begin():
             payment: Payment = await self._payment_dao.create(data)
-        # Используем базовый интерфейс провайдера
         payment_result = self._payment_provider.create_payment(
             amount=payment.amount,
             currency=CurrencyEnum.EUR,

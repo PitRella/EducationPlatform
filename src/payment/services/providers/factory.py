@@ -22,7 +22,6 @@ class PaymentProviderFactory:
             NotImplementedError: If provider is not implemented yet.
         """
         if provider_type is None:
-            # Берем из настроек (уже enum)
             settings = Settings.load()
             provider_type = settings.payment_settings.PROVIDER
         
