@@ -34,8 +34,7 @@ class PaymentProviderFactory:
                 raise NotImplementedError("LiqPay provider not implemented yet")
             case PaymentProviderEnum.WAYFORPAY:
                 raise NotImplementedError("WayForPay provider not implemented yet")
-            case _:
-                raise ValueError(f"Unknown payment provider: {provider_type}")
+        raise ValueError(f"Unknown payment provider: {provider_type}")
     
     @classmethod
     def get_available_providers(cls) -> list[PaymentProviderEnum]:
