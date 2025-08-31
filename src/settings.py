@@ -1,3 +1,4 @@
+from functools import cache
 from pathlib import Path
 
 from pydantic import Field
@@ -90,6 +91,7 @@ class Settings(BaseSettings):
     )
 
     @classmethod
+    @cache
     def load(cls) -> 'Settings':
         """Return a new instance of Settings."""
         return cls()
