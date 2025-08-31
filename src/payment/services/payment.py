@@ -9,6 +9,8 @@ from src.payment.models import Payment
 from src.base.service import BaseService
 from src.payment.schemas import CreatePaymentRequestSchema
 from src.payment.services.providers import StripePaymentProviderService
+from src.payment.services.providers.base import AbstractProvider
+
 from src.users import User
 
 type PaymentDAO = BaseDAO[Payment, CreatePaymentRequestSchema]
@@ -20,14 +22,18 @@ class PaymentService(BaseService):
             db_session: AsyncSession,
             payment_dao: PaymentDAO | None = None,
             course_dao: CourseDAO | None = None,
-            stripe_service: StripePaymentProviderService | None = None,
+            payment_provider: AbstractProvider | None = None,
     ) -> None:
-        """Initialize the LessonService.
+        """Initialize the PaymentService.
 
         Args:
             db_session (AsyncSession): SQLAlchemy async database session.
-            payment_dao (LessonDAO | None): Optional data access object for lessons.
-                If not provided, a new LessonDAO is created.
+            payment_dao (PaymentDAO | None): Optional data access object for payments.
+                If not provided, a new PaymentDAO is created.
+            course_dao (CourseDAO | None): Optional data access object for courses.
+                If not provided, a new CourseDAO is created.
+            payment_provider (AbstractProvider | None): Payment provider service.
+                If not provided, StripePaymentProviderService is used by default.
 
         """
         super().__init__(db_session)
@@ -39,7 +45,7 @@ class PaymentService(BaseService):
             db_session,
             Course,
         )
-        self._stripe_service: StripePaymentProviderService = stripe_service or StripePaymentProviderService()
+        self._payment_provider: AbstractProvider = payment_provider or StripePaymentProviderService()
 
     async def create_payment(
             self,
@@ -59,7 +65,7 @@ class PaymentService(BaseService):
         data['currency'] = course.currency
         async with self.session.begin():
             payment: Payment = await self._payment_dao.create(data)
-        payment_result = self._stripe_service.create_payment(
+        payment_result = self._payment_provider.create_payment(
             amount=payment.amount,
             currency=CurrencyEnum.EUR,
             method=payment_schema.payment_method,
