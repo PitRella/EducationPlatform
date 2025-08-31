@@ -14,9 +14,20 @@ from src.payment.schemas import (
     CreatePaymentRequestSchema
 )
 from src.payment.services import PaymentService
+from src.payment.dependencies import get_available_providers
 from src.users import User
 
 payment_router = APIRouter()
+
+
+@payment_router.get('/providers')
+async def get_payment_providers() -> list[str]:
+    """Get list of available payment providers.
+    
+    Returns:
+        List of available payment provider names.
+    """
+    return get_available_providers()
 
 
 @payment_router.post('/', response_model=PaymentResponseSchema)

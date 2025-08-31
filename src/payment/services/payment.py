@@ -8,9 +8,8 @@ from src.courses.models import Course
 from src.payment.models import Payment
 from src.base.service import BaseService
 from src.payment.schemas import CreatePaymentRequestSchema
-from src.payment.services.providers import StripePaymentProviderService
+from src.payment.services.providers.factory import PaymentProviderFactory
 from src.payment.services.providers.base import AbstractProvider
-
 from src.users import User
 
 type PaymentDAO = BaseDAO[Payment, CreatePaymentRequestSchema]
@@ -33,7 +32,7 @@ class PaymentService(BaseService):
             course_dao (CourseDAO | None): Optional data access object for courses.
                 If not provided, a new CourseDAO is created.
             payment_provider (AbstractProvider | None): Payment provider service.
-                If not provided, StripePaymentProviderService is used by default.
+                If not provided, provider is created using factory based on settings.
 
         """
         super().__init__(db_session)
@@ -45,7 +44,7 @@ class PaymentService(BaseService):
             db_session,
             Course,
         )
-        self._payment_provider: AbstractProvider = payment_provider or StripePaymentProviderService()
+        self._payment_provider: AbstractProvider = payment_provider or PaymentProviderFactory.create_provider()
 
     async def create_payment(
             self,
@@ -65,6 +64,7 @@ class PaymentService(BaseService):
         data['currency'] = course.currency
         async with self.session.begin():
             payment: Payment = await self._payment_dao.create(data)
+        # Используем базовый интерфейс провайдера
         payment_result = self._payment_provider.create_payment(
             amount=payment.amount,
             currency=CurrencyEnum.EUR,
