@@ -16,6 +16,7 @@ class StripePaymentSettings(BaseSettings):
         env_prefix='STRIPE_', env_file=BASE_DIR / '.env', extra='ignore'
     )
     SECRET_KEY: str = ''
+    WEBHOOK_SECRET_KEY: str = ''
 
 
 class PaymentSettings(BaseSettings):
