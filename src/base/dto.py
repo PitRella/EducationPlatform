@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass, fields, MISSING, is_dataclass
 from typing import Any, Dict, List, TypeVar, Union, get_origin, get_args, \
     Optional
@@ -10,6 +11,9 @@ T = TypeVar('T', bound='BaseDTO')
 
 @dataclass
 class BaseDTO:
+    @classmethod
+    def from_body(cls: type[T], body: bytes) -> T:
+        return cls.from_dict(json.loads(body))
 
     @classmethod
     def from_dict(
