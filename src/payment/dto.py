@@ -1,96 +1,115 @@
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any, Optional, Dict, List
 
 from src.base.dto import BaseDTO
 from src.courses.enums import CurrencyEnum
 from src.payment.enums import PaymentStatusEnum
-from typing import Any, Optional
+
 
 @dataclass
 class PaymentResult(BaseDTO):
     status: PaymentStatusEnum
     amount: Decimal
     currency: CurrencyEnum
-    redirect_url: str | None = None
-    error_message: str | None = None
+    redirect_url: Optional[str] = None
+    error_message: Optional[str] = None
 
-# Stripe
 
+# Stripe Models
 @dataclass
-class StripeWebhookRequest:
+class StripeWebhookRequest(BaseDTO):
     id: str
-    idempotency_key: Optional[str]
+    idempotency_key: Optional[str] = None
+
 
 @dataclass
-class StripeWebhookShippingAddress:
-    city: Optional[str]
-    country: Optional[str]
-    line1: Optional[str]
-    line2: Optional[str]
-    postal_code: Optional[str]
-    state: Optional[str]
+class StripeWebhookShippingAddress(BaseDTO):
+    city: Optional[str] = None
+    country: Optional[str] = None
+    line1: Optional[str] = None
+    line2: Optional[str] = None
+    postal_code: Optional[str] = None
+    state: Optional[str] = None
+
 
 @dataclass
-class StripeWebhookShipping:
+class StripeWebhookShipping(BaseDTO):
     address: StripeWebhookShippingAddress
-    carrier: Optional[str]
     name: str
-    phone: Optional[str]
-    tracking_number: Optional[str]
+    carrier: Optional[str] = None
+    phone: Optional[str] = None
+    tracking_number: Optional[str] = None
+
 
 @dataclass
-class StripeWebhookPaymentMethodOptionsCard:
-    installments: Optional[Any]
-    mandate_options: Optional[Any]
-    network: Optional[str]
+class StripeWebhookPaymentMethodOptionsCard(BaseDTO):
     request_three_d_secure: str
+    installments: Optional[Any] = None
+    mandate_options: Optional[Any] = None
+    network: Optional[str] = None
+
 
 @dataclass
-class StripeWebhookPaymentIntent:
+class StripeWebhookPaymentMethodOptions(BaseDTO):
+    card: StripeWebhookPaymentMethodOptionsCard
+
+
+@dataclass
+class StripeWebhookAmountDetails(BaseDTO):
+    tip: Dict[str, Any]
+
+
+@dataclass
+class StripeWebhookPaymentIntent(BaseDTO):
     id: str
     object: str
     amount: int
     amount_capturable: int
-    amount_details: dict[str, Any]
+    amount_details: StripeWebhookAmountDetails
     amount_received: int
-    application: Optional[str]
-    application_fee_amount: Optional[int]
-    automatic_payment_methods: Optional[Any]
-    canceled_at: Optional[int]
-    cancellation_reason: Optional[str]
     capture_method: str
     client_secret: str
     confirmation_method: str
     created: int
     currency: str
-    customer: Optional[str]
     description: Optional[str]
-    excluded_payment_method_types: Optional[Any]
-    last_payment_error: Optional[Any]
-    latest_charge: Optional[str]
     livemode: bool
-    metadata: dict[str, Any]
-    next_action: Optional[Any]
-    on_behalf_of: Optional[str]
+    metadata: Dict[str, Any]
     payment_method: str
-    payment_method_configuration_details: Optional[Any]
-    payment_method_options: dict[str, StripeWebhookPaymentMethodOptionsCard]
-    payment_method_types: list[str]
-    processing: Optional[Any]
-    receipt_email: Optional[str]
-    review: Optional[Any]
-    setup_future_usage: Optional[Any]
-    shipping: Optional[StripeWebhookShipping]
-    source: Optional[str]
-    statement_descriptor: Optional[str]
-    statement_descriptor_suffix: Optional[str]
+    payment_method_options: StripeWebhookPaymentMethodOptions
+    payment_method_types: List[str]
     status: str
-    transfer_data: Optional[Any]
-    transfer_group: Optional[str]
+
+    # Optional fields
+    application: Optional[str] = None
+    application_fee_amount: Optional[int] = None
+    automatic_payment_methods: Optional[Any] = None
+    canceled_at: Optional[int] = None
+    cancellation_reason: Optional[str] = None
+    customer: Optional[str] = None
+    excluded_payment_method_types: Optional[Any] = None
+    last_payment_error: Optional[Any] = None
+    latest_charge: Optional[str] = None
+    next_action: Optional[Any] = None
+    on_behalf_of: Optional[str] = None
+    payment_method_configuration_details: Optional[Any] = None
+    processing: Optional[Any] = None
+    receipt_email: Optional[str] = None
+    review: Optional[Any] = None
+    setup_future_usage: Optional[Any] = None
+    shipping: Optional[StripeWebhookShipping] = None
+    source: Optional[str] = None
+    statement_descriptor: Optional[str] = None
+    statement_descriptor_suffix: Optional[str] = None
+    transfer_data: Optional[Any] = None
+    transfer_group: Optional[str] = None
+
 
 @dataclass
-class StripeWebhookData:
+class StripeWebhookData(BaseDTO):
     object: StripeWebhookPaymentIntent
+
 
 @dataclass
 class StripeWebhookPayload(BaseDTO):
