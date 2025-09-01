@@ -5,9 +5,6 @@ from fastapi import APIRouter, Security, Depends
 from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
-from src.courses.dependencies import CoursePermissionDependency
-from src.courses.models import Course
-from src.courses.permissions import IsCourseActive
 from src.payment.models import Payment
 from src.payment.schemas import (
     PaymentResponseSchema,
@@ -23,7 +20,7 @@ payment_router = APIRouter()
 @payment_router.get('/providers')
 async def get_payment_providers() -> list[str]:
     """Get list of available payment providers.
-    
+
     Returns:
         List of available payment provider names.
     """
@@ -44,3 +41,4 @@ async def create_payment(
         user,
     )
     return PaymentResponseSchema.model_validate(payment)
+

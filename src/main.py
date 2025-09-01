@@ -11,7 +11,7 @@ from src.courses.router import course_router
 from src.database import engine
 from src.lessons.router import lesson_router
 from src.logger import configure_logging
-from src.payment.router import payment_router
+from src.payment.routers import payment_router
 from src.settings import Settings
 from src.users.admin import AuthorAdmin, UserAdmin
 from src.users.routers import author_router, user_router
