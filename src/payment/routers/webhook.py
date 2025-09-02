@@ -14,11 +14,15 @@ webhooks_payment_router = APIRouter()
 
 
 @webhooks_payment_router.post("/stripe")
-async def stripe_webhook(request: Request) -> None:
+async def stripe_webhook(
+        request: Request
+) -> None:
     request_body: bytes = await request.body()
     stripe_signature = request.headers['stripe-signature']
     stripe.Webhook.construct_event(
-        body,stripe_signature,settings.stripe_settings.WEBHOOK_SECRET_KEY
+        request_body,
+        stripe_signature,
+        settings.stripe_settings.WEBHOOK_SECRET_KEY
     )
     await StripeWebhookService.handle_webhook(request_body=request_body)
 
