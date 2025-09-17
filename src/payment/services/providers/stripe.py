@@ -11,10 +11,17 @@ from src.payment.dto import PaymentResult
 
 settings = Settings.load()
 
+CURRENCY_BASE_MULTIPLIER: int = 100  # Stripe get price in cents
+
 
 class StripePaymentProviderService(AbstractProvider):
     def __init__(self) -> None:
         stripe.api_key = settings.stripe_settings.SECRET_KEY
+
+    @staticmethod
+    def _get_stripe_amount(amount: Decimal) -> int:
+        """Stripe get price in cents. So we need to multiply it."""
+        return int(amount) * CURRENCY_BASE_MULTIPLIER
 
     def create_payment(
             self,
@@ -24,7 +31,7 @@ class StripePaymentProviderService(AbstractProvider):
             metadata: dict[str, Any] | None = None
     ) -> PaymentResult:
         stripe_result = stripe.PaymentIntent.create(
-            amount=int(amount),
+            amount=self._get_stripe_amount(amount),
             currency=currency,
             payment_method_types=[method],
         )
