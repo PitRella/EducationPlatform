@@ -9,6 +9,7 @@ from src.payment.enums import PaymentStatusEnum
 
 @dataclass
 class PaymentResult(BaseDTO):
+    id: str
     status: PaymentStatusEnum
     amount: Decimal
     currency: CurrencyEnum
