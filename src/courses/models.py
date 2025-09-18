@@ -58,7 +58,7 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
     description: Mapped[str] = mapped_column(
         String(512), nullable=False, comment='Course description'
     )
-    level: Mapped[str] = mapped_column(
+    level: Mapped[CourseLevelEnum] = mapped_column(
         Enum(CourseLevelEnum), nullable=False, comment='Course level'
     )
     logo: Mapped[str] = mapped_column(
@@ -94,12 +94,12 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
         server_default='0',
         comment='Course discount percentage',
     )
-    currency: Mapped[str] = mapped_column(
+    currency: Mapped[CurrencyEnum] = mapped_column(
         Enum(CurrencyEnum),
         nullable=False,
         comment='Course currency',
     )
-    language: Mapped[str] = mapped_column(
+    language: Mapped[AvailableLanguagesEnum] = mapped_column(
         Enum(AvailableLanguagesEnum),
         nullable=False,
         comment='Course available languages',
