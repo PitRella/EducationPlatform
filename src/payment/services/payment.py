@@ -5,6 +5,7 @@ from src.courses.dao import CourseDAO
 from src.courses.enums import CurrencyEnum
 from src.courses.exceptions import CourseNotFoundByIdException
 from src.courses.models import Course
+from src.payment.dto import PaymentResult
 from src.payment.models import Payment
 from src.base.service import BaseService
 from src.payment.schemas import CreatePaymentRequestSchema
@@ -62,11 +63,12 @@ class PaymentService(BaseService):
         data['course_id'] = course.id
         data['amount'] = course.price
         data['currency'] = course.currency
-        async with self.session.begin():
-            payment: Payment = await self._payment_dao.create(data)
-        payment_result = self._payment_provider.create_payment(
-            amount=payment.amount,
-            currency=CurrencyEnum.EUR,
+        payment_result: PaymentResult = self._payment_provider.create_payment(
+            amount=data['amount'],
+            currency=course.currency,
             method=payment_schema.payment_method,
         )
+        data['provider_payment_id'] = payment_result.id
+        async with self.session.begin():
+            payment: Payment = await self._payment_dao.create(data)
         return payment
