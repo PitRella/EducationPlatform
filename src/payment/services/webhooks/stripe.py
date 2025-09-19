@@ -9,7 +9,11 @@ from src.payment.schemas import CreatePaymentRequestSchema
 from src.payment.services.payment import PaymentDAO
 import logging
 
+from src.users.models import UserCourses
+
 logger = logging.getLogger(__name__)
+
+type UserCourseDAO = BaseDAO[UserCourses]
 
 
 class StripeWebhookService(BaseService):
@@ -17,12 +21,17 @@ class StripeWebhookService(BaseService):
             self,
             db_session: AsyncSession,
             payment_dao: PaymentDAO | None = None,
+            user_courses_dao: UserCourseDAO | None = None,
+
     ) -> None:
         super().__init__(db_session)
         self._payment_dao: PaymentDAO = payment_dao or BaseDAO[
             Payment,
             CreatePaymentRequestSchema
         ](session=db_session, model=Payment)
+        self._user_courses_dao: UserCourseDAO = user_courses_dao or BaseDAO[
+            UserCourses
+        ](db_session, model=UserCourses)
 
     async def handle_webhook(
             self,

@@ -4,23 +4,19 @@ from typing import ClassVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.base.dao import BaseDAO
 from src.base.service import BaseService
 from src.courses.dao import CourseDAO
 from src.courses.exceptions import (
     CourseNotFoundByIdException,
-    CourseWasNotBoughtException,
 )
 from src.courses.models import Course
 from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
-from src.users import User
-from src.users.models import Author, UserCourses
+from src.users.models import Author
 from src.utils import make_slug
 
-type UserCourseDAO = BaseDAO[UserCourses]
 
 
 class CourseService(BaseService):
@@ -37,7 +33,6 @@ class CourseService(BaseService):
         self,
         db_session: AsyncSession,
         course_dao: CourseDAO | None = None,
-        user_courses_dao: UserCourseDAO | None = None,
     ) -> None:
         """Initialize the CourseService.
 
@@ -55,9 +50,6 @@ class CourseService(BaseService):
             db_session,
             Course,
         )
-        self._user_courses_dao: UserCourseDAO = user_courses_dao or BaseDAO[
-            UserCourses
-        ](db_session, model=UserCourses)
 
     async def create_course(
         self, author: Author, course_schema: BaseCreateCourseRequestSchema
