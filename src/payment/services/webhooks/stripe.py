@@ -7,6 +7,9 @@ from src.payment.enums import PaymentStatusEnum
 from src.payment.models import Payment
 from src.payment.schemas import CreatePaymentRequestSchema
 from src.payment.services.payment import PaymentDAO
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class StripeWebhookService(BaseService):
@@ -24,7 +27,7 @@ class StripeWebhookService(BaseService):
     async def handle_webhook(
             self,
             request_body: bytes
-    ):
+    ) -> None:
         payload: StripeWebhookPayload = StripeWebhookPayload.from_body(
             request_body
         )
@@ -37,4 +40,5 @@ class StripeWebhookService(BaseService):
                 {"status": payment_status},
                 provider_payment_id=payment_id,
             )
-
+        if not payment:
+            logger.warning(f"Payment with id %s not found", payment_id)
