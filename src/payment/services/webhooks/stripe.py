@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
@@ -44,10 +45,39 @@ class StripeWebhookService(BaseService):
         payment_status: PaymentStatusEnum = PaymentStatusEnum(
             payload.data.object.status
         )
-        async with self.session.begin():
-            payment: Payment | None = await self._payment_dao.update(
-                {"status": payment_status},
-                provider_payment_id=payment_id,
-            )
-        if not payment:
-            logger.warning(f"Payment with id %s not found", payment_id)
+        try:
+            async with self.session.begin():
+                payment: Payment | None = await self._payment_dao.update(
+                    {"status": payment_status},
+                    provider_payment_id=payment_id,
+                )
+                if not payment:
+                    logger.warning(
+                        "Payment with id %s not found",
+                        payment_id
+                    )
+                    return
+                if payment_status == PaymentStatusEnum.SUCCEEDED:
+                    bought_course: (
+                            UserCourses | None
+                    ) = await self._user_courses_dao.create(
+                        {
+                            'user_id': payment.user_id,
+                            'course_id': payment.course_id
+                        }
+                    )
+                    if not bought_course:
+                        logger.error(
+                            "Course %s was not bought by user %s",
+                            payment.course_id,
+                            payment.user_id
+                        )
+                        return
+                    logger.info(
+                        "Course %s was bought by user %s",
+                        bought_course.course_id,
+                        bought_course.user_id
+                    )
+        except IntegrityError:
+            logger.error("Course was already bought by user")
+            return
