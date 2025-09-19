@@ -194,27 +194,3 @@ class CourseService(BaseService):
             )
         if not deleted_course:
             raise CourseNotFoundByIdException
-
-    async def purchase_course(
-        self,
-        course: Course,
-        user: User,
-    ) -> None:
-        """Record a purchase of a course by a user.
-
-        Args:
-            course (Course): The course being purchased.
-            user (User): The user purchasing the course.
-
-        Raises:
-            CourseWasNotBoughtException: If the purchase could not be recorded.
-
-        """
-        async with self.session.begin():
-            bought_course: (
-                UserCourses | None
-            ) = await self._user_courses_dao.create(
-                {'user_id': user.id, 'course_id': course.id}
-            )
-        if not bought_course:
-            raise CourseWasNotBoughtException

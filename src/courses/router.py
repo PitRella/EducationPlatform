@@ -164,35 +164,3 @@ async def deactivate_course_by_id(
     """
     await service.deactivate_course(course=course)
 
-
-@course_router.post('/purchase/{course_id}', status_code=201)
-async def purchase_course_by_id(
-    user: Annotated[
-        User, Security(UserPermissionDependency([IsAuthenticated]))
-    ],
-    course: Annotated[
-        Course,
-        Security(
-            CoursePermissionDependency(
-                [
-                    IsCourseActive,
-                ]
-            )
-        ),
-    ],
-    service: Annotated[CourseService, Depends(get_service(CourseService))],
-) -> None:
-    """Purchase a course by its ID.
-
-    The user must be authenticated. The course must be active.
-
-    Args:
-        user (User): Authenticated user purchasing the course.
-        course (Course): Course instance retrieved via permission dependency.
-        service (CourseService): Service for course operations.
-
-    Returns:
-        None
-
-    """
-    await service.purchase_course(course=course, user=user)
