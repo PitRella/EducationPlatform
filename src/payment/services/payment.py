@@ -50,14 +50,9 @@ class PaymentService(BaseService):
     async def create_payment(
             self,
             payment_schema: CreatePaymentRequestSchema,
+            course: Course,
             user: User,
     ) -> Payment:
-        async with self.session.begin():
-            course: Course | None = await self._course_dao.get_published_course(
-                id=payment_schema.course_id
-            )
-        if not course:
-            raise CourseNotFoundByIdException
         data = payment_schema.model_dump()
         data['user_id'] = user.id
         data['course_id'] = course.id

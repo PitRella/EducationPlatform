@@ -5,6 +5,9 @@ from fastapi import APIRouter, Security, Depends
 from src.auth.dependencies import UserPermissionDependency
 from src.auth.permissions import IsAuthenticated
 from src.base.dependencies import get_service
+from src.courses.dependencies import CoursePermissionDependency
+from src.courses.models import Course
+from src.courses.permissions import IsCourseActive
 from src.payment.models import Payment
 from src.payment.schemas import (
     PaymentResponseSchema,
@@ -27,17 +30,28 @@ async def get_payment_providers() -> list[str]:
     return get_available_providers()
 
 
-@payment_router.post('/', response_model=PaymentResponseSchema)
-async def create_payment(
+@payment_router.post('/{course_id}', response_model=PaymentResponseSchema)
+async def buy_course(
         payment_schema: CreatePaymentRequestSchema,
         user: Annotated[
             User, Security(UserPermissionDependency([IsAuthenticated]))
+        ],
+        course: Annotated[
+            Course,
+            Security(
+                CoursePermissionDependency(
+                    [
+                        IsCourseActive,
+                    ]
+                )
+            ),
         ],
         service: Annotated[
             PaymentService, Depends(get_service(PaymentService))],
 ) -> PaymentResponseSchema:
     payment: Payment = await service.create_payment(
         payment_schema,
+        course,
         user,
     )
     return PaymentResponseSchema.model_validate(payment)

@@ -6,7 +6,6 @@ from src.payment.enums import PaymentMethodEnum, PaymentProviderEnum
 
 
 class CreatePaymentRequestSchema(BaseModel):
-    course_id: uuid.UUID
     payment_method: PaymentMethodEnum
     provider: PaymentProviderEnum
 
