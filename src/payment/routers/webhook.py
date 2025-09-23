@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends
 from fastapi.requests import Request
 
 from src.base.dependencies import get_service
+from src.payment.services.webhooks import StripeWebhookService
 from src.settings import Settings
 
 settings = Settings.load()
-from src.payment.services.webhooks import StripeWebhookService
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ async def stripe_webhook(
 
     Returns:
         None
+
     """
     request_body: bytes = await request.body()
     stripe_signature = request.headers['stripe-signature']

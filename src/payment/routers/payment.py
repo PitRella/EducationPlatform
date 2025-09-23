@@ -49,6 +49,18 @@ async def buy_course(
     ],
     service: Annotated[PaymentService, Depends(get_service(PaymentService))],
 ) -> PaymentResponseSchema:
+    """Create a new payment for course purchase.
+
+    Args:
+        payment_schema (CreatePaymentRequestSchema): Payment details.
+        user (User): Authenticated user making the purchase.
+        course (Course): Active course being purchased.
+        service (PaymentService): Service for handling payment operations.
+
+    Returns:
+        PaymentResponseSchema: Created payment details including payment URL.
+
+    """
     payment: Payment = await service.create_payment(
         payment_schema,
         course,

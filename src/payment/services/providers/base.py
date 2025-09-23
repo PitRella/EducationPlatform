@@ -14,6 +14,7 @@ class AbstractProvider(ABC):
     payment operations like creating payments, checking status, canceling and
     refunding payments.
     """
+
     @abstractmethod
     def create_payment(
         self,
@@ -72,9 +73,9 @@ class AbstractProvider(ABC):
 
     @abstractmethod
     def process_webhook(
-            self,
-            payload: dict[str, Any],
-            headers: dict[str, str],
+        self,
+        payload: dict[str, Any],
+        headers: dict[str, str],
     ) -> PaymentResult:
         """Process incoming webhook notification from payment provider.
 

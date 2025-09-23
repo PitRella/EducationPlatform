@@ -15,6 +15,7 @@ class CreatePaymentRequestSchema(BaseModel):
     Attributes:
         payment_method (PaymentMethodEnum): The method of payment .
         provider (PaymentProviderEnum): The payment service provider.
+
     """
 
     payment_method: PaymentMethodEnum
@@ -31,6 +32,7 @@ class PaymentResponseSchema(BaseSchema):
         id (uuid.UUID): Unique identifier of the payment.
         course_id (uuid.UUID): Identifier of the course being purchased.
         user_id (uuid.UUID): Identifier of the user making the payment.
+
     """
 
     id: uuid.UUID
