@@ -11,8 +11,7 @@ from src.courses.router import course_router
 from src.database import engine
 from src.lessons.router import lesson_router
 from src.logger import configure_logging
-from src.payment.routers import payment_router
-from src.payment.routers import webhooks_payment_router
+from src.payment.routers import payment_router, webhooks_payment_router
 from src.settings import Settings
 from src.users.admin import AuthorAdmin, UserAdmin
 from src.users.routers import author_router, user_router
@@ -43,8 +42,12 @@ main_api_router.include_router(author_router, prefix='/author', tags=['author'])
 main_api_router.include_router(auth_router, prefix='/auth', tags=['auth'])
 main_api_router.include_router(course_router, prefix='/course', tags=['course'])
 main_api_router.include_router(lesson_router, prefix='/lesson', tags=['lesson'])
-main_api_router.include_router(payment_router, prefix='/payment', tags=['payment'])
-main_api_router.include_router(webhooks_payment_router, prefix='/payment/webhooks', tags=['payment'])
+main_api_router.include_router(
+    payment_router, prefix='/payment', tags=['payment']
+)
+main_api_router.include_router(
+    webhooks_payment_router, prefix='/payment/webhooks', tags=['payment']
+)
 app.include_router(main_api_router)
 
 logger.info('Application started')

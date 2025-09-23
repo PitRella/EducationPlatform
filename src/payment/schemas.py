@@ -1,6 +1,7 @@
 import uuid
 
 from pydantic import BaseModel
+
 from src.base.schemas import BaseSchema
 from src.payment.enums import PaymentMethodEnum, PaymentProviderEnum
 

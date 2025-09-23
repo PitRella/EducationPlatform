@@ -28,14 +28,14 @@ course_router = APIRouter()
 
 @course_router.get('/mine', response_model=list[BaseCourseResponseSchema])
 async def get_my_courses(
-        user: Annotated[
-            User, Security(UserPermissionDependency([IsAuthenticated]))
-        ],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
-        created_at: dt.datetime | None = None,
-        last_id: uuid.UUID | None = None,
-        limit: int | None = None,
-) ->list[BaseCourseResponseSchema] | None:
+    user: Annotated[
+        User, Security(UserPermissionDependency([IsAuthenticated]))
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
+    created_at: dt.datetime | None = None,
+    last_id: uuid.UUID | None = None,
+    limit: int | None = None,
+) -> list[BaseCourseResponseSchema] | None:
     courses: list[Course] = await service.get_all_user_courses(
         user, created_at, last_id, limit
     )
@@ -44,10 +44,10 @@ async def get_my_courses(
 
 @course_router.get('/all', response_model=list[BaseCourseResponseSchema])
 async def get_all_courses(
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
-        created_at: dt.datetime | None = None,
-        last_id: uuid.UUID | None = None,
-        limit: int | None = None,
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
+    created_at: dt.datetime | None = None,
+    last_id: uuid.UUID | None = None,
+    limit: int | None = None,
 ) -> list[BaseCourseResponseSchema] | None:
     """Retrieve a list of all available courses with optional filtering.
 
@@ -71,11 +71,11 @@ async def get_all_courses(
 
 @course_router.post('/', response_model=BaseCourseResponseSchema)
 async def create_course(
-        course_schema: BaseCreateCourseRequestSchema,
-        author: Annotated[
-            Author, Security(AuthorPermissionDependency([IsAuthorPermission]))
-        ],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_schema: BaseCreateCourseRequestSchema,
+    author: Annotated[
+        Author, Security(AuthorPermissionDependency([IsAuthorPermission]))
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> BaseCourseResponseSchema:
     """Create a new course.
 
@@ -98,14 +98,14 @@ async def create_course(
 
 @course_router.get('/{course_id}', response_model=BaseCourseResponseSchema)
 async def get_course(
-        course: Annotated[
-            Course,
-            Security(
-                CoursePermissionDependency(
-                    [IsCourseActive, IsAuthorCourse], logic='OR'
-                )
-            ),
-        ],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsCourseActive, IsAuthorCourse], logic='OR'
+            )
+        ),
+    ],
 ) -> BaseCourseResponseSchema:
     """Retrieve a specific course by its ID.
 
@@ -123,16 +123,16 @@ async def get_course(
 
 @course_router.patch('/{course_id}', response_model=BaseCourseResponseSchema)
 async def update_course(
-        course: Annotated[
-            Course,
-            Security(
-                CoursePermissionDependency(
-                    [IsAuthorCourse],
-                )
-            ),
-        ],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
-        course_fields: UpdateCourseRequestSchema,
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsAuthorCourse],
+            )
+        ),
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course_fields: UpdateCourseRequestSchema,
 ) -> BaseCourseResponseSchema:
     """Update an existing course.
 
@@ -155,15 +155,15 @@ async def update_course(
 
 @course_router.delete('/{course_id}', status_code=204)
 async def deactivate_course_by_id(
-        course: Annotated[
-            Course,
-            Security(
-                CoursePermissionDependency(
-                    [IsAuthorCourse],
-                )
-            ),
-        ],
-        service: Annotated[CourseService, Depends(get_service(CourseService))],
+    course: Annotated[
+        Course,
+        Security(
+            CoursePermissionDependency(
+                [IsAuthorCourse],
+            )
+        ),
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
 ) -> None:
     """Deactivate a course by its ID.
 

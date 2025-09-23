@@ -21,11 +21,11 @@ class StripePaymentSettings(BaseSettings):
 
 class PaymentSettings(BaseSettings):
     """Payment provider settings."""
-    
+
     model_config = SettingsConfigDict(
         env_prefix='PAYMENT_', env_file=BASE_DIR / '.env', extra='ignore'
     )
-    
+
     PROVIDER: PaymentProviderEnum = PaymentProviderEnum.STRIPE
 
 
@@ -75,21 +75,15 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = 'INFO'
 
     # Nested settings
-    token_settings: TokenSettings = Field(
-        default_factory=TokenSettings
-    )
+    token_settings: TokenSettings = Field(default_factory=TokenSettings)
     stripe_settings: StripePaymentSettings = Field(
         default_factory=StripePaymentSettings
     )
-    payment_settings: PaymentSettings = Field(
-        default_factory=PaymentSettings
-    )
+    payment_settings: PaymentSettings = Field(default_factory=PaymentSettings)
     database_settings: DatabaseSettings = Field(
         default_factory=DatabaseSettings
     )
-    logging_settings: LoggingSettings = Field(
-        default_factory=LoggingSettings
-    )
+    logging_settings: LoggingSettings = Field(default_factory=LoggingSettings)
 
     @classmethod
     @cache

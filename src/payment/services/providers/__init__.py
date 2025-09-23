@@ -1,9 +1,9 @@
 from .base import AbstractProvider
-from .stripe import StripePaymentProviderService
 from .factory import PaymentProviderFactory
+from .stripe import StripePaymentProviderService
 
 __all__ = [
     'AbstractProvider',
-    'StripePaymentProviderService', 
-    'PaymentProviderFactory'
+    'PaymentProviderFactory',
+    'StripePaymentProviderService',
 ]

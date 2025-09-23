@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Optional, Any
+from typing import Any
 
 from src.courses.enums import CurrencyEnum
 from src.payment.dto import PaymentResult
@@ -10,18 +10,56 @@ from src.payment.enums import PaymentMethodEnum, PaymentStatusEnum
 class AbstractProvider(ABC):
     @abstractmethod
     def create_payment(
-            self,
-            amount: Decimal,
-            currency: CurrencyEnum,
-            method: PaymentMethodEnum,
-            metadata: dict[str, Any] | None = None
+        self,
+        amount: Decimal,
+        currency: CurrencyEnum,
+        method: PaymentMethodEnum,
+        metadata: dict[str, Any] | None = None,
     ) -> PaymentResult:
-        pass
+        """Create a new payment transaction.
+
+        Args:
+            amount: The payment amount.
+            currency: The currency for the payment.
+            method: The payment method to be used.
+            metadata: Additional payment metadata.
+
+        Returns:
+            PaymentResult containing the payment details and status.
+
+        """
 
     @abstractmethod
     def get_payment_status(self, payment_id: str) -> PaymentStatusEnum:
-        pass
+        """Get the current status of a payment.
+
+        Args:
+            payment_id: The unique identifier of the payment.
+
+        Returns:
+            Current status of the payment.
+
+        """
 
     @abstractmethod
     def cancel_payment(self, payment_id: str) -> None:
-        pass
+        """Cancel an existing payment.
+
+        Args:
+            payment_id: The unique identifier of the payment to cancel.
+
+        """
+
+    @abstractmethod
+    def refund_payment(
+        self,
+        payment_id: str,
+        amount: Decimal | None = None,
+    ) -> None:
+        """Refund an existing payment, either fully or partially.
+
+        Args:
+            payment_id: The unique identifier of the payment to refund.
+            amount: Optional amount to refund. If None, refunds the full amount.
+
+        """

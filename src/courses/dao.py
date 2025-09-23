@@ -13,18 +13,12 @@ class CourseDAO(BaseDAO[Course, BaseCreateCourseRequestSchema]):
     """
 
     async def get_published_course(
-            self,
-            *filters: Any,
-            **filters_by: Any
+        self, *filters: Any, **filters_by: Any
     ) -> Course | None:
-        return await self.get_one(
-            *filters,
-            is_active=True,
-            **filters_by
-        )
+        return await self.get_one(*filters, is_active=True, **filters_by)
 
     async def get_course_with_lessons(
-            self, *filters: Any, **filters_by: Any
+        self, *filters: Any, **filters_by: Any
     ) -> Course | None:
         """Retrieve a course with its related lessons.
 

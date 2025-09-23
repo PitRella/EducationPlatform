@@ -32,11 +32,10 @@ class CourseService(BaseService):
     _DEACTIVATE_COURSE_UPDATE: ClassVar[dict[str, bool]] = {'is_active': False}
 
     def __init__(
-            self,
-            db_session: AsyncSession,
-            course_dao: CourseDAO | None = None,
-            user_courses_dao: UserCourseDAO | None = None,
-
+        self,
+        db_session: AsyncSession,
+        course_dao: CourseDAO | None = None,
+        user_courses_dao: UserCourseDAO | None = None,
     ) -> None:
         """Initialize the CourseService.
 
@@ -59,7 +58,7 @@ class CourseService(BaseService):
         ](db_session, model=UserCourses)
 
     async def create_course(
-            self, author: Author, course_schema: BaseCreateCourseRequestSchema
+        self, author: Author, course_schema: BaseCreateCourseRequestSchema
     ) -> Course:
         """Create a new course for a specific author.
 
@@ -80,9 +79,9 @@ class CourseService(BaseService):
         return course
 
     async def get_course(
-            self,
-            course_id: uuid.UUID,
-            author: Author | None = None,
+        self,
+        course_id: uuid.UUID,
+        author: Author | None = None,
     ) -> Course:
         """Retrieve a course by its ID, optionally filtered by author.
 
@@ -103,7 +102,7 @@ class CourseService(BaseService):
             filters['author_id'] = author.id
         async with self.session.begin():
             course: (
-                    Course | None
+                Course | None
             ) = await self._course_dao.get_course_with_lessons(
                 **filters,
             )
@@ -112,9 +111,9 @@ class CourseService(BaseService):
         return course
 
     async def update_course(
-            self,
-            course: Course,
-            course_fields: UpdateCourseRequestSchema,
+        self,
+        course: Course,
+        course_fields: UpdateCourseRequestSchema,
     ) -> Course:
         """Update an existing course with new data.
 
@@ -146,14 +145,16 @@ class CourseService(BaseService):
         return updated_course
 
     async def get_all_user_courses(
-            self,
-            user: User,
-            created_at: dt.datetime | None = None,
-            last_id: uuid.UUID | None = None,
-            limit: int | None = None,
+        self,
+        user: User,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
     ) -> list[Course] | None:
         async with self.session.begin():
-            user_courses: list[UserCourses] | None = await self._user_courses_dao.get_all(
+            user_courses: (
+                list[UserCourses] | None
+            ) = await self._user_courses_dao.get_all(
                 created_at=created_at,
                 last_id=last_id,
                 limit=limit,
@@ -182,10 +183,10 @@ class CourseService(BaseService):
         return ordered_courses
 
     async def get_all_courses(
-            self,
-            created_at: dt.datetime | None = None,
-            last_id: uuid.UUID | None = None,
-            limit: int | None = None,
+        self,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
     ) -> list[Course]:
         """Retrieve all active courses with optional filtering and pagination.
 
@@ -210,8 +211,8 @@ class CourseService(BaseService):
         return courses if courses else []
 
     async def deactivate_course(
-            self,
-            course: Course,
+        self,
+        course: Course,
     ) -> None:
         """Deactivate a course (mark as inactive).
 

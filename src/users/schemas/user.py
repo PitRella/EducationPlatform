@@ -1,6 +1,5 @@
 import re
 import uuid
-from collections.abc import Sequence
 from typing import Annotated
 
 from pydantic import (
@@ -12,7 +11,6 @@ from pydantic import (
 )
 
 from src.base.schemas import BaseSchema
-from src.users.enums import UserRole
 from src.users.exceptions import (
     BadEmailSchemaException,
     BadPasswordSchemaException,

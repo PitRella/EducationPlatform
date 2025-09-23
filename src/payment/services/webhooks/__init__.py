@@ -1,3 +1,3 @@
 from .stripe import StripeWebhookService
 
-__all__ = ['StripeWebhookService',]
+__all__ = ['StripeWebhookService']
