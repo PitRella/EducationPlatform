@@ -23,6 +23,20 @@ async def stripe_webhook(
         StripeWebhookService, Depends(get_service(StripeWebhookService))
     ],
 ) -> None:
+    """Handle incoming Stripe webhook events.
+
+    This endpoint processes webhook notifications from Stripe, verifies their
+    signature, and delegates the event handling to the webhook service.
+
+    Args:
+        request (Request): The incoming FastAPI request containing the webhook
+            payload and headers.
+        service (StripeWebhookService): Service for processing Stripe webhook
+            events.
+
+    Returns:
+        None
+    """
     request_body: bytes = await request.body()
     stripe_signature = request.headers['stripe-signature']
     stripe.Webhook.construct_event(

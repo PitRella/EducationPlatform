@@ -15,6 +15,24 @@ type PaymentDAO = BaseDAO[Payment, CreatePaymentRequestSchema]
 
 
 class PaymentService(BaseService):
+    """Service class for handling payment operations and transactions.
+
+    This service manages the creation and processing of payments for course
+    purchases using configured payment providers. It coordinates between the
+    payment provider, database storage, and related course information to
+    ensure proper payment processing and record keeping.
+
+    The service abstracts payment provider details through a provider factory
+    pattern, allowing for different payment methods and providers while
+    maintaining a consistent interface for the application.
+
+    Key responsibilities:
+    - Creating and processing new payments
+    - Interacting with payment providers
+    - Maintaining payment records in the database
+    - Coordinating payment information with course purchases
+    """
+
     def __init__(
         self,
         db_session: AsyncSession,
@@ -26,12 +44,12 @@ class PaymentService(BaseService):
 
         Args:
             db_session (AsyncSession): SQLAlchemy async database session.
-            payment_dao (PaymentDAO | None): Optional data access object for payments.
+            payment_dao (PaymentDAO | None): Optional DAO for payments.
                 If not provided, a new PaymentDAO is created.
-            course_dao (CourseDAO | None): Optional data access object for courses.
+            course_dao (CourseDAO | None): Optional DAO for courses.
                 If not provided, a new CourseDAO is created.
-            payment_provider (AbstractProvider | None): Payment provider service.
-                If not provided, a provider is created using factory based on settings.
+            payment_provider (AbstractProvider | None): Payment service.
+                If not provided, a provider is created using factory based.
 
         """
         super().__init__(db_session)
@@ -55,11 +73,11 @@ class PaymentService(BaseService):
         """Create a new payment record for a course purchase.
 
         This method creates a payment using the specified payment provider and
-        stores the payment record in the database. The payment amount and currency
-        are taken from the course details.
+        stores the payment record in the database. The payment amount
+        and currency are taken from the course details.
 
         Args:
-            payment_schema (CreatePaymentRequestSchema): Schema containing payment
+            payment_schema (CreatePaymentRequestSchema): Schema with payment
                 details including payment method.
             course (Course): The course being purchased.
             user (User): The user making the purchase.
