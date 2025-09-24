@@ -16,14 +16,78 @@ T = TypeVar('T', bound='BaseDTO')
 
 @dataclass
 class BaseDTO:
+    """Base Data Transfer Object class providing serialization and validation.
+
+    This class serves as a foundation for creating DTOs with automatic
+    serialization, deserialization, and validation capabilities. It supports:
+    - JSON serialization/deserialization
+    - Dictionary conversion (to/from)
+    - Nested dataclass handling
+    - Type validation and conversion
+    - Optional field handling
+    - Strict mode for validation
+    - Object mapping
+
+    Example:
+        @dataclass
+        class UserDTO(BaseDTO):
+            name: str
+            age: int
+            email: str | None = None
+
+        # Create from dict
+        user = UserDTO.from_dict({"name": "John", "age": "25"})
+
+        # Convert to dict
+        data = user.to_dict()
+
+        # Update from dict
+        user.update_from_dict({"age": 26})
+
+    """
+
     @classmethod
     def from_body(cls: type[T], body: bytes) -> T:
+        """Create a DTO instance from bytes containing JSON data.
+
+        Args:
+            body (bytes): Raw bytes containing JSON-encoded data.
+
+        Returns:
+            T: New instance of the DTO class populated with data from the JSON.
+
+        Raises:
+            json.JSONDecodeError: If the body cannot be decoded as JSON.
+            TypeError: If the decoded JSON is not a dictionary.
+            ValueError: If required fields are missing or validation fails.
+
+        """
         return cls.from_dict(json.loads(body))
 
     @classmethod
     def from_dict(
         cls: type[T], data: dict[str, Any], strict: bool = False
     ) -> T:
+        """Create a DTO instance from a dictionary.
+
+        Validates and converts dictionary data to create a new instance of the
+        DTO class. Performs type validation and conversion for all fields.
+
+        Args:
+            data (dict[str, Any]): Dictionary with field names and values.
+            strict (bool, optional): If True, raises exceptions for unknown
+                fields and validation errors. If False, skips invalid fields
+                with warnings. Defaults to False.
+
+        Returns:
+            T: New instance of the DTO class populated with validated data.
+
+        Raises:
+            TypeError: If data is not a dictionary or field conversion fails.
+            ValueError: If required fields are missing or validation fails in
+                strict mode.
+
+        """
         if not isinstance(data, dict):
             raise TypeError('Data must be a dictionary')
 
@@ -40,17 +104,21 @@ class BaseDTO:
                     )
                     validated_data[key] = validated_value
                 except (TypeError, ValueError) as e:
-                    logger.warning(f'Error while validating field {key}: {e}')
+                    logger.warning(
+                        'Error while validating field %s: %s', key, e
+                    )
                     if strict:
                         raise
                     skipped_fields.append(key)
             else:
                 skipped_fields.append(key)
                 if strict:
-                    raise ValueError(f'Unknown field: {key}')
+                    raise ValueError('Unknown field: %s', key) from None
 
         if skipped_fields:
-            logger.debug(f'Skipped fields for {cls.__name__}: {skipped_fields}')
+            logger.debug(
+                'Skipped fields for %s %s', cls.__name__, skipped_fields
+            )
 
         # Check for required fields
         required_fields = [
@@ -63,12 +131,43 @@ class BaseDTO:
             field for field in required_fields if field not in validated_data
         ]
         if missing_fields:
-            raise ValueError(f'Missing required fields: {missing_fields}')
+            raise ValueError('Missing required fields: %s', missing_fields)
 
         return cls(**validated_data)
 
     @classmethod
     def from_object(cls: type[T], obj: Any, **extra_fields: Any) -> T:
+        """Create a DTO instance by mapping fields from another object.
+
+        Creates a new DTO instance by copying field values from the provided
+        object that match the DTO's field names. Additional fields can be
+        provided through extra_fields.
+
+        Args:
+            obj (Any): Source object to extract field values from.
+            **extra_fields (Any): Additional field values to include in the
+                created DTO.
+
+        Returns:
+            T: New instance of the DTO class populated with values from the
+                source object and extra fields.
+
+        Example:
+            class UserModel:
+                def __init__(self):
+                    self.name = "John"
+                    self.age = 30
+
+            @dataclass
+            class UserDTO(BaseDTO):
+                name: str
+                age: int
+                role: str
+
+            user_model = UserModel()
+            user_dto = UserDTO.from_object(user_model, role="admin")
+
+        """
         data: dict[str, Any] = {}
 
         # Extract fields from an object by field names
@@ -88,7 +187,7 @@ class BaseDTO:
         if value is None:
             if BaseDTO._is_optional_type(field_type):
                 return None
-            raise ValueError(f'Field {field_name} cannot be None')
+            raise ValueError('Field %s cannot be None', field_name)
 
         actual_type = BaseDTO._get_actual_type(field_type)
 
@@ -105,7 +204,10 @@ class BaseDTO:
             if isinstance(value, actual_type):
                 return value
             raise TypeError(
-                f'Cannot convert {type(value)} to {actual_type} for field {field_name}'
+                'Cannot convert %s to %s for field %s',
+                type(value),
+                actual_type,
+                field_name,
             )
 
         # Handle BaseDTO subclasses
@@ -119,9 +221,11 @@ class BaseDTO:
             if isinstance(value, actual_type):
                 return value
             raise TypeError(
-                f'Cannot convert {type(value)} to {actual_type} for field {field_name}'
+                'Cannot convert %s to %s for field %s',
+                type(value),
+                actual_type,
+                field_name,
             )
-
         # Handle generic types (List, Dict, etc.)
         origin = get_origin(actual_type)
         if origin is not None:
@@ -143,7 +247,9 @@ class BaseDTO:
         if origin is list or origin is list:
             if not isinstance(value, list):
                 raise TypeError(
-                    f'Expected list for field {field_name}, got {type(value)}'
+                    'Expected list for field %s, got %s',
+                    field_name,
+                    type(value),
                 )
 
             if not type_args:
@@ -162,15 +268,20 @@ class BaseDTO:
                     converted_list.append(converted_item)
                 except (TypeError, ValueError) as e:
                     raise TypeError(
-                        f'Error converting list item at index {i} for field {field_name}: {e}'
-                    )
+                        'Error converting list item at index %s for field %s %s',
+                        i,
+                        field_name,
+                        e,
+                    ) from None
 
             return converted_list
 
         if origin is dict or origin is dict:
             if not isinstance(value, dict):
                 raise TypeError(
-                    f'Expected dict for field {field_name}, got {type(value)}'
+                    'Expected dict for field %s, got %s',
+                    field_name,
+                    type(value),
                 )
 
             if len(type_args) < 2:
@@ -194,14 +305,17 @@ class BaseDTO:
                     converted_dict[converted_key] = converted_value
                 except (TypeError, ValueError) as e:
                     raise TypeError(
-                        f'Error converting dict item for key {k} in field {field_name}: {e}'
+                        'Error converting dict item for key %s in field %s: %s',
+                        k,
+                        field_name,
+                        e,
                     )
 
             return converted_dict
 
         # For other generic types, just return the value as-is
         logger.warning(
-            f'Unsupported generic type {origin} for field {field_name}'
+            'Unsupported generic type %s for field %s', origin, field_name
         )
         return value
 
@@ -242,18 +356,37 @@ class BaseDTO:
                     return target_type(value)
                 if isinstance(value, target_type):
                     return value
-
             logger.warning(
-                f"Couldn't convert field {field_name} to {target_type}"
+                "Couldn't convert field %s to %s", field_name, target_type
             )
             return value
 
         except (ValueError, TypeError) as e:
             raise TypeError(
-                f"Couldn't convert field {field_name} to {target_type}: {e}"
+                "Couldn't convert field %s to %s: %s",
+                field_name,
+                target_type,
+                e,
             )
 
     def to_dict(self, exclude_none: bool = False) -> dict[str, Any]:
+        """Convert the DTO instance to a dictionary representation.
+
+        Recursively converts all nested dataclasses, lists, and dictionaries
+        to their dictionary representations. For nested dataclasses, it will
+        attempt to use their to_dict method if available, otherwise it will
+        create a dictionary from their fields directly.
+
+        Args:
+            exclude_none (bool, optional): If True, fields with None values
+                will be excluded from the resulting dictionary. Defaults to
+                False.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all fields of the DTO and
+                their values, with nested structures converted to dictionaries.
+
+        """
         result: dict[str, Any] = {}
         for field in fields(self):
             value = getattr(self, field.name)
@@ -319,6 +452,17 @@ class BaseDTO:
         return result
 
     def update_from_dict(self, data: dict[str, Any]) -> None:
+        """Update the DTO instance with values from a dictionary.
+
+        Updates only fields that exist in the DTO class. Values are validated
+        using the same validation rules as in from_dict method. Invalid values
+        are skipped with a warning.
+
+        Args:
+            data (dict[str, Any]): Dictionary containing field names and values
+                to update.
+
+        """
         class_fields = {f.name: f for f in fields(self)}
 
         for key, value in data.items():
@@ -331,4 +475,4 @@ class BaseDTO:
                     )
                     setattr(self, key, validated_value)
                 except (TypeError, ValueError) as e:
-                    logger.warning(f'Skipping field {key} update: {e}')
+                    logger.warning('Skipping field %s update: %s', key, e)

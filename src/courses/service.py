@@ -151,6 +151,20 @@ class CourseService(BaseService):
         last_id: uuid.UUID | None = None,
         limit: int | None = None,
     ) -> list[Course] | None:
+        """Retrieve all courses owned by a specific user.
+
+        Args:
+            user (User): The user whose courses are to retrieve.
+            created_at (dt.datetime | None, optional): Filter courses created
+                after this timestamp.
+            last_id (uuid.UUID | None, optional): Last ID for pagination.
+            limit (int | None, optional): Maximum number of courses to return.
+
+        Returns:
+            list[Course] | None: List of courses owned by the user. Empty list
+                if no courses exist.
+
+        """
         async with self.session.begin():
             user_courses: (
                 list[UserCourses] | None

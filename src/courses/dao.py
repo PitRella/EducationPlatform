@@ -15,6 +15,20 @@ class CourseDAO(BaseDAO[Course, BaseCreateCourseRequestSchema]):
     async def get_published_course(
         self, *filters: Any, **filters_by: Any
     ) -> Course | None:
+        """Retrieve a published (active) course matching given filters.
+
+        This method fetches a single active course that matches the provided
+        filters. The course must have is_active=True to be returned.
+
+        Args:
+            *filters (Any): Positional filters applied to the query.
+            **filters_by (Any): Keyword-based filters applied to the query.
+
+        Returns:
+            Course | None: The matching active course, or None if no course
+            matches the filters.
+
+        """
         return await self.get_one(*filters, is_active=True, **filters_by)
 
     async def get_course_with_lessons(

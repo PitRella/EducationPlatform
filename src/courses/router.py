@@ -36,6 +36,24 @@ async def get_my_courses(
     last_id: uuid.UUID | None = None,
     limit: int | None = None,
 ) -> list[BaseCourseResponseSchema] | None:
+    """Retrieve a list of courses owned by the authenticated user.
+
+    Fetches courses based on optional filters like creation date,
+    last seen course ID, and limit.
+
+    Args:
+        user (User): Authenticated user requesting their courses.
+        service (CourseService): Service for course operations.
+        created_at (datetime, optional): Filter courses created after this
+            timestamp.
+        last_id (UUID, optional): Get courses after this course ID.
+        limit (int, optional): Maximum number of courses to return.
+
+    Returns:
+        list[BaseCourseResponseSchema] | None: List of course schemas owned
+            by the user or None if no courses exist.
+
+    """
     courses: list[Course] = await service.get_all_user_courses(
         user, created_at, last_id, limit
     )
