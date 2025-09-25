@@ -92,6 +92,23 @@ class StripePaymentProviderService(AbstractProvider):
         """
         stripe.PaymentIntent.cancel(payment_id)
 
+    def refund_payment(
+        self,
+        payment_id: str,
+        amount: Decimal,
+    ) -> None:
+        """Refund a payment intent in Stripe.
+
+        Args:
+            payment_id (str): The Stripe payment intent ID to refund.
+            amount (Decimal | None, optional): Amount to refund. If None,
+
+        """
+        stripe.Refund.create(
+            payment_intent=payment_id,
+            amount=self._get_stripe_amount(amount),
+        )
+
     def get_payment_status(self, payment_id: str) -> PaymentStatusEnum:
         """Get normalized payment status.
 
@@ -104,7 +121,7 @@ class StripePaymentProviderService(AbstractProvider):
         """
         status = self.payment_status(payment_id)
         if status in ['succeeded', 'processing']:
-            return PaymentStatusEnum.COMPLETED
+            return PaymentStatusEnum.SUCCEEDED
         if status == 'requires_payment_method':
             return PaymentStatusEnum.PENDING
         return PaymentStatusEnum.FAILED

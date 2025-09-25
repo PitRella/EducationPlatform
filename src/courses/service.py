@@ -150,7 +150,7 @@ class CourseService(BaseService):
         created_at: dt.datetime | None = None,
         last_id: uuid.UUID | None = None,
         limit: int | None = None,
-    ) -> list[Course] | None:
+    ) -> list[Course]:
         """Retrieve all courses owned by a specific user.
 
         Args:

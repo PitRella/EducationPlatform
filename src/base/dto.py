@@ -1,6 +1,7 @@
 import json
 import logging
 from dataclasses import MISSING, dataclass, fields, is_dataclass
+from decimal import Decimal
 from typing import (
     Any,
     TypeVar,
@@ -12,6 +13,7 @@ from typing import (
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T', bound='BaseDTO')
+_NUMBER_OF_TYPE_ARGS: int = 2
 
 
 @dataclass
@@ -66,7 +68,9 @@ class BaseDTO:
 
     @classmethod
     def from_dict(
-        cls: type[T], data: dict[str, Any], strict: bool = False
+        cls: type[T],
+        data: dict[str, Any],
+        strict: bool = False,  # noqa: FBT001, FBT002
     ) -> T:
         """Create a DTO instance from a dictionary.
 
@@ -89,7 +93,7 @@ class BaseDTO:
 
         """
         if not isinstance(data, dict):
-            raise TypeError('Data must be a dictionary')
+            raise TypeError('Data must be a dictionary')  # noqa: TRY003
 
         class_fields = {f.name: f for f in fields(cls)}
         validated_data: dict[str, Any] = {}
@@ -113,7 +117,7 @@ class BaseDTO:
             else:
                 skipped_fields.append(key)
                 if strict:
-                    raise ValueError('Unknown field: %s', key) from None
+                    raise ValueError('Unknown field: %s', key) from None  # noqa: TRY003
 
         if skipped_fields:
             logger.debug(
@@ -131,7 +135,7 @@ class BaseDTO:
             field for field in required_fields if field not in validated_data
         ]
         if missing_fields:
-            raise ValueError('Missing required fields: %s', missing_fields)
+            raise ValueError('Missing required fields: %s', missing_fields)  # noqa: TRY003
 
         return cls(**validated_data)
 
@@ -181,13 +185,13 @@ class BaseDTO:
         return cls.from_dict(data)
 
     @staticmethod
-    def _validate_field_value(
+    def _validate_field_value(  # noqa: C901, PLR0911
         field_name: str, field_type: Any, value: Any
     ) -> Any:
         if value is None:
             if BaseDTO._is_optional_type(field_type):
                 return None
-            raise ValueError('Field %s cannot be None', field_name)
+            raise ValueError('Field %s cannot be None', field_name)  # noqa: TRY003
 
         actual_type = BaseDTO._get_actual_type(field_type)
 
@@ -199,11 +203,11 @@ class BaseDTO:
                 return (
                     actual_type.from_dict(value)
                     if hasattr(actual_type, 'from_dict')
-                    else actual_type(**value)
+                    else actual_type(**value)  # type: ignore
                 )
-            if isinstance(value, actual_type):
+            if isinstance(value, actual_type):  # type: ignore
                 return value
-            raise TypeError(
+            raise TypeError(  # noqa: TRY003
                 'Cannot convert %s to %s for field %s',
                 type(value),
                 actual_type,
@@ -220,7 +224,7 @@ class BaseDTO:
                 return actual_type.from_dict(value)
             if isinstance(value, actual_type):
                 return value
-            raise TypeError(
+            raise TypeError(  # noqa: TRY003
                 'Cannot convert %s to %s for field %s',
                 type(value),
                 actual_type,
@@ -238,7 +242,7 @@ class BaseDTO:
         return BaseDTO._convert_value(field_name, actual_type, value)
 
     @staticmethod
-    def _handle_generic_type(
+    def _handle_generic_type(  # noqa: C901
         field_name: str, field_type: Any, value: Any
     ) -> Any:
         origin = get_origin(field_type)
@@ -246,7 +250,7 @@ class BaseDTO:
 
         if origin is list or origin is list:
             if not isinstance(value, list):
-                raise TypeError(
+                raise TypeError(  # noqa: TRY003
                     'Expected list for field %s, got %s',
                     field_name,
                     type(value),
@@ -267,8 +271,8 @@ class BaseDTO:
                     )
                     converted_list.append(converted_item)
                 except (TypeError, ValueError) as e:
-                    raise TypeError(
-                        'Error converting list item at index %s for field %s %s',
+                    raise TypeError(  # noqa: TRY003
+                        'Error converting list item at index %s for field %s %s',  # noqa: E501
                         i,
                         field_name,
                         e,
@@ -278,13 +282,13 @@ class BaseDTO:
 
         if origin is dict or origin is dict:
             if not isinstance(value, dict):
-                raise TypeError(
+                raise TypeError(  # noqa: TRY003
                     'Expected dict for field %s, got %s',
                     field_name,
                     type(value),
                 )
 
-            if len(type_args) < 2:
+            if len(type_args) < _NUMBER_OF_TYPE_ARGS:
                 return value
 
             key_type, value_type = type_args[0], type_args[1]
@@ -304,12 +308,12 @@ class BaseDTO:
                     )
                     converted_dict[converted_key] = converted_value
                 except (TypeError, ValueError) as e:
-                    raise TypeError(
+                    raise TypeError(  # noqa: TRY003
                         'Error converting dict item for key %s in field %s: %s',
                         k,
                         field_name,
                         e,
-                    )
+                    ) from None
 
             return converted_dict
 
@@ -344,8 +348,6 @@ class BaseDTO:
                 hasattr(target_type, '__name__')
                 and target_type.__name__ == 'Decimal'
             ):
-                from decimal import Decimal
-
                 return Decimal(str(value))
 
             # Handle enums
@@ -356,20 +358,21 @@ class BaseDTO:
                     return target_type(value)
                 if isinstance(value, target_type):
                     return value
-            logger.warning(
-                "Couldn't convert field %s to %s", field_name, target_type
-            )
-            return value
+            else:
+                logger.warning(
+                    "Couldn't convert field %s to %s", field_name, target_type
+                )
+                return value
 
         except (ValueError, TypeError) as e:
-            raise TypeError(
+            raise TypeError(  # noqa: TRY003
                 "Couldn't convert field %s to %s: %s",
                 field_name,
                 target_type,
                 e,
-            )
+            ) from None
 
-    def to_dict(self, exclude_none: bool = False) -> dict[str, Any]:
+    def to_dict(self, *, exclude_none: bool = False) -> dict[str, Any]:  # noqa: C901, PLR0912
         """Convert the DTO instance to a dictionary representation.
 
         Recursively converts all nested dataclasses, lists, and dictionaries

@@ -61,29 +61,12 @@ class AbstractProvider(ABC):
     def refund_payment(
         self,
         payment_id: str,
-        amount: Decimal | None = None,
+        amount: Decimal,
     ) -> None:
         """Refund an existing payment, either fully or partially.
 
         Args:
             payment_id: The unique identifier of the payment to refund.
             amount: Optional amount to refund. If None, refunds the full amount.
-
-        """
-
-    @abstractmethod
-    def process_webhook(
-        self,
-        payload: dict[str, Any],
-        headers: dict[str, str],
-    ) -> PaymentResult:
-        """Process incoming webhook notification from payment provider.
-
-        Args:
-            payload: The webhook payload/body received from provider.
-            headers: The webhook request headers.
-
-        Returns:
-            PaymentResult containing the processed payment details.
 
         """

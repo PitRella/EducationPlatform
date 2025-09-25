@@ -40,7 +40,7 @@ async def stripe_webhook(
     """
     request_body: bytes = await request.body()
     stripe_signature = request.headers['stripe-signature']
-    stripe.Webhook.construct_event(
+    stripe.Webhook.construct_event(  # type: ignore[no-untyped-call]
         request_body,
         stripe_signature,
         settings.stripe_settings.WEBHOOK_SECRET_KEY,
