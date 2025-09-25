@@ -26,6 +26,40 @@ from src.users.permissions import IsAuthorPermission
 course_router = APIRouter()
 
 
+@course_router.get('/mine', response_model=list[BaseCourseResponseSchema])
+async def get_my_courses(
+    user: Annotated[
+        User, Security(UserPermissionDependency([IsAuthenticated]))
+    ],
+    service: Annotated[CourseService, Depends(get_service(CourseService))],
+    created_at: dt.datetime | None = None,
+    last_id: uuid.UUID | None = None,
+    limit: int | None = None,
+) -> list[BaseCourseResponseSchema] | None:
+    """Retrieve a list of courses owned by the authenticated user.
+
+    Fetches courses based on optional filters like creation date,
+    last seen course ID, and limit.
+
+    Args:
+        user (User): Authenticated user requesting their courses.
+        service (CourseService): Service for course operations.
+        created_at (datetime, optional): Filter courses created after this
+            timestamp.
+        last_id (UUID, optional): Get courses after this course ID.
+        limit (int, optional): Maximum number of courses to return.
+
+    Returns:
+        list[BaseCourseResponseSchema] | None: List of course schemas owned
+            by the user or None if no courses exist.
+
+    """
+    courses: list[Course] = await service.get_all_user_courses(
+        user, created_at, last_id, limit
+    )
+    return [BaseCourseResponseSchema.model_validate(c) for c in courses]
+
+
 @course_router.get('/all', response_model=list[BaseCourseResponseSchema])
 async def get_all_courses(
     service: Annotated[CourseService, Depends(get_service(CourseService))],
@@ -163,36 +197,3 @@ async def deactivate_course_by_id(
 
     """
     await service.deactivate_course(course=course)
-
-
-@course_router.post('/purchase/{course_id}', status_code=201)
-async def purchase_course_by_id(
-    user: Annotated[
-        User, Security(UserPermissionDependency([IsAuthenticated]))
-    ],
-    course: Annotated[
-        Course,
-        Security(
-            CoursePermissionDependency(
-                [
-                    IsCourseActive,
-                ]
-            )
-        ),
-    ],
-    service: Annotated[CourseService, Depends(get_service(CourseService))],
-) -> None:
-    """Purchase a course by its ID.
-
-    The user must be authenticated. The course must be active.
-
-    Args:
-        user (User): Authenticated user purchasing the course.
-        course (Course): Course instance retrieved via permission dependency.
-        service (CourseService): Service for course operations.
-
-    Returns:
-        None
-
-    """
-    await service.purchase_course(course=course, user=user)

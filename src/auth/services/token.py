@@ -47,7 +47,7 @@ class TokenManager:
             settings.token_settings.SECRET_KEY,
             algorithm=settings.token_settings.ALGORITHM,
         )
-        return f'Bearer {encoded_jwt}'
+        return encoded_jwt
 
     @classmethod
     def generate_refresh_token(cls) -> tuple[uuid.UUID, timedelta]:

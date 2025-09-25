@@ -9,18 +9,16 @@ from src.base.service import BaseService
 from src.courses.dao import CourseDAO
 from src.courses.exceptions import (
     CourseNotFoundByIdException,
-    CourseWasNotBoughtException,
 )
 from src.courses.models import Course
 from src.courses.schemas import (
     BaseCreateCourseRequestSchema,
     UpdateCourseRequestSchema,
 )
+from src.payment.services.webhooks.stripe import UserCourseDAO
 from src.users import User
 from src.users.models import Author, UserCourses
 from src.utils import make_slug
-
-type UserCourseDAO = BaseDAO[UserCourses]
 
 
 class CourseService(BaseService):
@@ -146,6 +144,58 @@ class CourseService(BaseService):
             raise CourseNotFoundByIdException
         return updated_course
 
+    async def get_all_user_courses(
+        self,
+        user: User,
+        created_at: dt.datetime | None = None,
+        last_id: uuid.UUID | None = None,
+        limit: int | None = None,
+    ) -> list[Course]:
+        """Retrieve all courses owned by a specific user.
+
+        Args:
+            user (User): The user whose courses are to retrieve.
+            created_at (dt.datetime | None, optional): Filter courses created
+                after this timestamp.
+            last_id (uuid.UUID | None, optional): Last ID for pagination.
+            limit (int | None, optional): Maximum number of courses to return.
+
+        Returns:
+            list[Course] | None: List of courses owned by the user. Empty list
+                if no courses exist.
+
+        """
+        async with self.session.begin():
+            user_courses: (
+                list[UserCourses] | None
+            ) = await self._user_courses_dao.get_all(
+                created_at=created_at,
+                last_id=last_id,
+                limit=limit,
+                order_by=['id'],
+                user_id=user.id,
+            )
+            if not user_courses:
+                return []
+
+            course_ids = [row.course_id for row in user_courses]
+            courses: list[Course] | None = await self._course_dao.get_all(
+                None,
+                None,
+                len(course_ids),
+                ['id'],
+                Course.id.in_(course_ids),
+                is_active=True,
+            )
+            if not courses:
+                return []
+
+            id_to_course: dict[uuid.UUID, Course] = {c.id: c for c in courses}
+            ordered_courses: list[Course] = [
+                id_to_course[cid] for cid in course_ids if cid in id_to_course
+            ]
+        return ordered_courses
+
     async def get_all_courses(
         self,
         created_at: dt.datetime | None = None,
@@ -194,27 +244,3 @@ class CourseService(BaseService):
             )
         if not deleted_course:
             raise CourseNotFoundByIdException
-
-    async def purchase_course(
-        self,
-        course: Course,
-        user: User,
-    ) -> None:
-        """Record a purchase of a course by a user.
-
-        Args:
-            course (Course): The course being purchased.
-            user (User): The user purchasing the course.
-
-        Raises:
-            CourseWasNotBoughtException: If the purchase could not be recorded.
-
-        """
-        async with self.session.begin():
-            bought_course: (
-                UserCourses | None
-            ) = await self._user_courses_dao.create(
-                {'user_id': user.id, 'course_id': course.id}
-            )
-        if not bought_course:
-            raise CourseWasNotBoughtException

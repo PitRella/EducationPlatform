@@ -1,9 +1,32 @@
+from functools import cache
 from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.payment.enums import PaymentProviderEnum
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class StripePaymentSettings(BaseSettings):
+    """Payment-related settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix='STRIPE_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
+    SECRET_KEY: str = ''
+    WEBHOOK_SECRET_KEY: str = ''
+
+
+class PaymentSettings(BaseSettings):
+    """Payment provider settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix='PAYMENT_', env_file=BASE_DIR / '.env', extra='ignore'
+    )
+
+    PROVIDER: PaymentProviderEnum = PaymentProviderEnum.STRIPE
 
 
 class TokenSettings(BaseSettings):
@@ -53,12 +76,17 @@ class Settings(BaseSettings):
 
     # Nested settings
     token_settings: TokenSettings = Field(default_factory=TokenSettings)
+    stripe_settings: StripePaymentSettings = Field(
+        default_factory=StripePaymentSettings
+    )
+    payment_settings: PaymentSettings = Field(default_factory=PaymentSettings)
     database_settings: DatabaseSettings = Field(
         default_factory=DatabaseSettings
     )
     logging_settings: LoggingSettings = Field(default_factory=LoggingSettings)
 
     @classmethod
+    @cache
     def load(cls) -> 'Settings':
         """Return a new instance of Settings."""
         return cls()

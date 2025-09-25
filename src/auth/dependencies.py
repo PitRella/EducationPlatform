@@ -13,7 +13,7 @@ from src.users.permissions.user import BaseUserPermission
 from src.users.services import UserService
 
 oauth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
-    tokenUrl='/auth/login',
+    tokenUrl='/api/v1/auth/login',
     auto_error=False,
 )
 
