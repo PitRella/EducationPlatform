@@ -7,6 +7,7 @@ from src.payment.models import Payment
 
 
 class PaymentAdmin(TimestampAdminMixin, ModelView, model=Payment):
+    """Admin interface for managing Payment model in the admin panel."""
 
     column_list: ClassVar = [
         Payment.id,

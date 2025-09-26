@@ -8,6 +8,7 @@ from src.lessons.models import Lesson
 
 class LessonAdmin(TimestampAdminMixin, ModelView, model=Lesson):
     """Admin interface for managing a Lesson model in the admin panel."""
+
     column_list: ClassVar = [
         Lesson.title,
         Lesson.slug,
