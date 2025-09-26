@@ -17,7 +17,7 @@ from src.settings import Settings
 from src.users.admin import AuthorAdmin, UserAdmin
 from src.users.routers import author_router, user_router
 from src.users.routers.admin import admin_router
-
+from src.admin import initialize_admin_panel
 logger = logging.getLogger(__name__)
 
 settings = Settings.load()
@@ -28,13 +28,7 @@ sentry_sdk.init(
     send_default_pii=True,
 )
 app = FastAPI(title='EducationPlatform')
-admin = Admin(app, engine)
-
-admin.add_view(UserAdmin)
-admin.add_view(AuthorAdmin)
-admin.add_view(CourseAdmin)
-admin.add_view(LessonAdmin)
-
+initialize_admin_panel()
 app.add_middleware(PrometheusMiddleware)
 app.add_route('/metrics', handle_metrics)
 main_api_router = APIRouter(prefix='/api/v1')
