@@ -11,11 +11,10 @@ from src.settings import Settings
 settings = Settings.load()
 logger = logging.getLogger(__name__)
 
-_debug: bool = settings.DEBUG
 
 
 def initialize_admin_panel() -> None:
-    if _debug:
+    if settings.DEBUG:
         from src.main import app
         logger.info('Initializing admin panel.')
         admin = Admin(app=app, engine=engine)
