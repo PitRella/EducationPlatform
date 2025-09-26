@@ -126,3 +126,6 @@ class Payment(BaseUUIDMixin, BaseTimeStampMixin):
         nullable=True,
         comment='Payment processing completion timestamp',
     )
+
+    def __repr__(self) -> str:
+        return f'<Payment {self.payment_method}>'

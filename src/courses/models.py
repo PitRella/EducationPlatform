@@ -104,3 +104,6 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
         nullable=False,
         comment='Course available languages',
     )
+
+    def __repr__(self) -> str:
+        return f'<Lesson {self.title}>'

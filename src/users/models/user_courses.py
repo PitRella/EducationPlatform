@@ -27,3 +27,6 @@ class UserCourses(BaseUUIDMixin, BaseTimeStampMixin):
     )
 
     __table_args__ = (UniqueConstraint('user_id', 'course_id'),)
+
+    def __repr__(self) -> str:
+        return f'<User {self.user_id} - Course {self.course_id}>'

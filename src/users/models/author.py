@@ -84,3 +84,6 @@ class Author(BaseUUIDMixin, BaseTimeStampMixin):
     )
 
     __table_args__ = (UniqueConstraint('user_id'),)  # Be sure its o2o relation
+
+    def __repr__(self) -> str:
+        return f'<User {self.user.email}>'
