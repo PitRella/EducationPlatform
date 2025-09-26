@@ -9,6 +9,7 @@ from src.auth.router import auth_router
 from src.courses.admin import CourseAdmin
 from src.courses.router import course_router
 from src.database import engine
+from src.lessons.admin import LessonAdmin
 from src.lessons.router import lesson_router
 from src.logger import configure_logging
 from src.payment.routers import payment_router, webhooks_payment_router
@@ -32,6 +33,7 @@ admin = Admin(app, engine)
 admin.add_view(UserAdmin)
 admin.add_view(AuthorAdmin)
 admin.add_view(CourseAdmin)
+admin.add_view(LessonAdmin)
 
 app.add_middleware(PrometheusMiddleware)
 app.add_route('/metrics', handle_metrics)
