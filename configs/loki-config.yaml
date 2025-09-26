@@ -1,10 +1,7 @@
-auth_enabled: false
-
 server:
   http_listen_port: 3100
 
 common:
-  path_prefix: /loki
   storage:
     filesystem:
       chunks_directory: /loki/chunks
@@ -14,6 +11,7 @@ common:
     instance_addr: 127.0.0.1
     kvstore:
       store: inmemory
+  path_prefix: /tmp/loki
 
 schema_config:
   configs:
@@ -29,8 +27,6 @@ ruler:
   alertmanager_url: http://localhost:9093
 auth_enabled: false
 
-server:
-  http_listen_port: 3100
 
 ingester:
   lifecycler:
@@ -42,15 +38,6 @@ ingester:
   chunk_retain_period: 30s
   max_chunk_age: 1h
 
-schema_config:
-  configs:
-    - from: 2020-10-24
-      store: boltdb-shipper
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 24h
 
 storage_config:
   boltdb_shipper:
@@ -69,6 +56,3 @@ table_manager:
 
 query_scheduler:
   max_outstanding_requests_per_tenant: 2048
-
-common:
-  path_prefix: /tmp/loki
