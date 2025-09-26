@@ -2,10 +2,11 @@ from typing import ClassVar
 
 from sqladmin import ModelView
 
+from src.base.admin import TimestampAdminMixin
 from src.users import User
 
 
-class UserAdmin(ModelView, model=User):
+class UserAdmin(TimestampAdminMixin, ModelView, model=User):
     """Admin interface for managing a User model in the admin panel."""
 
     column_list: ClassVar = [
@@ -17,7 +18,7 @@ class UserAdmin(ModelView, model=User):
     ]
     form_excluded_columns: ClassVar = [User.password]
     column_searchable_list: ClassVar = [User.email, User.name]
+
     form_args: ClassVar = {
-        'created_at': {'render_kw': {'readonly': True, 'disabled': True}},
-        'updated_at': {'render_kw': {'readonly': True, 'disabled': True}},
+        **TimestampAdminMixin.form_args,
     }
