@@ -2,11 +2,12 @@ from typing import ClassVar
 
 from sqladmin import ModelView
 
+from src.base.admin import TimestampAdminMixin
 from src.courses.models import Course
 
 
-class CourseAdmin(ModelView, model=Course):
-    """Admin interface for managing Course model in the admin panel."""
+class CourseAdmin(TimestampAdminMixin, ModelView, model=Course):
+    """Admin interface for managing a Course model in the admin panel."""
 
     column_list: ClassVar = [
         Course.title,
@@ -17,7 +18,6 @@ class CourseAdmin(ModelView, model=Course):
     ]
 
     form_args: ClassVar = {
-        'created_at': {'render_kw': {'readonly': True, 'disabled': True}},
-        'updated_at': {'render_kw': {'readonly': True, 'disabled': True}},
+        **TimestampAdminMixin.form_args,
         'slug': {'render_kw': {'readonly': True, 'disabled': True}},
     }
