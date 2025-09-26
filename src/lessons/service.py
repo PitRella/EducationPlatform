@@ -15,8 +15,7 @@ from src.lessons.schemas import (
     CreateLessonRequestSchema,
     UpdateLessonRequestSchema,
 )
-from src.utils import make_slug
-
+from src.base.utils import make_slug
 
 class LessonService(BaseService):
     """Service layer for managing lessons.

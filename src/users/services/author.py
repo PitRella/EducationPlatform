@@ -12,7 +12,7 @@ from src.users.exceptions.author import (
 )
 from src.users.models import Author
 from src.users.schemas import CreateAuthorRequestSchema
-from src.utils import make_slug
+from src.base.utils import make_slug
 
 
 class AuthorService(BaseService):

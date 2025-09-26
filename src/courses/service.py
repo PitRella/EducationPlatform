@@ -18,7 +18,7 @@ from src.courses.schemas import (
 from src.payment.services.webhooks.stripe import UserCourseDAO
 from src.users import User
 from src.users.models import Author, UserCourses
-from src.utils import make_slug
+from src.base.utils import make_slug
 
 
 class CourseService(BaseService):
