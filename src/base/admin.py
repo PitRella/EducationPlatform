@@ -1,4 +1,4 @@
-from typing import ClassVar, Any
+from typing import Any, ClassVar
 
 
 class TimestampAdminMixin:
@@ -12,6 +12,7 @@ class TimestampAdminMixin:
     Attributes:
         form_args: Class-level dictionary containing form field configurations
             for created_at and updated_at fields.
+
     """
 
     form_args: ClassVar[dict[str, Any]] = {

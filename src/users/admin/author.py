@@ -19,5 +19,4 @@ class AuthorAdmin(TimestampAdminMixin, ModelView, model=Author):
         **TimestampAdminMixin.form_args,
         'slug': {'render_kw': {'readonly': True, 'disabled': True}},
         'balance': {'render_kw': {'readonly': True, 'disabled': True}},
-
     }
