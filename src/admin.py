@@ -6,6 +6,7 @@ from sqladmin import Admin
 from src.courses.admin import CourseAdmin
 from src.database import engine
 from src.lessons.admin import LessonAdmin
+from src.payment.admin import PaymentAdmin
 from src.settings import Settings
 from src.users.admin import AuthorAdmin, UserAdmin
 
@@ -22,5 +23,6 @@ def initialize_admin_panel(app: FastAPI) -> None:
         admin.add_view(AuthorAdmin)
         admin.add_view(CourseAdmin)
         admin.add_view(LessonAdmin)
+        admin.add_view(PaymentAdmin)
     else:
         logger.info('Debug mode is off, skipping admin panel initialization.')
