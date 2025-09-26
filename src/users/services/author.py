@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.service import BaseService
+from src.base.utils import make_slug
 from src.users import User
 from src.users.dao import AuthorDAO
 from src.users.exceptions.author import (
@@ -12,7 +13,6 @@ from src.users.exceptions.author import (
 )
 from src.users.models import Author
 from src.users.schemas import CreateAuthorRequestSchema
-from src.base.utils import make_slug
 
 
 class AuthorService(BaseService):

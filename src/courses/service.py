@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.dao import BaseDAO
 from src.base.service import BaseService
+from src.base.utils import make_slug
 from src.courses.dao import CourseDAO
 from src.courses.exceptions import (
     CourseNotFoundByIdException,
@@ -18,7 +19,6 @@ from src.courses.schemas import (
 from src.payment.services.webhooks.stripe import UserCourseDAO
 from src.users import User
 from src.users.models import Author, UserCourses
-from src.base.utils import make_slug
 
 
 class CourseService(BaseService):

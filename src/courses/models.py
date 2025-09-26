@@ -106,4 +106,5 @@ class Course(BaseUUIDMixin, BaseTimeStampMixin):
     )
 
     def __repr__(self) -> str:
+        """Return a string representation of the Course object."""
         return f'<Lesson {self.title}>'

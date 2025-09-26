@@ -83,4 +83,5 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
         return self.is_user_admin or self.is_user_superadmin
 
     def __repr__(self) -> str:
+        """Return a string representation of the object."""
         return f'<User {self.email}>'

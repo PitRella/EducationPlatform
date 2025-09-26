@@ -128,4 +128,5 @@ class Payment(BaseUUIDMixin, BaseTimeStampMixin):
     )
 
     def __repr__(self) -> str:
+        """Return a string representation of the Payment object."""
         return f'<Payment {self.payment_method}>'
