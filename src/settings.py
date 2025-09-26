@@ -70,9 +70,12 @@ class Settings(BaseSettings):
         env_file_encoding='utf-8',
         extra='ignore',
     )
-
+    # Api version
+    API_TITLE: str = 'EducationPlatform'
+    API_VERSION: str = 'v1'
     # Log level
     LOG_LEVEL: str = 'INFO'
+    DEBUG: bool = True
 
     # Nested settings
     token_settings: TokenSettings = Field(default_factory=TokenSettings)

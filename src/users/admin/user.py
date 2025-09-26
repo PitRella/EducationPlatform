@@ -16,7 +16,12 @@ class UserAdmin(TimestampAdminMixin, ModelView, model=User):
         User.role,
         User.is_active,
     ]
-    form_excluded_columns: ClassVar = [User.password]
+    form_excluded_columns: ClassVar = [
+        User.created_at,
+        User.updated_at,
+        User.purchased_courses,
+        User.payments,
+    ]
     column_searchable_list: ClassVar = [User.email, User.name]
 
     form_args: ClassVar = {

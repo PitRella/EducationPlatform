@@ -81,3 +81,7 @@ class User(BaseUUIDMixin, BaseTimeStampMixin):
     def is_user_in_admin_group(self) -> bool:
         """Check if user in an admin group or not."""
         return self.is_user_admin or self.is_user_superadmin
+
+    def __repr__(self) -> str:
+        """Return a string representation of the object."""
+        return f'<User {self.email}>'

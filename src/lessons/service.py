@@ -4,6 +4,7 @@ from typing import ClassVar
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.base.service import BaseService
+from src.base.utils import make_slug
 from src.courses.models import Course
 from src.lessons.dao import LessonDAO
 from src.lessons.exceptions import (
@@ -15,7 +16,6 @@ from src.lessons.schemas import (
     CreateLessonRequestSchema,
     UpdateLessonRequestSchema,
 )
-from src.utils import make_slug
 
 
 class LessonService(BaseService):

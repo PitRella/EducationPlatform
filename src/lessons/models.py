@@ -115,3 +115,7 @@ class Lesson(BaseUUIDMixin, BaseTimeStampMixin):
     )
 
     __table_args__ = (UniqueConstraint('course_id', 'order_number'),)
+
+    def __repr__(self) -> str:
+        """Return a string representation of the Lesson object."""
+        return f'<Lesson {self.title}>'

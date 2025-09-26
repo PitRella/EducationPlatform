@@ -15,8 +15,9 @@ class AuthorAdmin(TimestampAdminMixin, ModelView, model=Author):
         Author.is_verified,
         Author.balance,
     ]
+    form_excluded_columns: ClassVar = [Author.created_at, Author.updated_at]
+
     form_args: ClassVar = {
         **TimestampAdminMixin.form_args,
-        'slug': {'render_kw': {'readonly': True, 'disabled': True}},
         'balance': {'render_kw': {'readonly': True, 'disabled': True}},
     }
