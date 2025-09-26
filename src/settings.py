@@ -73,6 +73,7 @@ class Settings(BaseSettings):
 
     # Log level
     LOG_LEVEL: str = 'INFO'
+    DEBUG: bool = True
 
     # Nested settings
     token_settings: TokenSettings = Field(default_factory=TokenSettings)
