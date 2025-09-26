@@ -16,8 +16,8 @@ class CourseAdmin(TimestampAdminMixin, ModelView, model=Course):
         Course.price,
         Course.language,
     ]
+    form_excluded_columns: ClassVar = [Course.created_at,  Course.updated_at, Course.users, Course.lessons]
 
     form_args: ClassVar = {
         **TimestampAdminMixin.form_args,
-        'slug': {'render_kw': {'readonly': True, 'disabled': True}},
     }
