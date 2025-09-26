@@ -1,5 +1,6 @@
 import logging
 
+from fastapi import FastAPI
 from sqladmin import Admin
 
 from src.courses.admin import CourseAdmin
@@ -13,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 
-def initialize_admin_panel() -> None:
+def initialize_admin_panel(app: FastAPI) -> None:
     if settings.DEBUG:
-        from src.main import app
         logger.info('Initializing admin panel.')
         admin = Admin(app=app, engine=engine)
         admin.add_view(UserAdmin)

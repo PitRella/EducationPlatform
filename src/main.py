@@ -18,10 +18,10 @@ if not settings.DEBUG: # In debug mode we don't want to initialize sentry
         dsn=settings.logging_settings.SENTRY_URL,
         send_default_pii=True,
     )
-app = FastAPI(title='EducationPlatform')
-
-initialize_admin_panel() # Initialize an admin panel before routers
-initialize_routers() # Initialize routers after admin panel initialization
+app = FastAPI(title=settings.API_TITLE)
+initialize_admin_panel(app=app) # Initialize an admin panel before routers
+main_api_router = initialize_routers() # Initialize routers after admin panel initialization
+app.include_router(main_api_router)
 app.add_middleware(PrometheusMiddleware)
 app.add_route('/metrics', handle_metrics)
 logger.info('Application started')
