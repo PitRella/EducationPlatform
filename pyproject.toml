@@ -146,3 +146,12 @@ select = [
     "W", # pycodestyle
     "YTT", # flake8-2020
 ]
+
+# Ignore conflictiong rules
+ignore = [
+    "D203", # incorrect-blank-line-before-class (конфликтует с D211)
+    "D213", # multi-line-summary-second-line (конфликтует с D212)
+    "COM812", # comma formatting conflicts with formatter
+    "Q000", # quote style conflicts with formatter
+    "Q003", # mixed quotes conflicts with formatter
+]
